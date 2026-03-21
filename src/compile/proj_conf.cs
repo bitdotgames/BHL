@@ -122,29 +122,11 @@ public class ProjectConf
     var tmp_scripts = bindings_sources.Where(f => f.EndsWith(".bhl")).ToList();
     bindings_scripts = new List<string>();
     foreach(var s in tmp_scripts)
-      bindings_scripts.AddRange(Glob(s));
+      bindings_scripts.AddRange(BuildUtils.Glob(s));
 
     bindings_bytecode_file = bindings_sources.Where(f => f.EndsWith(".bhc")).FirstOrDefault();
 
     return bindings_scripts.Count > 0;
-  }
-
-  static string[] Glob(string s)
-  {
-    var files = new List<string>();
-    int idx = s.IndexOf('*');
-    if(idx != -1)
-    {
-      string dir = s.Substring(0, idx);
-      string mask = s.Substring(idx);
-
-      if(Directory.Exists(dir))
-        files.AddRange(Directory.GetFiles(dir, mask));
-    }
-    else
-      files.Add(s);
-
-    return files.ToArray();
   }
 
   public IUserBindings LoadBindings()

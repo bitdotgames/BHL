@@ -65,7 +65,7 @@ public static partial class Tasks
   {
     //touching version file which is used for detection of bhl dll
     //'staleness' in top level scripts
-    tm.Touch($"{BHL_ROOT}/src/vm/version.cs", DateTime.Now);
+    BuildUtils.Touch($"{BHL_ROOT}/src/vm/version.cs", DateTime.Now);
 
     //invoking dotnet clean to remove all build products
     tm.TryShell("dotnet", $"clean {BHL_ROOT}/bhl.csproj");
@@ -83,7 +83,7 @@ public static partial class Tasks
   {
     var files = new List<string>();
     foreach(var s in srcs)
-      files.AddRange(tm.Glob(s));
+      files.AddRange(BuildUtils.Glob(s));
 
     //NOTE: in case of dotnet build result is a directory not a file,
     //      let's remove any conflicting files
@@ -124,7 +124,7 @@ public static partial class Tasks
     var csproj_file = result + ".csproj";
     Directory.CreateDirectory(Path.GetDirectoryName(csproj_file));
     if(!File.Exists(csproj_file) || File.ReadAllText(csproj_file) != csproj)
-      tm.Write(csproj_file, csproj);
+      BuildUtils.Write(csproj_file, csproj);
 
     //let's add bhl binary as a dependency
     deps.Add(BuildUtils.GetSelfFile());
@@ -132,8 +132,8 @@ public static partial class Tasks
     deps.Add(csproj_file);
 
     if(force ||
-       tm.NeedToRegen(result_dll, files) ||
-       tm.NeedToRegen(result_dll, deps))
+       BuildUtils.NeedToRegen(result_dll, files) ||
+       BuildUtils.NeedToRegen(result_dll, deps))
     {
       if(force)
       {
@@ -149,7 +149,7 @@ public static partial class Tasks
 
       //let's force file modification time since .Net may use result from the cache
       //without changing the file time
-      tm.Touch(result_dll, DateTime.Now);
+      BuildUtils.Touch(result_dll, DateTime.Now);
     }
 
     return result_dll;

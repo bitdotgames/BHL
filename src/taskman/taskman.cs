@@ -41,20 +41,6 @@ public class Taskman
 
   HashSet<Task> invoked = new HashSet<Task>();
 
-  public bool IsWin
-  {
-    get { return !IsUnix; }
-  }
-
-  public bool IsUnix
-  {
-    get
-    {
-      int p = (int)Environment.OSVersion.Platform;
-      return (p == 4) || (p == 6) || (p == 128);
-    }
-  }
-
   public Taskman(Type tasks_class)
   {
     foreach (var method in tasks_class.GetMethods())
@@ -137,41 +123,10 @@ public class Taskman
     return null;
   }
 
-  public string CLIPath(string p)
-  {
-    if(p.IndexOf(" ") == -1)
-      return p;
-
-    if(IsWin)
-    {
-      p = "\"" + p.Trim(new char[] { '"' }) + "\"";
-      return p;
-    }
-    else
-    {
-      p = "'" + p.Trim(new char[] { '\'' }) + "'";
-      return p;
-    }
-  }
-
   public void Echo(string s)
   {
     if(verbose)
       Console.WriteLine(s);
-  }
-
-  public void Mkdir(string path)
-  {
-    if(!Directory.Exists(path))
-      Directory.CreateDirectory(path);
-  }
-
-  public void Copy(string src, string dst)
-  {
-    if(File.Exists(dst))
-      File.Delete(dst);
-    Mkdir(Path.GetDirectoryName(dst));
-    File.Copy(src, dst);
   }
 
   public void Shell(string binary, string args)
@@ -183,17 +138,17 @@ public class Taskman
 
   public int TryShell(string binary, string args)
   {
-    binary = CLIPath(binary);
+    binary = BuildUtils.CLIPath(binary);
     Echo($"shell: {binary} {args}");
 
     var p = new System.Diagnostics.Process();
 
-    if(IsWin)
+    if(BuildUtils.IsWin)
     {
       string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
       string cmd = binary + " " + args;
       var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";
-      Write(bat_file, cmd);
+      BuildUtils.Write(bat_file, cmd);
 
       p.StartInfo.FileName = "cmd.exe";
       p.StartInfo.Arguments = "/c " + bat_file;
@@ -212,60 +167,6 @@ public class Taskman
     p.WaitForExit();
 
     return p.ExitCode;
-  }
-
-  public string[] Glob(string s)
-  {
-    var files = new List<string>();
-    int idx = s.IndexOf('*');
-    if(idx != -1)
-    {
-      string dir = s.Substring(0, idx);
-      string mask = s.Substring(idx);
-
-      if(Directory.Exists(dir))
-        files.AddRange(Directory.GetFiles(dir, mask));
-    }
-    else
-      files.Add(s);
-
-    return files.ToArray();
-  }
-
-  public void Rm(string path)
-  {
-    if(Directory.Exists(path))
-      Directory.Delete(path, true);
-    else
-      File.Delete(path);
-  }
-
-  public void Write(string path, string text)
-  {
-    Mkdir(Path.GetDirectoryName(path));
-    File.WriteAllText(path, text);
-  }
-
-  public void Touch(string path, DateTime dt)
-  {
-    if(!File.Exists(path))
-      File.WriteAllText(path, "");
-    File.SetLastWriteTime(path, dt);
-  }
-
-  public bool NeedToRegen(string file, IList<string> deps)
-  {
-    if(!File.Exists(file))
-      return true;
-
-    var fmtime = new FileInfo(file).LastWriteTime;
-    foreach(var dep in deps)
-    {
-      if(File.Exists(dep) && (new FileInfo(dep).LastWriteTime > fmtime))
-        return true;
-    }
-
-    return false;
   }
 }
 

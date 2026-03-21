@@ -7,6 +7,20 @@ namespace bhl
 
 static public class BuildUtils
 {
+  static public bool IsWin
+  {
+    get { return !IsUnix; }
+  }
+
+  static public bool IsUnix
+  {
+    get
+    {
+      int p = (int)Environment.OSVersion.Platform;
+      return (p == 4) || (p == 6) || (p == 128);
+    }
+  }
+
   static public string NormalizeFilePath(string file_path)
   {
     var path = Path.GetFullPath(file_path).Replace("\\", "/");
@@ -76,6 +90,75 @@ static public class BuildUtils
   static DateTime GetLastWriteTime(string file)
   {
     return new FileInfo(file).LastWriteTime;
+  }
+
+  static public List<string> Glob(string s)
+  {
+    var files = new List<string>();
+    int idx = s.IndexOf('*');
+    if(idx != -1)
+    {
+      string dir = s.Substring(0, idx);
+      string mask = s.Substring(idx);
+
+      if(Directory.Exists(dir))
+        files.AddRange(Directory.GetFiles(dir, mask));
+    }
+    else
+      files.Add(s);
+
+    return files;
+  }
+
+  static public void Rm(string path)
+  {
+    if(Directory.Exists(path))
+      Directory.Delete(path, true);
+    else
+      File.Delete(path);
+  }
+
+  static public void Write(string path, string text)
+  {
+    Mkdir(Path.GetDirectoryName(path));
+    File.WriteAllText(path, text);
+  }
+
+  static public void Touch(string path, DateTime dt)
+  {
+    if(!File.Exists(path))
+      File.WriteAllText(path, "");
+    File.SetLastWriteTime(path, dt);
+  }
+
+  static public void Mkdir(string path)
+  {
+    if(!Directory.Exists(path))
+      Directory.CreateDirectory(path);
+  }
+
+  static public void Copy(string src, string dst)
+  {
+    if(File.Exists(dst))
+      File.Delete(dst);
+    Mkdir(Path.GetDirectoryName(dst));
+    File.Copy(src, dst);
+  }
+  static public string CLIPath(string p)
+  {
+    if(p.IndexOf(" ") == -1)
+      return p;
+
+    if(IsWin)
+    {
+      p = "\"" + p.Trim(new char[] { '"' }) + "\"";
+      return p;
+    }
+    else
+    {
+      p = "'" + p.Trim(new char[] { '\'' }) + "'";
+      return p;
+    }
   }
 }
 
