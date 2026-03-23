@@ -52,26 +52,30 @@ public class ProjectConf
 
   public const string DefaultBindingsScriptName = "RegisterBindings";
 
-  //NOTE: 1) if there's a .bhl script it's assumed to define a global RegisterBindings(..) function
+  //NOTE: 1) if there are .bhl scripts they will be built into a bindings_dll (if it's present)
   //      2) if there are .cs sources they will be built into a bindings_dll
   public List<string> bindings_sources = new List<string>();
 
-  //NOTE: this can be a directory path as well containing dll
+  //NOTE: 1) in case of .bhl bindings it's assumed to have a .bhc extension
+  //      2) in case of .cs sources this can be a directory path as well containing an actual dll
+  //         (e.g. bindings.dll/bindings.dll)
   public string bindings_dll = "";
 
+  //NOTE: list of .cs sources which are built into posproc_dll
   public List<string> postproc_sources = new List<string>();
 
-  //NOTE: this can be a directory path as well containing dll
+  //NOTE: this can be a directory path as well containing an actual dll
+  //      (posproc.dll/postproc.dll)
   public string postproc_dll = "";
 
   public static string NormalizePath(string proj_file, string file_path)
   {
     if(Path.IsPathRooted(file_path))
       return BuildUtils.NormalizeFilePath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file) &&
-            !string.IsNullOrEmpty(file_path) &&
-            file_path[0] == '.')
+
+    if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
       return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
+
     return file_path;
   }
 
@@ -103,14 +107,7 @@ public class ProjectConf
     error_file = NormalizePath(proj_file, error_file);
   }
 
-  static System.Reflection.Assembly LoadAssemblyFromDirOrFile(string path)
-  {
-    return System.Reflection.Assembly.LoadFrom(
-      Directory.Exists(path) ? path + "/" + Path.GetFileName(path) : path
-    );
-  }
-
-  bool TryGetBindingsScripts(
+  bool TryGetScriptedBindings(
       out List<string> bindings_scripts,
       out string func_name,
       out string bindings_bytecode_file
@@ -124,66 +121,29 @@ public class ProjectConf
     foreach(var s in tmp_scripts)
       bindings_scripts.AddRange(BuildUtils.Glob(s));
 
-    bindings_bytecode_file = bindings_sources.Where(f => f.EndsWith(".bhc")).FirstOrDefault();
+    bindings_bytecode_file = null;
+    if(!string.IsNullOrEmpty(bindings_dll) && bindings_dll.EndsWith(".bhc"))
+      bindings_bytecode_file = bindings_dll;
 
-    return bindings_scripts.Count > 0;
+    return bindings_scripts.Count > 0 || !string.IsNullOrEmpty(bindings_bytecode_file);
   }
 
   public IUserBindings LoadBindings()
   {
-    if(!string.IsNullOrEmpty(bindings_dll))
-    {
-      var userbindings_assembly = LoadAssemblyFromDirOrFile(bindings_dll);
-      var types = userbindings_assembly.GetTypes();
+    if(!string.IsNullOrEmpty(bindings_dll) && bindings_dll.EndsWith(".dll"))
+      return new DllBindings(bindings_dll);
 
-      Type userbindings_class = null;
-      foreach(var type in types)
-      {
-        if(typeof(IUserBindings).IsAssignableFrom(type))
-        {
-          userbindings_class = type;
-          break;
-        }
-      }
-
-      if(userbindings_class == null)
-        throw new Exception("IUserBindings instance not found");
-
-      return Activator.CreateInstance(userbindings_class) as IUserBindings;
-    }
-    else if(TryGetBindingsScripts(out var bindings_scripts, out string func_name, out var bindings_bytecode_file))
+    if(TryGetScriptedBindings(out var bindings_scripts, out string func_name, out var bindings_bytecode_file))
       return new ScriptedBindings(bindings_scripts, func_name, use_cache, bindings_bytecode_file);
-    else
-      return new EmptyUserBindings();
+
+    return new EmptyUserBindings();
   }
 
   public IFrontPostProcessor LoadPostprocessor()
   {
-    if(string.IsNullOrEmpty(postproc_dll))
-      return new EmptyPostProcessor();
+    if(!string.IsNullOrEmpty(postproc_dll))
+      return new DllPostProcessor(postproc_dll);
 
-    var postproc_assembly = LoadAssemblyFromDirOrFile(postproc_dll);
-    var types = postproc_assembly.GetTypes();
-
-    var postproc_classes = new List<Type>();
-    foreach(var type in types)
-    {
-      if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
-        postproc_classes.Add(type);
-    }
-
-    if(postproc_classes.Count == 0)
-      throw new Exception("IFrontPostProcessor instance not found");
-
-    if(postproc_classes.Count == 1)
-      return InstantiatePostProc(postproc_classes[0]);
-
-    var postproc_instances = postproc_classes.Select(InstantiatePostProc).ToList();
-    return new CombinedPostProcessor(postproc_instances);
-  }
-
-  static IFrontPostProcessor InstantiatePostProc(System.Type type)
-  {
-    return Activator.CreateInstance(type) as IFrontPostProcessor;
+    return new EmptyPostProcessor();
   }
 }

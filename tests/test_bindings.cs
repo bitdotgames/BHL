@@ -72,8 +72,9 @@ public class TestBindings : BHL_TestBase
       {
         var cl = std.bind.NewNativeListTypeSymbol(""List_Color"", types.T(""Color""))
         types.ns.Define(cl)
-        cl.Setup()
       }
+
+      types.SetupType(""List_Color"")
     }
     ";
 

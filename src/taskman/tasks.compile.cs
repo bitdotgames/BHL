@@ -68,10 +68,10 @@ public static partial class Tasks
       runtime_args.Add($"--postproc-dll={postproc_dll_path}");
     }
 
-    return _compile(tm, runtime_args.ToArray());
+    return _compile(runtime_args.ToArray(), force_rebuild);
   }
 
-  static async ThreadTask _compile(Taskman tm, string[] args)
+  static async ThreadTask _compile(string[] args, bool force_rebuild)
   {
     var files = new List<string>();
 
@@ -132,6 +132,9 @@ public static partial class Tasks
         v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v)
       }
     };
+
+    if(force_rebuild)
+      proj.use_cache = false;
 
     var extra = new List<string>();
     try
@@ -198,7 +201,7 @@ public static partial class Tasks
     var conf = new CompileConf();
     conf.proj = proj;
     conf.logger = logger;
-    conf.args = string.Join(";", args);
+    conf.args_signature = string.Join(";", args);
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = bindings;

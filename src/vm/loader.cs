@@ -6,58 +6,6 @@ using System.Buffers;
 namespace bhl
 {
 
-public interface IUserBindings
-{
-  void Register(Types ts);
-}
-
-public class EmptyUserBindings : IUserBindings
-{
-  public void Register(Types ts)
-  {
-  }
-}
-
-public class ScriptedBindings : IUserBindings
-{
-  List<string> script_paths;
-  string func_name;
-  bool use_cache;
-  string bytecode_file;
-
-  public ScriptedBindings(
-    List<string> script_paths,
-    string func_name,
-    bool use_cache = false,
-    string bytecode_file = null
-    )
-  {
-    this.script_paths = script_paths;
-    this.func_name = func_name;
-    this.use_cache = use_cache;
-    this.bytecode_file = bytecode_file;
-  }
-
-  public void Register(Types ts)
-  {
-#if BHL_FRONT
-    var sw = System.Diagnostics.Stopwatch.StartNew();
-    var vm = CompilationExecutor.CompileAndLoadVM(
-      script_paths,
-      use_cache: use_cache,
-      bytecode_file: bytecode_file
-    ).GetAwaiter().GetResult();
-    if(vm == null)
-      throw new Exception("Failed to initialize scripted bindings");
-    //for quick debug
-    //Console.WriteLine("Scripted bindings compiled in " + sw.Elapsed.TotalSeconds + " sec");
-    vm.Execute(func_name, Val.NewObj(ts, std.bind.TypesSymbol));
-#else
-    throw new NotImplementedException();
-#endif
-  }
-}
-
 public enum ModuleBinaryFormat
 {
   FMT_BIN      = 0,

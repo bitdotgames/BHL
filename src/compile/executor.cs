@@ -12,17 +12,16 @@ public class CompileConf
   public ProjectConf proj;
   public Logger logger;
   public Types ts;
-  public string args = "";
+  public string args_signature = "";
   public List<string> files = new List<string>();
   public string self_file = "";
-  public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings bindings = new EmptyUserBindings();
+  public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public int max_errors_num = 100;
 }
 
 public class CompilationExecutor
 {
-  const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
 
   public int cache_hits { get; private set; }
@@ -37,8 +36,6 @@ public class CompilationExecutor
     string bytecode_file = null
   )
   {
-    string file0_dir = Path.GetDirectoryName(files[0]);
-
     var proj = new ProjectConf();
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.use_cache = use_cache;
@@ -573,9 +570,9 @@ public class CompilationExecutor
   {
     var tmp_args_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".args";
     bool changed = !File.Exists(tmp_args_file) ||
-                   (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
+                   (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args_signature);
     if(changed)
-      File.WriteAllText(tmp_args_file, conf.args);
+      File.WriteAllText(tmp_args_file, conf.args_signature);
     return changed;
   }
 
