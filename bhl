@@ -9,6 +9,9 @@ VERSION=$DIR/src/vm/version.cs
 if [[ ! -f "$BHL_DLL" ]] || [[ "$BHL_DLL" -ot "$VERSION"  ]] || [[ -n "$BHL_REBUILD" ]] ; then
   cd "$DIR" && dotnet clean bhl.csproj || true
   cd "$DIR" && dotnet publish bhl.csproj
+  if [[ -f "$BHL_DLL" ]] ; then
+    touch "$BHL_DLL"
+  fi
 fi
 
 dotnet "$BHL_DLL" $*
