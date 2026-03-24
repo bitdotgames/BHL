@@ -1,17 +1,38 @@
 #!/bin/bash
 
-set -e
+set -Eeuo pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-BHL_DLL=$DIR/build/bhl/Release/net8.0/bhl.dll
-VERSION=$DIR/src/vm/version.cs
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1
+  pwd -P
+)"
 
-if [[ ! -f "$BHL_DLL" ]] || [[ "$BHL_DLL" -ot "$VERSION"  ]] || [[ -n "$BHL_REBUILD" ]] ; then
-  cd "$DIR" && dotnet clean bhl.csproj || true
-  cd "$DIR" && dotnet publish bhl.csproj
-  if [[ -f "$BHL_DLL" ]] ; then
-    touch "$BHL_DLL"
-  fi
+PROJECT_FILE="$SCRIPT_DIR/bhl.csproj"
+VERSION_FILE="$SCRIPT_DIR/src/vm/version.cs"
+BHL_DLL="$SCRIPT_DIR/build/bhl/Release/net8.0/bhl.dll"
+
+needs_rebuild=false
+
+if [[ ! -f "$BHL_DLL" ]]; then
+  needs_rebuild=true
+elif [[ "$BHL_DLL" -ot "$VERSION_FILE" ]]; then
+  needs_rebuild=true
+elif [[ -n "${BHL_REBUILD:-}" ]]; then
+  needs_rebuild=true
 fi
 
-dotnet "$BHL_DLL" $*
+if [[ "$needs_rebuild" == true ]]; then
+  (
+    cd "$SCRIPT_DIR"
+
+    # Best-effort clean; do not fail the whole script if clean fails.
+    dotnet clean "$PROJECT_FILE" || true
+
+    dotnet publish "$PROJECT_FILE"
+  )
+
+  # Refresh timestamp if the publish created the DLL.
+  [[ -f "$BHL_DLL" ]] && touch "$BHL_DLL"
+fi
+
+exec dotnet "$BHL_DLL" "$@"
