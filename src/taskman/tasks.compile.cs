@@ -27,9 +27,9 @@ public static partial class Tasks
     string proj_file;
     var runtime_args = GetProjectArg(args, out proj_file);
 
-    var proj = new ProjectConfPartial();
+    var proj = new ProjectConfShort();
     if(!string.IsNullOrEmpty(proj_file))
-      proj = ProjectConfPartial.ReadFromFile(proj_file);
+      proj = ProjectConfShort.ReadFromFile(proj_file);
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
@@ -38,6 +38,9 @@ public static partial class Tasks
     {
       if(string.IsNullOrEmpty(proj.bindings_dll))
         throw new Exception("Resulting 'bindings_dll' is not set");
+
+      if(!proj.bindings_dll.EndsWith(".dll"))
+        throw new Exception("Resulting 'bindings_dll' invalid extension: " + proj.bindings_dll);
 
       bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
       string bindings_dll_path = DotnetBuildLibrary(
