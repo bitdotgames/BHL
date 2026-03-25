@@ -165,6 +165,32 @@ public static partial class std
         }
 
         {
+          var fn = new FuncSymbolNative(new Origin(), "TFunc", FuncAttrib.VariadicArgs, proxy_type, 0,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
+              var args = new List<ScopeExtensions.TypeArg>();
+              var vargs = (ValList)exec.stack.Pop().obj;
+              foreach(var varg in vargs)
+                args.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
+              vargs.Release();
+              var return_type = (ProxyType)exec.stack.Pop().obj;
+              bool is_coro = exec.stack.Pop();
+              exec.stack.Pop(); //for self
+
+              var proxy = types.TFunc(is_coro, return_type, args.ToArray());
+              exec.stack.Push(Val.NewObj(proxy, proxy_type));
+              return null;
+            },
+            new FuncArgSymbol("is_coro", Types.Bool),
+            new FuncArgSymbol("return_type", proxy_type),
+            new FuncArgSymbol("args", ts.TArr(proxy_type))
+          );
+          cl.Define(fn);
+        }
+
+        {
           var fn = new FuncSymbolNative(new Origin(), "SetupType", Types.Void,
             (VM.ExecState exec, FuncArgsInfo args_info) =>
             {
@@ -299,7 +325,7 @@ public static partial class std
         bind.Define(fn);
       }
 
-      var cl_type = new ClassSymbolNative(new Origin(), "ClassSymbol", symbol_type, null, null, typeof(bhl.ClassSymbol));
+      var cl_type = new ClassSymbolNative(new Origin(), "ClassSymbolNative", symbol_type, null, null, typeof(bhl.ClassSymbolNative));
       bind.Define(cl_type);
 
       {
@@ -338,10 +364,24 @@ public static partial class std
 
       cl_type.Setup();
 
+      var ifs_type = new ClassSymbolNative(new Origin(), "InterfaceSymbolNative", symbol_type, null, null, typeof(bhl.InterfaceSymbolNative));
+      bind.Define(ifs_type);
+      ifs_type.Setup();
+
       {
-        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolNative", cl_type,
+        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolNative", cl_type, 1,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
+            ValList implements = args_info.IsDefaultArgUsed(0) ? null : (ValList)exec.stack.Pop().obj;
+            List<ProxyType> proxy_implements = null;
+            if(implements != null)
+            {
+              proxy_implements = new List<ProxyType>();
+              foreach(var imp in implements)
+                proxy_implements.Add((ProxyType)imp.obj);
+            }
+            implements?.Release();
+
             bool has_ctor = exec.stack.Pop();
             var parent_type_ref_obj = exec.stack.Pop().obj;
             string name = exec.stack.Pop();
@@ -350,14 +390,54 @@ public static partial class std
               new Origin(), //pass it from above?
               name,
               parent_type_ref_obj == null ? new ProxyType() : (ProxyType)parent_type_ref_obj,
+              proxy_implements,
               has_ctor ? delegate(VM.ExecState exec, ref Val v, IType type) {} : null
-              );
+            );
             exec.stack.Push(Val.NewObj(cl, cl_type));
             return null;
           },
           new FuncArgSymbol("name", Types.String),
           new FuncArgSymbol("parent_type", proxy_type),
-          new FuncArgSymbol("has_ctor", Types.Bool)
+          new FuncArgSymbol("has_ctor", Types.Bool),
+          new FuncArgSymbol("implements", ts.TArr(proxy_type))
+        );
+        bind.Define(fn);
+      }
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewInterfaceSymbolNative", ifs_type, 1,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ValList inherits = args_info.IsDefaultArgUsed(0) ? null : (ValList)exec.stack.Pop().obj;
+            List<ProxyType> proxy_inherits = null;
+            if(inherits != null)
+            {
+              proxy_inherits = new List<ProxyType>();
+              foreach(var imp in inherits)
+                proxy_inherits.Add((ProxyType)imp.obj);
+            }
+            inherits?.Release();
+
+            var funcs = new List<FuncSymbol>();
+            var func_args = (ValList)exec.stack.Pop().obj;
+            foreach(var func_arg in func_args)
+              funcs.Add((FuncSymbol)func_arg.obj);
+            func_args.Release();
+
+            string name = exec.stack.Pop();
+
+            var ifs = new InterfaceSymbolNative(
+              new Origin(), //pass it from above?
+              name,
+              proxy_inherits,
+              funcs.ToArray()
+            );
+            exec.stack.Push(Val.NewObj(ifs, ifs_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("funcs", ts.TArr(fsn_type)),
+          new FuncArgSymbol("inherits", ts.TArr(proxy_type))
         );
         bind.Define(fn);
       }
