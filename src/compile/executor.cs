@@ -699,7 +699,7 @@ public class CompilationExecutor
       if(imports == null)
       {
         imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
-        WriteImportsCache(file, imports);
+        TryWriteImportsCache(file, imports);
       }
 
       return imports;
@@ -709,7 +709,7 @@ public class CompilationExecutor
     {
       var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
 
-      if(BuildUtils.NeedToRegen(cache_imports_file, file))
+      if(!conf.proj.use_cache || BuildUtils.NeedToRegen(cache_imports_file, file))
         return null;
 
       try
@@ -726,6 +726,12 @@ public class CompilationExecutor
     {
       var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
       Marshall.Obj2File(imports, cache_imports_file);
+    }
+
+    void TryWriteImportsCache(string file, FileImports imports)
+    {
+      if(conf.proj.use_cache)
+        WriteImportsCache(file, imports);
     }
 
     //TODO: this one doesn't take into account commented imports!
@@ -753,6 +759,8 @@ public class CompilationExecutor
             {
               string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
               string file_path = inc_path.ResolveImportPath(file, rel_import);
+              if(string.IsNullOrEmpty(file_path))
+                throw new BuildError(file, "can not resolve import path '" + rel_import + "'");
               imps.Add(rel_import, file_path);
             }
             else

@@ -97,7 +97,11 @@ public class BuildError : Exception, ICompileError
   public string file { get; }
 
   public BuildError(string file, string msg)
-    : base(ErrorUtils.MakeMessage(file, new SourceRange(), msg))
+    : this(file, msg, new SourceRange())
+  {}
+
+  public BuildError(string file, string msg, SourceRange range)
+    : base(ErrorUtils.MakeMessage(file, range, msg))
   {
     this.text = msg;
     this.file = file;
