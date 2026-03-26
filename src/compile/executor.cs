@@ -759,9 +759,8 @@ public class CompilationExecutor
             {
               string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
               string file_path = inc_path.ResolveImportPath(file, rel_import);
-              if(string.IsNullOrEmpty(file_path))
-                throw new BuildError(file, "can not resolve import path '" + rel_import + "'");
-              imps.Add(rel_import, file_path);
+              if(!string.IsNullOrEmpty(file_path))
+                imps.Add(rel_import, file_path);
             }
             else
               break;
