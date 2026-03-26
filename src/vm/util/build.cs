@@ -52,7 +52,7 @@ static public class BuildUtils
     return Path.GetDirectoryName(GetSelfFile());
   }
 
-  static public bool NeedToRegen(string file, List<string> deps)
+  static public bool NeedToRegen(string file, IEnumerable<string> deps)
   {
     if(!File.Exists(file))
     {
@@ -139,8 +139,7 @@ static public class BuildUtils
 
   static public void Copy(string src, string dst)
   {
-    if(File.Exists(dst))
-      File.Delete(dst);
+    Rm(dst);
     Mkdir(Path.GetDirectoryName(dst));
     File.Copy(src, dst);
   }

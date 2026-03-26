@@ -210,11 +210,13 @@ public static partial class Tasks
     conf.args_signature = string.Join(";", args);
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
+    if(File.Exists(proj.bindings_dll))
+      conf.global_file_deps.Add(proj.bindings_dll);
     conf.bindings = bindings;
     conf.postproc = postproc;
 
-    var cmp = new CompilationExecutor();
-    var errors = await cmp.Exec(conf);
+    var executor = new CompilationExecutor();
+    var errors = await executor.Exec(conf);
     if(errors.Count > 0)
     {
       if(string.IsNullOrEmpty(proj.error_file))

@@ -92,7 +92,7 @@ public class ScriptedBindings : IUserBindings
     var vm = CompilationExecutor.CompileAndLoadVM(
       script_paths,
       use_cache: use_cache,
-      bytecode_file: bytecode_file
+      bytecode_result_file: bytecode_file
     ).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("Failed to initialize scripted bindings");

@@ -14,6 +14,7 @@ public class CompileConf
   public Types ts;
   public string args_signature = "";
   public List<string> files = new List<string>();
+  public List<string> global_file_deps = new List<string>();
   public string self_file = "";
   public IUserBindings bindings = new EmptyUserBindings();
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
@@ -23,6 +24,7 @@ public class CompileConf
 public class CompilationExecutor
 {
   const uint FILE_VERSION = 1;
+  const int MAX_THREADS = 6;
 
   public int cache_hits { get; private set; }
   public int cache_miss { get; private set; }
@@ -33,20 +35,20 @@ public class CompilationExecutor
   public static async Task<VM> CompileAndLoadVM(
     List<string> files,
     bool use_cache = false,
-    string bytecode_file = null
+    string bytecode_result_file = null
   )
   {
     var proj = new ProjectConf();
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.use_cache = use_cache;
-    proj.max_threads = files.Count == 1 ? 1 : 6;
+    proj.max_threads = files.Count == 1 ? 1 : MAX_THREADS;
     foreach(var file in files)
     {
       var dir = Path.GetDirectoryName(file);
       if(proj.src_dirs.IndexOf(dir) == -1)
         proj.src_dirs.Add(dir);
     }
-    proj.result_file = bytecode_file ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".bhc");
+    proj.result_file = bytecode_result_file ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".bhc");
     proj.tmp_dir = Path.GetTempPath();
     proj.verbosity = 0;
     proj.Setup();
@@ -136,7 +138,7 @@ public class CompilationExecutor
       conf.files.Sort();
 
     if(!string.IsNullOrEmpty(conf.proj.error_file))
-      File.Delete(conf.proj.error_file);
+      BuildUtils.Rm(conf.proj.error_file);
 
     var res_dir = Path.GetDirectoryName(conf.proj.result_file);
     if(res_dir.Length > 0)
@@ -248,8 +250,7 @@ public class CompilationExecutor
 
             WriteCompilationResultToFile(conf, workers, tmp_res_file);
 
-            if(File.Exists(conf.proj.result_file))
-              File.Delete(conf.proj.result_file);
+            BuildUtils.Rm(conf.proj.result_file);
             File.Move(tmp_res_file, conf.proj.result_file);
             return workers;
           })
@@ -641,6 +642,7 @@ public class CompilationExecutor
         var imports_maybe = GetMaybeImports(current_file, sfs);
         var deps = new List<string>(imports_maybe.file_paths);
         deps.Add(current_file);
+        deps.AddRange(conf.global_file_deps);
 
         //NOTE: adding self binary as a dep
         if(conf.self_file.Length > 0)
