@@ -48,7 +48,7 @@ public class TextDocumentDefinitionHandler : DefinitionHandlerBase
 
     if(document != null)
     {
-      var symb = document.FindSymbol(request.Position.FromLsp2Antlr());
+      var symb = document.FindSymbol(request.Position);
       if(symb != null)
       {
         var range = symb.origin.source_range;
@@ -56,7 +56,7 @@ public class TextDocumentDefinitionHandler : DefinitionHandlerBase
           new Location()
           {
             Uri = symb.origin.source_file,
-            Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
+            Range = symb.origin.source_range.FromAntlr2LspRange()
           });
       }
     }

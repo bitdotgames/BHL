@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp;
 
@@ -31,6 +29,7 @@ public class CodeIndex
     }
   }
 
+  //NOTE: expects 0 based line and column
   public int CalcByteIndex(int line, int column)
   {
     if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
@@ -39,6 +38,7 @@ public class CodeIndex
     return -1;
   }
 
+  //NOTE: expects 0 based line and column
   public int CalcByteIndex(int line)
   {
     if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)

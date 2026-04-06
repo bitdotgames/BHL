@@ -82,7 +82,7 @@ public static class ServerFactory
 
           proj.LoadBindings().Register(types);
 
-          workspace.Init(types, proj);
+          workspace.Init(types, proj, logger);
 
           //TODO: run it in async manner with progress
           await workspace.IndexFilesAsync(token);

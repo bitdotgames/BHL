@@ -24,40 +24,25 @@ public static class Extensions
     return JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.None, jsettings);
   }
 
-  public static Range ToRange(this SourceRange range)
+  public static Range FromAntlr2LspRange(this SourceRange range)
   {
-    return new Range(range.start.ToPosition(), range.end.ToPosition());
+    return new Range(range.start.FromAntlr2LspPosition(), range.end.FromAntlr2LspPosition());
+  }
+
+  public static Position FromAntlr2LspPosition(this SourcePos pos)
+  {
+    //NOTE: in LSP line is 0 based
+    return new Position(pos.line - 1, pos.column);
+  }
+
+  public static SourcePos ToSourcePos(this Position pos)
+  {
+    return new SourcePos(pos.Line, pos.Character);
   }
 
   public static Position ToPosition(this SourcePos pos)
   {
-    //NOTE: in LSP position is 0 based
-    return new Position(pos.line - 1, pos.column);
-  }
-
-  public static SourcePos FromAntlr2Lsp(this SourcePos pos)
-  {
-    return new SourcePos(pos.line - 1, pos.column);
-  }
-
-  public static SourcePos FromLsp2Antlr(this SourcePos pos)
-  {
-    return new SourcePos(pos.line + 1, pos.column);
-  }
-
-  public static SourceRange FromAntlr2Lsp(this SourceRange range)
-  {
-    return new SourceRange(range.start.FromAntlr2Lsp(), range.end.FromAntlr2Lsp());
-  }
-
-  public static SourceRange FromLsp2Antlr(this SourceRange range)
-  {
-    return new SourceRange(range.start.FromLsp2Antlr(), range.end.FromLsp2Antlr());
-  }
-
-  public static SourcePos FromLsp2Antlr(this Position pos)
-  {
-    return new SourcePos(pos.Line + 1, pos.Character);
+    return new Position(pos.line, pos.column);
   }
 
   public static string PathFixed(this DocumentUri uri)
@@ -95,7 +80,7 @@ public static class Extensions
       List<Diagnostic> diagnostics = new();
       foreach (var err in kv.Value)
       {
-        var range = err.range.ToRange();
+        var range = err.range.FromAntlr2LspRange();
 
         //NOTE: let's force the error to be 'one-line'
         if (range.Start.Line != range.End.Line)

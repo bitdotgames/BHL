@@ -33,7 +33,7 @@ public class TextDocumentHoverHandler : HoverHandlerBase
 
     var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
 
-    Symbol symb = document?.FindSymbol(request.Position.FromLsp2Antlr()) ?? null;
+    Symbol symb = document?.FindSymbol(request.Position);
 
     return symb == null ? null : new () {
       Contents = new MarkedStringsOrMarkupContent(

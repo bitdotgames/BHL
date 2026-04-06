@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Serilog;
 
 namespace bhl.lsp;
 
@@ -27,10 +28,13 @@ public class Workspace
 
   HashSet<string> _filesWithDiagnostics = new HashSet<string>();
 
-  public void Init(Types ts, ProjectConf conf)
+  ILogger _logger;
+
+  public void Init(Types ts, ProjectConf conf, ILogger logger = null)
   {
-    this.Types = ts;
-    this.ProjConf = conf;
+    Types = ts;
+    ProjConf = conf;
+    _logger = logger;
   }
 
   public void Shutdown()
@@ -238,7 +242,7 @@ public class Workspace
             refs.Add(new Location
             {
               Uri = DocumentUri.File(kv.Key),
-              Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
+              Range = anKv.Value.range.FromAntlr2LspRange()
             });
         }
       }
@@ -257,7 +261,7 @@ public class Workspace
       refs.Add(new Location
       {
         Uri = DocumentUri.File(symb.origin.source_file),
-        Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
+        Range = symb.origin.source_range.FromAntlr2LspRange()
       });
     }
 

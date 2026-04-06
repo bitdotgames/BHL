@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace bhl.lsp;
 
@@ -52,9 +53,9 @@ public class BHLDocument
     return null;
   }
 
-  public Symbol FindSymbol(SourcePos pos)
+  public Symbol FindSymbol(Position pos)
   {
-    return FindSymbol(pos.line, pos.column);
+    return FindSymbol(pos.Line, pos.Character);
   }
 
   public Symbol FindSymbol(int line, int character)
@@ -63,13 +64,14 @@ public class BHLDocument
     if(node == null)
       return null;
 
-    //Logger.current.Log(0, "NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " + node.Parent.GetType().Name + " " + node.Parent.GetText());
+    //Log.Logger.Debug("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " +
+    //                 node.Parent.GetType().Name + " " + node.Parent.GetText() + " line: " + line + ", character: " + character);
 
     var annotated = Processed.FindAnnotated(node);
     if(annotated == null)
       return null;
 
-    //Logger.current.Log(0, "SYMB " + annotated.lsp_symbol + " " + annotated.lsp_symbol?.GetType().Name);
+    //Log.Logger.Debug("SYMB " + annotated.lsp_symbol + " " + annotated.lsp_symbol?.GetType().Name);
 
     return annotated.lsp_symbol;
   }
@@ -93,12 +95,12 @@ public class BHLDocument
 
     if(ctx != null)
     {
-      ////Console.WriteLine("CTX " + ctx.GetText());
+      ////Log.Logger.Debug("CTX " + ctx.GetText());
       //var chain = new ANTLR_Processor.ExpChain(ctx);
-      ////Console.WriteLine("NAME " + chain.name_ctx.GetText());
+      ////Log.Logger.Debug("NAME " + chain.name_ctx.GetText());
       //var annotated = proc.FindAnnotated(chain.name_ctx);
-      ////Console.WriteLine("SYMB " + annotated.lsp_symbol);
-      ////Console.WriteLine("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
+      ////Log.Logger.Debug("SYMB " + annotated.lsp_symbol);
+      ////Log.Logger.Debug("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
       //return annotated?.lsp_symbol as FuncSymbol;
     }
 
@@ -107,7 +109,7 @@ public class BHLDocument
 
   public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
   {
-    //Console.WriteLine("TREE " + tree.GetType().Name + " " + tree.GetText());
+    //Log.Logger.Debug("TREE " + tree.GetType().Name + " " + tree.GetText());
     if(tree is TerminalNodeImpl tn)
       nodes.Add(tn);
 
