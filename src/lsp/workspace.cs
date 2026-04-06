@@ -21,6 +21,8 @@ public class Workspace
   public Dictionary<string, ANTLR_Processor> Path2Proc { get ; private set; } = new ();
   public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new ();
 
+  readonly object _syncRoot = new object();
+
   public bool Indexed { get; private set; }
 
   HashSet<string> _filesWithDiagnostics = new HashSet<string>();
@@ -102,10 +104,12 @@ public class Workspace
 
   public BHLDocument GetOrLoadDocument(DocumentUri uri)
   {
-    if(Path2Doc.TryGetValue(uri.PathFixed(), out var document))
-      return document;
-    else
-      return LoadDocument(uri);
+    lock(_syncRoot)
+    {
+      if(Path2Doc.TryGetValue(uri.PathFixed(), out var document))
+        return document;
+    }
+    return LoadDocument(uri);
   }
 
   public BHLDocument LoadDocument(DocumentUri uri)
@@ -119,14 +123,20 @@ public class Workspace
 
   public BHLDocument FindDocument(DocumentUri uri)
   {
-    Path2Doc.TryGetValue(uri.PathFixed(), out var document);
-    return document;
+    lock(_syncRoot)
+    {
+      Path2Doc.TryGetValue(uri.PathFixed(), out var document);
+      return document;
+    }
   }
 
   public BHLDocument FindDocument(string path)
   {
-    Path2Doc.TryGetValue(path, out var document);
-    return document;
+    lock(_syncRoot)
+    {
+      Path2Doc.TryGetValue(path, out var document);
+      return document;
+    }
   }
 
   public void OpenDocument(DocumentUri uri, string text)
@@ -137,7 +147,11 @@ public class Workspace
 
   public bool UpdateDocument(DocumentUri uri, string text)
   {
-    var document = FindDocument(uri);
+    BHLDocument document;
+    lock(_syncRoot)
+    {
+      Path2Doc.TryGetValue(uri.PathFixed(), out document);
+    }
     if(document == null)
       return false;
 
@@ -148,19 +162,22 @@ public class Workspace
 
   ANTLR_Processor ParseDocument(BHLDocument document, string text)
   {
-    var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(document.Uri.PathFixed(), ms);
-    Path2Proc[document.Uri.PathFixed()] = proc;
+    lock(_syncRoot)
+    {
+      var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
+      var proc = ParseFile(document.Uri.PathFixed(), ms);
+      Path2Proc[document.Uri.PathFixed()] = proc;
 
-    var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = Path2Proc;
-    //TODO: use compiled cache if needed
-    proc_bundle.file2cached = null;
-    ANTLR_Processor.ProcessAll(proc_bundle);
+      var proc_bundle = new ProjectCompilationStateBundle(Types);
+      proc_bundle.file2proc = Path2Proc;
+      //TODO: use compiled cache if needed
+      proc_bundle.file2cached = null;
+      ANTLR_Processor.ProcessAll(proc_bundle);
 
-    document.Update(text, proc);
-    Path2Doc[document.Uri.PathFixed()] = document;
-    return proc;
+      document.Update(text, proc);
+      Path2Doc[document.Uri.PathFixed()] = document;
+      return proc;
+    }
   }
 
   public Dictionary<string, List<Diagnostic>> GetDiagnosticsToPublish()
@@ -187,24 +204,53 @@ public class Workspace
 
   public Dictionary<string, CompileErrors> GetCompileErrors(bool filter_empty = false)
   {
-    var uri2errs = new Dictionary<string, CompileErrors>();
-    foreach(var kv in Path2Proc)
+    lock(_syncRoot)
     {
-      if(!filter_empty || kv.Value.result.errors.Count > 0)
-        uri2errs[kv.Key] = kv.Value.result.errors;
+      var uri2errs = new Dictionary<string, CompileErrors>();
+      foreach(var kv in Path2Proc)
+      {
+        if(!filter_empty || kv.Value.result.errors.Count > 0)
+          uri2errs[kv.Key] = kv.Value.result.errors;
+      }
+      return uri2errs;
     }
-
-    return uri2errs;
   }
 
-  public List<AnnotatedParseTree> FindReferences(Symbol symb)
+  public List<Location> FindRefs(Symbol symb)
   {
-    var refs = new List<AnnotatedParseTree>();
-    foreach(var doc_kv in Path2Doc)
+    var refs = new List<Location>();
+
+    lock(_syncRoot)
     {
-      foreach(var node_kv in doc_kv.Value.Processed.annotated_nodes)
-        if(node_kv.Value.lsp_symbol == symb)
-          refs.Add(node_kv.Value);
+      foreach(var kv in Path2Proc)
+      {
+        foreach(var anKv in kv.Value.annotated_nodes)
+        {
+          if(anKv.Value.lsp_symbol == symb)
+            refs.Add(new Location
+            {
+              Uri = DocumentUri.File(kv.Key),
+              Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
+            });
+        }
+      }
+    }
+
+    refs.Sort((a, b) =>
+    {
+      if(a.Uri.Path == b.Uri.Path)
+        return a.Range.Start.Line.CompareTo(b.Range.Start.Line);
+      else
+        return a.Uri.Path.CompareTo(b.Uri.Path);
+    });
+
+    if(symb is FuncSymbolNative)
+    {
+      refs.Add(new Location
+      {
+        Uri = DocumentUri.File(symb.origin.source_file),
+        Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
+      });
     }
 
     return refs;

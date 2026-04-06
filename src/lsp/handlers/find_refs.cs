@@ -37,52 +37,13 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
 
     var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
 
-    var refs = new List<Location>();
-
     if(document != null)
     {
       var symb = document.FindSymbol(request.Position.FromLsp2Antlr());
       if(symb != null)
-      {
-        //1. adding all found references
-        foreach(var kv in _workspace.Path2Proc)
-        {
-          foreach(var anKv in kv.Value.annotated_nodes)
-          {
-            if(anKv.Value.lsp_symbol == symb)
-            {
-              var loc = new Location
-              {
-                Uri = DocumentUri.File(kv.Key),
-                Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
-              };
-              refs.Add(loc);
-            }
-          }
-        }
-
-        //2. sorting by file name
-        refs.Sort((a, b) =>
-          {
-            if(a.Uri.Path == b.Uri.Path)
-              return a.Range.Start.Line.CompareTo(b.Range.Start.Line);
-            else
-              return a.Uri.Path.CompareTo(b.Uri.Path);
-          }
-        );
-
-        //3. adding definition for native symbol (if any)
-        if(symb is FuncSymbolNative)
-        {
-          refs.Add(new Location
-          {
-            Uri = DocumentUri.File(symb.origin.source_file),
-            Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
-          });
-        }
-      }
+        return new LocationContainer(_workspace.FindRefs(symb));
     }
 
-    return new LocationContainer(refs);
+    return new LocationContainer();
   }
 }
