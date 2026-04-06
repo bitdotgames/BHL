@@ -133,15 +133,12 @@ public static class Extensions
   {
     foreach(var kv in diagnostics)
     {
-      if(kv.Value.Count > 0)
-      {
-        server.TextDocument.PublishDiagnostics(
-          new PublishDiagnosticsParams()
-          {
-            Uri = DocumentUri.File(kv.Key),
-            Diagnostics = kv.Value,
-          });
-      }
+      server.TextDocument.PublishDiagnostics(
+        new PublishDiagnosticsParams()
+        {
+          Uri = DocumentUri.File(kv.Key),
+          Diagnostics = kv.Value,
+        });
     }
   }
 

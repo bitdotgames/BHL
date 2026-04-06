@@ -58,7 +58,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       }
     }
 
-    _server.PublishDiagnostics(_workspace.GetCompileErrors().GetDiagnostics());
+    _server.PublishDiagnostics(_workspace.GetDiagnosticsToPublish());
 
     return Unit.Value;
   }
@@ -74,7 +74,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       notification.TextDocument.Text
       );
 
-    _server.PublishDiagnostics(_workspace.GetCompileErrors().GetDiagnostics());
+    _server.PublishDiagnostics(_workspace.GetDiagnosticsToPublish());
 
     return Unit.Value;
   }

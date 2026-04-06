@@ -220,6 +220,8 @@ public class TestLSPShared : BHL_TestBase
 
       await foreach(var msg in RecvMsgsAsync(cts.Token))
       {
+        if(msg.Id == null)
+          continue;
         if(msg.Id != id)
           throw new InvalidOperationException($"Unexpected response id: {msg.Id}, expected {id}");
         return msg;

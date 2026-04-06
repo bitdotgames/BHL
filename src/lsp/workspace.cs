@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace bhl.lsp;
 
@@ -21,6 +22,8 @@ public class Workspace
   public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new ();
 
   public bool Indexed { get; private set; }
+
+  HashSet<string> _filesWithDiagnostics = new HashSet<string>();
 
   public void Init(Types ts, ProjectConf conf)
   {
@@ -157,6 +160,28 @@ public class Workspace
 
     document.Update(text, proc);
     return proc;
+  }
+
+  public Dictionary<string, List<Diagnostic>> GetDiagnosticsToPublish()
+  {
+    var errors = GetCompileErrors();
+    var result = errors.GetDiagnostics();
+
+    //NOTE: send empty diagnostics for files that had errors before but now don't
+    foreach(var file in _filesWithDiagnostics)
+    {
+      if(!result.ContainsKey(file))
+        result[file] = new List<Diagnostic>();
+    }
+
+    _filesWithDiagnostics.Clear();
+    foreach(var kv in result)
+    {
+      if(kv.Value.Count > 0)
+        _filesWithDiagnostics.Add(kv.Key);
+    }
+
+    return result;
   }
 
   public Dictionary<string, CompileErrors> GetCompileErrors(bool filter_empty = false)

@@ -101,7 +101,7 @@ public static class ServerFactory
         {
           logger.Debug("OnInitialized");
 
-          var diagnostics = workspace.GetCompileErrors().GetDiagnostics();
+          var diagnostics = workspace.GetDiagnosticsToPublish();
           _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
 
           return Task.CompletedTask;
