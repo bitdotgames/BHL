@@ -159,6 +159,7 @@ public class Workspace
     ANTLR_Processor.ProcessAll(proc_bundle);
 
     document.Update(text, proc);
+    Path2Doc[document.Uri.PathFixed()] = document;
     return proc;
   }
 
