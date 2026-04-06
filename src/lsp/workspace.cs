@@ -164,9 +164,17 @@ public class Workspace
   {
     lock(_syncRoot)
     {
+      var changed_path = document.Uri.PathFixed();
+
+      foreach(var kv in Path2Proc)
+      {
+        if(kv.Key != changed_path)
+          kv.Value.Reset();
+      }
+
       var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-      var proc = ParseFile(document.Uri.PathFixed(), ms);
-      Path2Proc[document.Uri.PathFixed()] = proc;
+      var proc = ParseFile(changed_path, ms);
+      Path2Proc[changed_path] = proc;
 
       var proc_bundle = new ProjectCompilationStateBundle(Types);
       proc_bundle.file2proc = Path2Proc;
@@ -175,7 +183,7 @@ public class Workspace
       ANTLR_Processor.ProcessAll(proc_bundle);
 
       document.Update(text, proc);
-      Path2Doc[document.Uri.PathFixed()] = document;
+      Path2Doc[changed_path] = document;
       return proc;
     }
   }

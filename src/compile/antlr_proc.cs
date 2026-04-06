@@ -109,10 +109,43 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     this.errors = errors;
 
+    InitScope();
+  }
+
+  void InitScope()
+  {
+    scopes.Clear();
     ns = module.ns;
     ns.Link(types.ns);
-
     PushScope(ns);
+  }
+
+  public void Reset()
+  {
+    module = new Module(types, module.path);
+
+    root_ast = null;
+    result = null;
+    errors = new CompileErrors();
+
+    raw_imports_parsed.Clear();
+    imports.Clear();
+    annotated_nodes.Clear();
+
+    return_found.Clear();
+    has_yield_calls.Clear();
+    func2blocks.Clear();
+    func_decl_stack.Clear();
+    json_type_stack.Clear();
+    call_by_ref_stack.Clear();
+    ast_stack.Clear();
+
+    passes.Clear();
+
+    semantic_tokens.Clear();
+    encoded_semantic_tokens.Clear();
+
+    InitScope();
   }
 
   void AddError(Origin origin, string msg)
