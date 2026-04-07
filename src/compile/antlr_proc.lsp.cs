@@ -116,11 +116,11 @@ public partial class ANTLR_Processor
 
     //let's ignore any invalid stuff
     if(a.Line <= 0 || b.Line <= 0 ||
-       a.Column <= 0 || b.Column <= 0)
+       a.Column < 0 || b.Column < 0) //ANTLR columns are 0 based
       return;
 
     if(a.Line != b.Line)
-      throw new Exception("Multiline semantic tokens not supported");
+      return;
 
     semantic_tokens.Add(new SemanticTokenNode()
     {
