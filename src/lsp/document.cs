@@ -14,7 +14,7 @@ public class BHLDocument
 
   public ANTLR_Processor Processed { get; private set; }
 
-  List<TerminalNodeImpl> _termNodes = new List<TerminalNodeImpl>();
+  public List<TerminalNodeImpl> TermNodes { get; } = new List<TerminalNodeImpl>();
 
   public BHLDocument(DocumentUri uri)
   {
@@ -27,8 +27,8 @@ public class BHLDocument
 
     Index.Update(text);
 
-    _termNodes.Clear();
-    GetTerminalNodes(proc.parsed.parse_tree, _termNodes);
+    TermNodes.Clear();
+    GetTerminalNodes(proc.parsed.parse_tree, TermNodes);
   }
 
   public TerminalNodeImpl FindTerminalNode(SourcePos pos)
@@ -44,7 +44,7 @@ public class BHLDocument
   public TerminalNodeImpl FindTerminalNodeByByteIndex(int idx)
   {
     //TODO: use binary search?
-    foreach(var node in _termNodes)
+    foreach(var node in TermNodes)
     {
       if(node.Symbol.StartIndex <= idx && node.Symbol.StopIndex >= idx)
         return node;

@@ -8,8 +8,13 @@ using Xunit;
 public class TestLSPCompletion : TestLSPShared, IDisposable
 {
   string bhl1 = @"
+  class Inner {
+    int VAL
+  }
+
   class Foo {
     int BAR
+    Inner inner
   }
 
   enum ErrorCodes {
@@ -29,6 +34,12 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   func test2()
   {
     test1(42)
+  }
+
+  func Foo MakeFoo()
+  {
+    Foo f
+    return f
   }
 
   func test5()
@@ -67,6 +78,17 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   {
     ErrorCodes local_err = ErrorCodes.Ok
     local_err.
+  }
+
+  func test_nested_dot()
+  {
+    Foo local_foo
+    local_foo.inner.
+  }
+
+  func test_func_ret_dot()
+  {
+    MakeFoo().
   }
   ";
 
@@ -221,6 +243,31 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
 
     Assert.Contains("Ok", labels);
     Assert.Contains("Bad", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_nested_chain()
+  {
+    await SendInit(srv);
+
+    // "local_foo.inner." — complete members of Inner
+    var result = await GetMemberCompletionsInDoc(srv, uri3, "local_foo.inner.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("VAL", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_func_return()
+  {
+    await SendInit(srv);
+
+    // "MakeFoo()." — complete members of the return type Foo
+    var result = await GetMemberCompletionsInDoc(srv, uri3, "MakeFoo().");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("BAR", labels);
+    Assert.Contains("inner", labels);
   }
 
   [Fact]

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Antlr4.Runtime.Tree;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -276,44 +277,133 @@ public class Workspace
     if(node == null)
       return null;
 
-    var annotation = document.Processed.FindAnnotated(node);
-    if(annotation == null)
+    // Walk up from the terminal trying each annotated node.
+    // Handles: plain variable ref, chained call foo.Bar(). (')' unannotated but ChainExpContext has eval_type).
+    IParseTree curr = node;
+    while(curr != null)
     {
-      // The node has no annotation (e.g. incomplete expression "foo." with parse error).
-      // Fall back: find any annotated declaration with the same name.
-      return FindScopeByName(document, node.GetText());
+      var annotation = document.Processed.FindAnnotated(curr);
+      if(annotation != null)
+      {
+        if(annotation.eval_type is IScope eval_scope)
+          return eval_scope;
+        if(annotation.lsp_symbol is IScope symb_scope)
+          return symb_scope;
+        if(annotation.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
+          return var_type_scope;
+      }
+      curr = curr.Parent;
     }
 
-    // For variables/expressions: eval_type holds the resolved type (e.g. ClassFoo for variable foo)
-    if(annotation.eval_type is IScope eval_scope)
-      return eval_scope;
+    // Fallback: entire expression is an error node (e.g. "foo.bar." or "MakeFoo().").
+    // Reconstruct the chain from terminal tokens on this line and resolve step by step.
+    return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1);
+  }
 
-    // For type names (Foo., ErrorCodes.): lsp_symbol is the type itself
-    if(annotation.lsp_symbol is IScope symb_scope)
-      return symb_scope;
+  // Collects identifier tokens before `dot_col` on the given line, reconstructs
+  // the access chain (e.g. ["foo","bar"] from "foo.bar." or ["MakeFoo",true] from "MakeFoo()."),
+  // and resolves it to a scope using annotations and the module namespace.
+  static IScope ResolveChainBeforeDot(BHLDocument document, int line, int dot_col)
+  {
+    // Gather tokens on this line that end before the trailing dot, sorted by column.
+    var line_tokens = new List<TerminalNodeImpl>();
+    foreach(var t in document.TermNodes)
+    {
+      int t_line = t.Symbol.Line - 1; // ANTLR lines are 1-based
+      if(t_line == line && t.Symbol.Column < dot_col)
+        line_tokens.Add(t);
+    }
+    line_tokens.Sort((a, b) => a.Symbol.Column.CompareTo(b.Symbol.Column));
 
-    // For variable references in incomplete expressions: lsp_symbol is the variable, resolve its type
-    if(annotation.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
-      return var_type_scope;
+    if(line_tokens.Count == 0)
+      return null;
 
+    // Build chain: walk tokens right-to-left collecting (name, is_call) parts
+    // separated by dots.  Stop when we hit something that isn't a NAME/dot/paren.
+    var chain = new List<(string name, bool is_call)>();
+    int i = line_tokens.Count - 1;
+
+    while(i >= 0)
+    {
+      var tok = line_tokens[i];
+      var txt = tok.GetText();
+
+      // Consume a possible "()" call suffix before the name
+      bool is_call = false;
+      if(txt == ")" && i >= 2 && line_tokens[i - 1].GetText() == "(")
+      {
+        is_call = true;
+        i -= 2; // skip "(" and ")"
+        if(i < 0) break;
+        tok = line_tokens[i];
+        txt = tok.GetText();
+      }
+
+      // Expect a NAME token
+      if(txt == "." || txt == "(" || txt == ")")
+        break;
+
+      chain.Insert(0, (txt, is_call));
+      i--;
+
+      // Expect a dot before the next part (or we're at the root)
+      if(i >= 0 && line_tokens[i].GetText() == ".")
+        i--;
+      else
+        break;
+    }
+
+    if(chain.Count == 0)
+      return null;
+
+    // Resolve each part of the chain
+    IScope curr_scope = null;
+
+    for(int c = 0; c < chain.Count; c++)
+    {
+      var (name, is_call) = chain[c];
+
+      Symbol sym;
+      if(c == 0)
+      {
+        // Root: check local declarations first, then module namespace
+        sym = FindSymbolByName(document, name)
+           ?? document.Processed.module.ns.ResolveWithFallback(name) as Symbol;
+      }
+      else
+      {
+        if(curr_scope == null) return null;
+        sym = curr_scope.ResolveRelatedOnly(name) as Symbol;
+      }
+
+      curr_scope = ScopeFromSymbol(sym, is_call);
+      if(curr_scope == null) return null;
+    }
+
+    return curr_scope;
+  }
+
+  // Extracts an IScope from a symbol, taking into account whether it's being called.
+  static IScope ScopeFromSymbol(Symbol sym, bool is_call)
+  {
+    if(sym == null) return null;
+    if(is_call && sym is FuncSymbol fs)
+      return fs.GetReturnType() as IScope;
+    if(sym is IScope direct)
+      return direct;
+    if(sym is VariableSymbol vs)
+      return vs.type.Get() as IScope;
     return null;
   }
 
-  // Scans all annotated nodes for any declaration with the given name that has a resolvable scope type.
-  // Used as fallback when the exact terminal node has no annotation (e.g. incomplete expression "foo.").
-  static IScope FindScopeByName(BHLDocument document, string name)
+  // Finds the first annotated declaration of `name` in the document and returns its scope type.
+  static Symbol FindSymbolByName(BHLDocument document, string name)
   {
     foreach(var kv in document.Processed.annotated_nodes)
     {
       var ann = kv.Value;
-      if(ann.lsp_symbol?.name != name)
-        continue;
-      if(ann.eval_type is IScope eval_scope)
-        return eval_scope;
-      if(ann.lsp_symbol is IScope symb_scope)
-        return symb_scope;
-      if(ann.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
-        return var_type_scope;
+      if(ann.lsp_symbol?.name == name)
+        return ann.lsp_symbol;
     }
     return null;
   }
