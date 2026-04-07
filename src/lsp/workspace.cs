@@ -194,24 +194,30 @@ public class Workspace
 
   public Dictionary<string, List<Diagnostic>> GetDiagnosticsToPublish()
   {
-    var errors = GetCompileErrors();
-    var result = errors.GetDiagnostics();
-
-    //NOTE: send empty diagnostics for files that had errors before but now don't
-    foreach(var file in _filesWithDiagnostics)
+    lock(_syncRoot)
     {
-      if(!result.ContainsKey(file))
-        result[file] = new List<Diagnostic>();
-    }
+      var uri2errs = new Dictionary<string, CompileErrors>();
+      foreach(var kv in Path2Proc)
+        uri2errs[kv.Key] = kv.Value.result.errors;
 
-    _filesWithDiagnostics.Clear();
-    foreach(var kv in result)
-    {
-      if(kv.Value.Count > 0)
-        _filesWithDiagnostics.Add(kv.Key);
-    }
+      var result = uri2errs.GetDiagnostics();
 
-    return result;
+      //NOTE: send empty diagnostics for files that had errors before but now don't
+      foreach(var file in _filesWithDiagnostics)
+      {
+        if(!result.ContainsKey(file))
+          result[file] = new List<Diagnostic>();
+      }
+
+      _filesWithDiagnostics.Clear();
+      foreach(var kv in result)
+      {
+        if(kv.Value.Count > 0)
+          _filesWithDiagnostics.Add(kv.Key);
+      }
+
+      return result;
+    }
   }
 
   public Dictionary<string, CompileErrors> GetCompileErrors(bool filter_empty = false)
