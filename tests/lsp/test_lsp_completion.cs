@@ -30,6 +30,13 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   {
     test1(42)
   }
+
+  func test5()
+  {
+    Foo local_foo
+    int x = local_foo.BAR
+    ErrorCodes local_err = ErrorCodes.Ok
+  }
   ";
 
   string bhl2 = @"
@@ -109,6 +116,67 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     Assert.Contains("test2", labels);
     Assert.Contains("Foo", labels);
     Assert.Contains("ErrorCodes", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_class_field()
+  {
+    await SendInit(srv);
+
+    // foo is of type Foo which has field BAR
+    var result = await GetMemberCompletions(srv, uri1, "foo");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("BAR", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_local_instance()
+  {
+    await SendInit(srv);
+
+    // local_foo is a local variable of type Foo
+    var result = await GetMemberCompletions(srv, uri1, "local_foo");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("BAR", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_local_enum()
+  {
+    await SendInit(srv);
+
+    var result = await GetMemberCompletions(srv, uri1, "local_err");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Ok", labels);
+    Assert.Contains("Bad", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_class_name()
+  {
+    await SendInit(srv);
+
+    // Foo. → class members (type name used as scope)
+    var result = await GetMemberCompletions(srv, uri1, "Foo");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("BAR", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_enum()
+  {
+    await SendInit(srv);
+
+    // ErrorCodes. → enum items
+    var result = await GetMemberCompletions(srv, uri1, "enum ErrorCodes");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Ok", labels);
+    Assert.Contains("Bad", labels);
   }
 
   [Fact]

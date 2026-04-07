@@ -391,6 +391,30 @@ public class TestLSPShared : BHL_TestBase
     );
   }
 
+  // Simulates typing a dot after `needle` and requesting member completions.
+  // Position is placed right after the needle text (where the dot would be typed).
+  public static async Task<CompletionList> GetMemberCompletions(TestLSPHost srv, DocumentUri uri, string needle)
+  {
+    var text = File.ReadAllText(uri.PathFixed());
+    var pos = FindPos(text, needle);
+    // advance past the needle to land right after the dot
+    var dot_pos = new Position(pos.ToPosition().Line, pos.ToPosition().Character + needle.Length + 1);
+
+    return await srv.SendRequestAsync<CompletionParams, CompletionList>(
+      "textDocument/completion",
+      new CompletionParams()
+      {
+        TextDocument = uri,
+        Position = dot_pos,
+        Context = new CompletionContext
+        {
+          TriggerKind = CompletionTriggerKind.TriggerCharacter,
+          TriggerCharacter = ".",
+        }
+      }
+    );
+  }
+
   public static async Task<Hover> GetHover(TestLSPHost srv, DocumentUri uri, string needle)
   {
     var pos = FindPos(File.ReadAllText(uri.PathFixed()), needle);

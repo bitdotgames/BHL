@@ -32,7 +32,8 @@ public class TextDocumentCompletionHandler : CompletionHandlerBase
   {
     await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.PathFixed(), ct);
 
-    var items = _workspace.GetCompletions(request.TextDocument.Uri);
+    var trigger = request.Context?.TriggerCharacter;
+    var items = _workspace.GetCompletions(request.TextDocument.Uri, request.Position, trigger);
     return new CompletionList(items);
   }
 

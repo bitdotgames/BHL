@@ -234,7 +234,7 @@ public class Workspace
     }
   }
 
-  public List<CompletionItem> GetCompletions(DocumentUri uri)
+  public List<CompletionItem> GetCompletions(DocumentUri uri, Position position, string trigger_character)
   {
     lock(_syncRoot)
     {
@@ -245,6 +245,16 @@ public class Workspace
       var items = new List<CompletionItem>();
       var seen = new HashSet<Symbol>();
 
+      if(trigger_character == "." && Path2Doc.TryGetValue(path, out var document))
+      {
+        var scope = GetScopeBeforeDot(document, position);
+        if(scope != null)
+        {
+          AddMemberCompletions(items, seen, scope);
+          return items;
+        }
+      }
+
       foreach(var sym in proc.module.ns)
         AddCompletionItem(items, seen, sym);
 
@@ -253,6 +263,39 @@ public class Workspace
 
       return items;
     }
+  }
+
+  static IScope GetScopeBeforeDot(BHLDocument document, Position pos)
+  {
+    // cursor is right after the dot, so the dot is at col-1 and
+    // the last character of the token before the dot is at col-2
+    if(pos.Character < 2)
+      return null;
+
+    var node = document.FindTerminalNode(pos.Line, pos.Character - 2);
+    if(node == null)
+      return null;
+
+    var annotation = document.Processed.FindAnnotated(node);
+    if(annotation == null)
+      return null;
+
+    // For variables/expressions: eval_type holds the resolved type (e.g. ClassFoo for variable foo)
+    if(annotation.eval_type is IScope eval_scope)
+      return eval_scope;
+
+    // For type names (Foo., ErrorCodes.): lsp_symbol is the type itself
+    if(annotation.lsp_symbol is IScope symb_scope)
+      return symb_scope;
+
+    return null;
+  }
+
+  static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope)
+  {
+    if(scope is IEnumerable<Symbol> ies)
+      foreach(var sym in ies)
+        AddCompletionItem(items, seen, sym);
   }
 
   static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym)
