@@ -51,7 +51,6 @@ public class TextDocumentDefinitionHandler : DefinitionHandlerBase
       var symb = document.FindSymbol(request.Position);
       if(symb != null)
       {
-        var range = symb.origin.source_range;
         return new LocationOrLocationLinks(
           new Location()
           {
