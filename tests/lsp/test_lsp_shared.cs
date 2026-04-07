@@ -379,6 +379,18 @@ public class TestLSPShared : BHL_TestBase
     return locations;
   }
 
+  public static async Task<CompletionList> GetCompletions(TestLSPHost srv, DocumentUri uri)
+  {
+    return await srv.SendRequestAsync<CompletionParams, CompletionList>(
+      "textDocument/completion",
+      new CompletionParams()
+      {
+        TextDocument = uri,
+        Position = new Position(0, 0),
+      }
+    );
+  }
+
   public static async Task<Hover> GetHover(TestLSPHost srv, DocumentUri uri, string needle)
   {
     var pos = FindPos(File.ReadAllText(uri.PathFixed()), needle);

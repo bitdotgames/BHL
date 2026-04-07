@@ -234,6 +234,53 @@ public class Workspace
     }
   }
 
+  public List<CompletionItem> GetCompletions(DocumentUri uri)
+  {
+    lock(_syncRoot)
+    {
+      var path = uri.PathFixed();
+      if(!Path2Proc.TryGetValue(path, out var proc))
+        return new List<CompletionItem>();
+
+      var items = new List<CompletionItem>();
+      var seen = new HashSet<Symbol>();
+
+      foreach(var sym in proc.module.ns)
+        AddCompletionItem(items, seen, sym);
+
+      foreach(var sym in Types.ns)
+        AddCompletionItem(items, seen, sym);
+
+      return items;
+    }
+  }
+
+  static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym)
+  {
+    if(!seen.Add(sym))
+      return;
+
+    items.Add(new CompletionItem
+    {
+      //TODO:?
+      //Label = sym.GetFullTypePath().ToString(),
+      Label = sym.name,
+      Kind = GetCompletionKind(sym),
+      Detail = sym.ToString(),
+    });
+  }
+
+  static CompletionItemKind GetCompletionKind(Symbol sym) => sym switch
+  {
+    FuncSymbol       => CompletionItemKind.Function,
+    ClassSymbol      => CompletionItemKind.Class,
+    InterfaceSymbol  => CompletionItemKind.Interface,
+    EnumSymbol       => CompletionItemKind.Enum,
+    EnumItemSymbol   => CompletionItemKind.EnumMember,
+    Namespace        => CompletionItemKind.Module,
+    _                => CompletionItemKind.Variable,
+  };
+
   public List<Location> FindRefs(Symbol symb)
   {
     var refs = new List<Location>();
