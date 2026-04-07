@@ -53,9 +53,27 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
   ";
 
+  // incomplete member access expressions — dot is already typed, cursor right after it
+  string bhl3 = @"
+  import ""bhl1""
+
+  func test_foo_dot()
+  {
+    Foo local_foo
+    local_foo.
+  }
+
+  func test_err_dot()
+  {
+    ErrorCodes local_err = ErrorCodes.Ok
+    local_err.
+  }
+  ";
+
   TestLSPHost srv;
   DocumentUri uri1;
   DocumentUri uri2;
+  DocumentUri uri3;
 
   public TestLSPCompletion()
   {
@@ -63,6 +81,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     CleanTestFiles();
     uri1 = MakeTestDocument("bhl1.bhl", bhl1);
     uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+    uri3 = MakeTestDocument("bhl3.bhl", bhl3);
   }
 
   public void Dispose()
@@ -173,6 +192,31 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
 
     // ErrorCodes. → enum items
     var result = await GetMemberCompletions(srv, uri1, "enum ErrorCodes");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Ok", labels);
+    Assert.Contains("Bad", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_incomplete_class_instance()
+  {
+    await SendInit(srv);
+
+    // "local_foo." is in the document as an incomplete expression
+    var result = await GetMemberCompletionsInDoc(srv, uri3, "local_foo.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("BAR", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_incomplete_enum()
+  {
+    await SendInit(srv);
+
+    // "local_err." is in the document as an incomplete expression
+    var result = await GetMemberCompletionsInDoc(srv, uri3, "local_err.");
     var labels = result.Items.Select(i => i.Label).ToHashSet();
 
     Assert.Contains("Ok", labels);

@@ -278,7 +278,11 @@ public class Workspace
 
     var annotation = document.Processed.FindAnnotated(node);
     if(annotation == null)
-      return null;
+    {
+      // The node has no annotation (e.g. incomplete expression "foo." with parse error).
+      // Fall back: find any annotated declaration with the same name.
+      return FindScopeByName(document, node.GetText());
+    }
 
     // For variables/expressions: eval_type holds the resolved type (e.g. ClassFoo for variable foo)
     if(annotation.eval_type is IScope eval_scope)
@@ -288,6 +292,29 @@ public class Workspace
     if(annotation.lsp_symbol is IScope symb_scope)
       return symb_scope;
 
+    // For variable references in incomplete expressions: lsp_symbol is the variable, resolve its type
+    if(annotation.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
+      return var_type_scope;
+
+    return null;
+  }
+
+  // Scans all annotated nodes for any declaration with the given name that has a resolvable scope type.
+  // Used as fallback when the exact terminal node has no annotation (e.g. incomplete expression "foo.").
+  static IScope FindScopeByName(BHLDocument document, string name)
+  {
+    foreach(var kv in document.Processed.annotated_nodes)
+    {
+      var ann = kv.Value;
+      if(ann.lsp_symbol?.name != name)
+        continue;
+      if(ann.eval_type is IScope eval_scope)
+        return eval_scope;
+      if(ann.lsp_symbol is IScope symb_scope)
+        return symb_scope;
+      if(ann.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
+        return var_type_scope;
+    }
     return null;
   }
 
