@@ -41,6 +41,7 @@ public static class ServerFactory
         .WithHandler<handlers.TextDocumentDefinitionHandler>()
         .WithHandler<handlers.TextDocumentHoverHandler>()
         .WithHandler<handlers.TextDocumentCompletionHandler>()
+        .WithHandler<handlers.ExecuteCommandHandler>()
         .OnInitialize(async (server, request, token) =>
         {
           logger.Debug("OnInitialize");

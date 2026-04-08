@@ -20,6 +20,11 @@ public class Namespace : Symbol, IScope,
   //      imported module which in its turn also imported it.
   internal int indirectness = 0;
 
+  // True when this namespace entry was created as an import-link shadow rather than being
+  // directly defined in the owning module. Such entries should be skipped when collecting
+  // module-local symbols (e.g. for IDE completion across all modules).
+  public bool IsLinkedShadow => indirectness > 0;
+
   public SymbolsStorage members;
 
   public override uint ClassId()

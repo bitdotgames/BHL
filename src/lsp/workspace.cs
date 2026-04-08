@@ -42,6 +42,14 @@ public class Workspace
   {
   }
 
+  public async Task ReloadAsync(CancellationToken ct = default)
+  {
+    var new_types = new Types();
+    ProjConf.LoadBindings().Register(new_types);
+    Init(new_types, ProjConf, _logger);
+    await IndexFilesAsync(ct);
+  }
+
   //NOTE: naive initial implementation
   public Task IndexFilesAsync(CancellationToken ct = default)
   {
