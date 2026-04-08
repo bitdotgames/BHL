@@ -279,6 +279,142 @@ public class Workspace
     }
   }
 
+  public SignatureHelp GetSignatureHelp(DocumentUri uri, Position position)
+  {
+    lock(_syncRoot)
+    {
+      var path = uri.PathNormalized();
+      if(!Path2Doc.TryGetValue(path, out var document))
+        return null;
+      return FindSignatureHelp(document, position, Path2Proc);
+    }
+  }
+
+  static SignatureHelp FindSignatureHelp(
+    BHLDocument document, Position position, Dictionary<string, ANTLR_Processor> path2proc)
+  {
+    int cur_line = position.Line;     // 0-based (LSP)
+    int cur_col  = position.Character;
+
+    // Collect tokens strictly before the cursor, sorted forward by position.
+    var tokens = new List<TerminalNodeImpl>();
+    foreach(var t in document.TermNodes)
+    {
+      int t_line = t.Symbol.Line - 1; // ANTLR is 1-based
+      if(t_line < cur_line || (t_line == cur_line && t.Symbol.Column < cur_col))
+        tokens.Add(t);
+    }
+    if(tokens.Count == 0)
+      return null;
+
+    tokens.Sort((a, b) => {
+      int d = a.Symbol.Line.CompareTo(b.Symbol.Line);
+      return d != 0 ? d : a.Symbol.Column.CompareTo(b.Symbol.Column);
+    });
+
+    // Forward scan with a stack: push on '(', pop on ')'.
+    // Each stack frame records the index of the '(' token and the running comma count.
+    // At the end, the top of the stack is the innermost unmatched '(' — i.e., the call
+    // the cursor is currently inside.  An empty stack means "not inside any call".
+    var stack = new System.Collections.Generic.Stack<(int open_idx, int commas)>();
+    int cur_commas = 0;
+
+    for(int i = 0; i < tokens.Count; i++)
+    {
+      var txt = tokens[i].GetText();
+      if(txt == "(")
+      {
+        stack.Push((i, cur_commas));
+        cur_commas = 0;
+      }
+      else if(txt == ")")
+      {
+        if(stack.Count > 0)
+          cur_commas = stack.Pop().commas; // restore outer comma count
+      }
+      else if(txt == "," && stack.Count > 0)
+        cur_commas++;
+    }
+
+    if(stack.Count == 0)
+      return null; // cursor is not inside any open call
+
+    // cur_commas is the comma count at the innermost level = active parameter index.
+    // The saved value in the stack frame is the outer level's count (used only for restore on pop).
+    var (open_paren_idx, _) = stack.Peek();
+    int active_param = cur_commas;
+
+    // Token immediately before '(' should be the function name.
+    int name_idx = open_paren_idx - 1;
+    if(name_idx < 0)
+      return null;
+    var name_tok = tokens[name_idx].GetText();
+    if(name_tok == "." || name_tok == ")" || name_tok == "(")
+      return null;
+
+    // Resolve the function symbol.  Two cases:
+    //   1. Plain call:  "test1("  — resolve name in module scope / all modules.
+    //   2. Member call: "foo.Bar(" — resolve chain up to '.' to get owner scope,
+    //                               then resolve name inside that scope.
+    Symbol sym;
+    if(name_idx >= 2 && tokens[name_idx - 1].GetText() == ".")
+    {
+      // Collect the chain before the dot and resolve it to a scope
+      int dot_col  = tokens[name_idx - 1].Symbol.Column;
+      int dot_line = tokens[name_idx - 1].Symbol.Line - 1; // 0-based
+      var (owner_scope, _) = ResolveChainBeforeDot(document, dot_line, dot_col, path2proc);
+      sym = owner_scope?.ResolveRelatedOnly(name_tok);
+    }
+    else
+    {
+      sym = FindSymbolByName(document, name_tok)
+            ?? document.Processed.module.ns.ResolveWithFallback(name_tok)
+            ?? FindSymbolInAllModules(path2proc, document.Processed.module.ts, name_tok);
+    }
+
+    if(sym is not FuncSymbol func_sym)
+      return null;
+
+    return BuildSignatureHelp(func_sym, active_param);
+  }
+
+  static SignatureHelp BuildSignatureHelp(FuncSymbol func_sym, int active_param)
+  {
+    int arg_count = func_sym.signature.arg_types.Count;
+
+    // Build parameters using GetArg(i) which correctly skips the implicit 'this'
+    // argument that non-static class methods store at members[0].
+    var param_infos = new List<ParameterInformation>(arg_count);
+    var param_labels = new List<string>(arg_count);
+    for(int i = 0; i < arg_count; i++)
+    {
+      var arg = func_sym.GetArg(i);
+      bool variadic = func_sym.signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs)
+                      && i == arg_count - 1;
+      string param_label = (variadic ? "..." : "") + func_sym.signature.arg_types[i] + " " + arg.name;
+      param_labels.Add(param_label);
+      param_infos.Add(new ParameterInformation { Label = new ParameterInformationLabel(param_label) });
+    }
+
+    // Build the label string the same way FuncSymbol.ToString() does, but using
+    // the correct arg names (via GetArg) rather than members[i] directly.
+    string coro = func_sym.signature.attribs.HasFlag(FuncSignatureAttrib.Coro) ? "coro " : "";
+    string label = $"{coro}func {func_sym.signature.return_type} {func_sym.name}({string.Join(",", param_labels)})";
+
+    var sig = new SignatureInformation
+    {
+      Label = label,
+      Parameters = new Container<ParameterInformation>(param_infos),
+    };
+
+    return new SignatureHelp
+    {
+      Signatures = new Container<SignatureInformation>(sig),
+      ActiveSignature = 0,
+      ActiveParameter = arg_count > 0 ? System.Math.Min(active_param, arg_count - 1) : 0,
+    };
+  }
+
   // Returns (scope, static_only): static_only=true when the identifier before the dot is a
   // class/type name — only static members should be offered in that case.
   static (IScope scope, bool static_only) GetScopeBeforeDot(

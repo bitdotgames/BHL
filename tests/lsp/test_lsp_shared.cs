@@ -453,12 +453,22 @@ public class TestLSPShared : BHL_TestBase
     return result;
   }
 
-  //public static string SignatureHelpReq(bhl.lsp.proto.Uri uri, string needle)
-  //{
-  //  var pos = Pos(File.ReadAllText(uri.path), needle);
-  //  return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
-  //         "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
-  //}
+  // Requests signature help with the cursor placed right after `needle`.
+  public static async Task<SignatureHelp> GetSignatureHelp(TestLSPHost srv, DocumentUri uri, string needle)
+  {
+    var text = File.ReadAllText(uri.PathNormalized());
+    var pos = FindPos(text, needle);
+    var after = new Position(pos.ToPosition().Line, pos.ToPosition().Character + needle.Length);
+
+    return await srv.SendRequestAsync<SignatureHelpParams, SignatureHelp>(
+      "textDocument/signatureHelp",
+      new SignatureHelpParams()
+      {
+        TextDocument = uri,
+        Position = after,
+      }
+    );
+  }
 
   public static void CleanTestFiles()
   {
