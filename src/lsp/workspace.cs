@@ -248,12 +248,9 @@ public class Workspace
 
       if(trigger_character == "." && Path2Doc.TryGetValue(path, out var document))
       {
-        var scope = GetScopeBeforeDot(document, position);
-        if(scope != null)
-        {
-          AddMemberCompletions(items, seen, scope);
-          return items;
-        }
+        var (scope, static_only) = GetScopeBeforeDot(document, position);
+        AddMemberCompletions(items, seen, scope, static_only);
+        return items;
       }
 
       foreach(var sym in proc.module.ns)
@@ -266,11 +263,13 @@ public class Workspace
     }
   }
 
-  static IScope GetScopeBeforeDot(BHLDocument document, Position pos)
+  // Returns (scope, static_only): static_only=true when the identifier before the dot is a
+  // class/type name — only static members should be offered in that case.
+  static (IScope scope, bool static_only) GetScopeBeforeDot(BHLDocument document, Position pos)
   {
     // dot is at col-1; collect tokens on this line before it and resolve the chain
     if(pos.Character < 1)
-      return null;
+      return (null, false);
 
     return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1);
   }
@@ -278,7 +277,9 @@ public class Workspace
   // Collects identifier tokens before `dot_column` on the given line, reconstructs
   // the access chain (e.g. ["foo","bar"] from "foo.bar." or ["MakeFoo",true] from "MakeFoo()."),
   // and resolves it to a scope using annotations and the module namespace.
-  static IScope ResolveChainBeforeDot(BHLDocument document, int line, int dot_column)
+  // Returns (scope, static_only): static_only=true when the last symbol was a class/type name
+  // (meaning only static members should be offered).
+  static (IScope scope, bool static_only) ResolveChainBeforeDot(BHLDocument document, int line, int dot_column)
   {
     // Gather tokens on this line that end before the trailing dot, sorted by column.
     var line_tokens = new List<TerminalNodeImpl>();
@@ -289,7 +290,7 @@ public class Workspace
         line_tokens.Add(t);
     }
     if(line_tokens.Count == 0)
-      return null;
+      return (null, false);
 
     line_tokens.Sort((a, b) => a.Symbol.Column.CompareTo(b.Symbol.Column));
 
@@ -338,10 +339,11 @@ public class Workspace
     }
 
     if(chain.Count == 0)
-      return null;
+      return (null, false);
 
     // Resolve each part of the chain
     IScope curr_scope = null;
+    bool static_only = false;
 
     for(int c = 0; c < chain.Count; c++)
     {
@@ -357,30 +359,36 @@ public class Workspace
       else
       {
         if(curr_scope == null)
-          return null;
+          return (null, false);
         sym = curr_scope.ResolveRelatedOnly(name);
       }
 
-      curr_scope = ScopeFromSymbol(sym, is_call);
+      (curr_scope, static_only) = ScopeFromSymbol(sym, is_call);
       if(curr_scope == null)
-        return null;
+        return (null, false);
     }
 
-    return curr_scope;
+    return (curr_scope, static_only);
   }
 
-  // Extracts an IScope from a symbol, taking into account whether it's being called.
-  static IScope ScopeFromSymbol(Symbol sym, bool is_call)
+  // Extracts an IScope from a symbol, and whether only static members should be shown.
+  // static_only=true when sym is a class/type name used directly (not an instance variable).
+  static (IScope scope, bool static_only) ScopeFromSymbol(Symbol sym, bool is_call)
   {
     if(sym == null)
-      return null;
+      return (null, false);
     if(is_call && sym is FuncSymbol fs)
-      return fs.GetReturnType() as IScope;
+      return (fs.GetReturnType() as IScope, false);
+    // Class name used directly → show only static members
+    if(sym is ClassSymbol cs)
+      return (cs, true);
+    // Enum name used directly → all items are static-like, show all
     if(sym is IScope direct)
-      return direct;
+      return (direct, false);
+    // Instance variable → show all members of its type
     if(sym is VariableSymbol vs)
-      return vs.type.Get() as IScope;
-    return null;
+      return (vs.type.Get() as IScope, false);
+    return (null, false);
   }
 
   // Finds the first annotated declaration of `name` in the document and returns its scope type.
@@ -395,11 +403,12 @@ public class Workspace
     return null;
   }
 
-  static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope)
+  static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope, bool static_only = false)
   {
     if(scope is IEnumerable<Symbol> ies)
       foreach(var sym in ies)
-        AddCompletionItem(items, seen, sym);
+        if(static_only ? sym.IsStatic() : !sym.IsStatic())
+          AddCompletionItem(items, seen, sym);
   }
 
   static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym)

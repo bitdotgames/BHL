@@ -15,6 +15,8 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   class Foo {
     int BAR
     Inner inner
+    static int STATIC_VAL
+    static func int StaticMethod() { return 0 }
   }
 
   enum ErrorCodes {
@@ -196,15 +198,33 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
 
   [Fact]
-  public async Task member_completion_class_name()
+  public async Task member_completion_instance_excludes_static()
   {
     await SendInit(srv);
 
-    // Foo. → class members (type name used as scope)
-    var result = await GetMemberCompletions(srv, uri1, "Foo");
+    // "foo." on an instance shows only instance members, not static ones
+    var result = await GetMemberCompletions(srv, uri1, "foo");
     var labels = result.Items.Select(i => i.Label).ToHashSet();
 
     Assert.Contains("BAR", labels);
+    Assert.Contains("inner", labels);
+    Assert.DoesNotContain("STATIC_VAL", labels);
+    Assert.DoesNotContain("StaticMethod", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_class_static_members()
+  {
+    await SendInit(srv);
+
+    // "Foo." on a class name shows only static members
+    var result = await GetMemberCompletions(srv, uri1, "Foo");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("STATIC_VAL", labels);
+    Assert.Contains("StaticMethod", labels);
+    Assert.DoesNotContain("BAR", labels);
+    Assert.DoesNotContain("inner", labels);
   }
 
   [Fact]
