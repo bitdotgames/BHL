@@ -268,35 +268,10 @@ public class Workspace
 
   static IScope GetScopeBeforeDot(BHLDocument document, Position pos)
   {
-    // cursor is right after the dot, so the dot is at col-1 and
-    // the last character of the token before the dot is at col-2
-    if(pos.Character < 2)
+    // dot is at col-1; collect tokens on this line before it and resolve the chain
+    if(pos.Character < 1)
       return null;
 
-    var node = document.FindTerminalNode(pos.Line, pos.Character - 2);
-    if(node == null)
-      return null;
-
-    // Walk up from the terminal trying each annotated node.
-    // Handles: plain variable ref, chained call foo.Bar(). (')' unannotated but ChainExpContext has eval_type).
-    IParseTree curr = node;
-    while(curr != null)
-    {
-      var annotation = document.Processed.FindAnnotated(curr);
-      if(annotation != null)
-      {
-        if(annotation.eval_type is IScope eval_scope)
-          return eval_scope;
-        if(annotation.lsp_symbol is IScope symb_scope)
-          return symb_scope;
-        if(annotation.lsp_symbol is VariableSymbol vs && vs.type.Get() is IScope var_type_scope)
-          return var_type_scope;
-      }
-      curr = curr.Parent;
-    }
-
-    // Fallback: entire expression is an error node (e.g. "foo.bar." or "MakeFoo().").
-    // Reconstruct the chain from terminal tokens on this line and resolve step by step.
     return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1);
   }
 
@@ -377,13 +352,13 @@ public class Workspace
       {
         // Root: check local declarations first, then module namespace
         sym = FindSymbolByName(document, name)
-           ?? document.Processed.module.ns.ResolveWithFallback(name) as Symbol;
+              ?? document.Processed.module.ns.ResolveWithFallback(name);
       }
       else
       {
         if(curr_scope == null)
           return null;
-        sym = curr_scope.ResolveRelatedOnly(name) as Symbol;
+        sym = curr_scope.ResolveRelatedOnly(name);
       }
 
       curr_scope = ScopeFromSymbol(sym, is_call);
