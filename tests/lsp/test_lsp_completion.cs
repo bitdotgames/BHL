@@ -36,7 +36,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     test1(42)
   }
 
-  func Foo MakeFoo()
+  func Foo MakeFoo(int x, int y)
   {
     Foo f
     return f
@@ -88,7 +88,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
 
   func test_func_ret_dot()
   {
-    MakeFoo().
+    MakeFoo(1, 2).
   }
   ";
 
@@ -263,7 +263,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     await SendInit(srv);
 
     // "MakeFoo()." — complete members of the return type Foo
-    var result = await GetMemberCompletionsInDoc(srv, uri3, "MakeFoo().");
+    var result = await GetMemberCompletionsInDoc(srv, uri3, "MakeFoo(1, 2).");
     var labels = result.Items.Select(i => i.Label).ToHashSet();
 
     Assert.Contains("BAR", labels);

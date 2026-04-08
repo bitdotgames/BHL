@@ -85,7 +85,7 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
 
   protected override async Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier, CancellationToken ct)
   {
-    await _workspace.SetupProjectIfEmptyAsync(identifier.TextDocument.Uri.PathFixed(), ct);
+    await _workspace.SetupProjectIfEmptyAsync(identifier.TextDocument.Uri.PathNormalized(), ct);
 
     var document = _workspace.GetOrLoadDocument(identifier.TextDocument.Uri);
 

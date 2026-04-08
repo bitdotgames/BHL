@@ -111,7 +111,7 @@ public class Workspace
   {
     lock(_syncRoot)
     {
-      if(Path2Doc.TryGetValue(uri.PathFixed(), out var document))
+      if(Path2Doc.TryGetValue(uri.PathNormalized(), out var document))
         return document;
     }
     return LoadDocument(uri);
@@ -119,7 +119,7 @@ public class Workspace
 
   public BHLDocument LoadDocument(DocumentUri uri)
   {
-    byte[] buffer = File.ReadAllBytes(uri.PathFixed());
+    byte[] buffer = File.ReadAllBytes(uri.PathNormalized());
     string text = Encoding.UTF8.GetString(buffer);
     var document = new BHLDocument(uri);
     ParseDocument(document, text);
@@ -130,7 +130,7 @@ public class Workspace
   {
     lock(_syncRoot)
     {
-      Path2Doc.TryGetValue(uri.PathFixed(), out var document);
+      Path2Doc.TryGetValue(uri.PathNormalized(), out var document);
       return document;
     }
   }
@@ -155,7 +155,7 @@ public class Workspace
     BHLDocument document;
     lock(_syncRoot)
     {
-      Path2Doc.TryGetValue(uri.PathFixed(), out document);
+      Path2Doc.TryGetValue(uri.PathNormalized(), out document);
     }
     if(document == null)
       return false;
@@ -169,7 +169,7 @@ public class Workspace
   {
     lock(_syncRoot)
     {
-      var changed_path = document.Uri.PathFixed();
+      var changed_path = document.Uri.PathNormalized();
 
       foreach(var kv in Path2Proc)
       {
@@ -239,7 +239,7 @@ public class Workspace
   {
     lock(_syncRoot)
     {
-      var path = uri.PathFixed();
+      var path = uri.PathNormalized();
       if(!Path2Proc.TryGetValue(path, out var proc))
         return new List<CompletionItem>();
 
@@ -300,23 +300,23 @@ public class Workspace
     return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1);
   }
 
-  // Collects identifier tokens before `dot_col` on the given line, reconstructs
+  // Collects identifier tokens before `dot_column` on the given line, reconstructs
   // the access chain (e.g. ["foo","bar"] from "foo.bar." or ["MakeFoo",true] from "MakeFoo()."),
   // and resolves it to a scope using annotations and the module namespace.
-  static IScope ResolveChainBeforeDot(BHLDocument document, int line, int dot_col)
+  static IScope ResolveChainBeforeDot(BHLDocument document, int line, int dot_column)
   {
     // Gather tokens on this line that end before the trailing dot, sorted by column.
     var line_tokens = new List<TerminalNodeImpl>();
     foreach(var t in document.TermNodes)
     {
       int t_line = t.Symbol.Line - 1; // ANTLR lines are 1-based
-      if(t_line == line && t.Symbol.Column < dot_col)
+      if(t_line == line && t.Symbol.Column < dot_column)
         line_tokens.Add(t);
     }
-    line_tokens.Sort((a, b) => a.Symbol.Column.CompareTo(b.Symbol.Column));
-
     if(line_tokens.Count == 0)
       return null;
+
+    line_tokens.Sort((a, b) => a.Symbol.Column.CompareTo(b.Symbol.Column));
 
     // Build chain: walk tokens right-to-left collecting (name, is_call) parts
     // separated by dots.  Stop when we hit something that isn't a NAME/dot/paren.
@@ -328,12 +328,21 @@ public class Workspace
       var tok = line_tokens[i];
       var txt = tok.GetText();
 
-      // Consume a possible "()" call suffix before the name
+      // Consume a possible "(args...)" call suffix before the name
       bool is_call = false;
-      if(txt == ")" && i >= 2 && line_tokens[i - 1].GetText() == "(")
+      if(txt == ")")
       {
+        int depth = 1;
+        i--;
+        while(i >= 0 && depth > 0)
+        {
+          var t = line_tokens[i].GetText();
+          if(t == ")") depth++;
+          else if(t == "(") depth--;
+          i--;
+        }
+        if(depth != 0) break; // unbalanced
         is_call = true;
-        i -= 2; // skip "(" and ")"
         if(i < 0) break;
         tok = line_tokens[i];
         txt = tok.GetText();
@@ -372,12 +381,14 @@ public class Workspace
       }
       else
       {
-        if(curr_scope == null) return null;
+        if(curr_scope == null)
+          return null;
         sym = curr_scope.ResolveRelatedOnly(name) as Symbol;
       }
 
       curr_scope = ScopeFromSymbol(sym, is_call);
-      if(curr_scope == null) return null;
+      if(curr_scope == null)
+        return null;
     }
 
     return curr_scope;
@@ -386,7 +397,8 @@ public class Workspace
   // Extracts an IScope from a symbol, taking into account whether it's being called.
   static IScope ScopeFromSymbol(Symbol sym, bool is_call)
   {
-    if(sym == null) return null;
+    if(sym == null)
+      return null;
     if(is_call && sym is FuncSymbol fs)
       return fs.GetReturnType() as IScope;
     if(sym is IScope direct)

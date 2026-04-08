@@ -30,7 +30,7 @@ public class TextDocumentCompletionHandler : CompletionHandlerBase
 
   public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken ct)
   {
-    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.PathFixed(), ct);
+    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.PathNormalized(), ct);
 
     var trigger = request.Context?.TriggerCharacter;
     var items = _workspace.GetCompletions(request.TextDocument.Uri, request.Position, trigger);

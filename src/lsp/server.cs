@@ -53,7 +53,7 @@ public static class ServerFactory
           {
             foreach(var wf in request.WorkspaceFolders)
             {
-              proj = ProjectConf.TryReadFromDir(wf.Uri.PathFixed());
+              proj = ProjectConf.TryReadFromDir(wf.Uri.PathNormalized());
               if(proj != null)
                 break;
             }
@@ -69,11 +69,11 @@ public static class ServerFactory
           }
           else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
           {
-            proj = ProjectConf.TryReadFromDir(request.RootUri.PathFixed());
+            proj = ProjectConf.TryReadFromDir(request.RootUri.PathNormalized());
             if(proj == null)
             {
               proj = new ProjectConf();
-              proj.SetupForRootPath(request.RootUri.PathFixed());
+              proj.SetupForRootPath(request.RootUri.PathNormalized());
             }
           }
           else

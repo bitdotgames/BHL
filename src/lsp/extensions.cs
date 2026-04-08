@@ -45,7 +45,7 @@ public static class Extensions
     return new Position(pos.line, pos.column);
   }
 
-  public static string PathFixed(this DocumentUri uri)
+  public static string PathNormalized(this DocumentUri uri)
   {
     string path = uri.Path;
     //it's a fix for a weird Windows related problem when path looks as follows: /c:/bla/foo/bar
