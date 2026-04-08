@@ -48,6 +48,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   {
     Foo local_foo
     int x = local_foo.BAR
+    int y = local_foo.inner.VAL
     ErrorCodes local_err = ErrorCodes.Ok
   }
   ";
@@ -263,6 +264,20 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
 
     Assert.Contains("Ok", labels);
     Assert.Contains("Bad", labels);
+  }
+
+  [Fact]
+  public async Task member_completion_chained_field()
+  {
+    await SendInit(srv);
+
+    // "local_foo.inner" — inner is a field of Foo (not a module-level name),
+    // so resolving it requires walking the chain: local_foo → Foo → inner → Inner.
+    // A naive "look up last token only" approach would fail here.
+    var result = await GetMemberCompletions(srv, uri1, "local_foo.inner");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("VAL", labels);
   }
 
   [Fact]

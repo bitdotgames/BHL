@@ -89,24 +89,6 @@ public class BHLDocument
     return tmp as T;
   }
 
-  public FuncSymbol FindFuncByCallStatement(TerminalNodeImpl node)
-  {
-    var ctx = GoUpUntil<bhlParser.ChainExpContext>(node);
-
-    if(ctx != null)
-    {
-      ////Log.Logger.Debug("CTX " + ctx.GetText());
-      //var chain = new ANTLR_Processor.ExpChain(ctx);
-      ////Log.Logger.Debug("NAME " + chain.name_ctx.GetText());
-      //var annotated = proc.FindAnnotated(chain.name_ctx);
-      ////Log.Logger.Debug("SYMB " + annotated.lsp_symbol);
-      ////Log.Logger.Debug("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
-      //return annotated?.lsp_symbol as FuncSymbol;
-    }
-
-    return null;
-  }
-
   public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
   {
     //Log.Logger.Debug("TREE " + tree.GetType().Name + " " + tree.GetText());
