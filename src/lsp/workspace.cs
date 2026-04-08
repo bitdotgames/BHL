@@ -240,7 +240,7 @@ public class Workspace
     lock(_syncRoot)
     {
       var path = uri.PathNormalized();
-      if(!Path2Proc.TryGetValue(path, out var proc))
+      if(!Path2Proc.TryGetValue(path, out var _))
         return new List<CompletionItem>();
 
       var items = new List<CompletionItem>();
@@ -248,13 +248,21 @@ public class Workspace
 
       if(trigger_character == "." && Path2Doc.TryGetValue(path, out var document))
       {
-        var (scope, static_only) = GetScopeBeforeDot(document, position);
+        var (scope, static_only) = GetScopeBeforeDot(document, position, Path2Proc);
         AddMemberCompletions(items, seen, scope, static_only);
         return items;
       }
 
-      foreach(var sym in proc.module.ns)
-        AddCompletionItem(items, seen, sym);
+      // Offer symbols from every module in the workspace, not just the current one and its imports.
+      // A namespace can be split across multiple files, so deduplicate by qualified label.
+      var seenLabels = new HashSet<string>();
+      foreach(var kv in Path2Proc)
+        AddModuleNsCompletions(kv.Value.module.ns, "", items, seen, seenLabels);
+
+      // Native modules (std, std.io, etc.) are registered in Types but not linked
+      // into any source module namespace — add their top-level symbols explicitly.
+      foreach(var m in Types.GetModules())
+        AddModuleNsCompletions(m.ns, "", items, seen, seenLabels);
 
       foreach(var sym in Types.ns)
         AddCompletionItem(items, seen, sym);
@@ -265,13 +273,14 @@ public class Workspace
 
   // Returns (scope, static_only): static_only=true when the identifier before the dot is a
   // class/type name — only static members should be offered in that case.
-  static (IScope scope, bool static_only) GetScopeBeforeDot(BHLDocument document, Position pos)
+  static (IScope scope, bool static_only) GetScopeBeforeDot(
+    BHLDocument document, Position pos, Dictionary<string, ANTLR_Processor> path2proc)
   {
     // dot is at col-1; collect tokens on this line before it and resolve the chain
     if(pos.Character < 1)
       return (null, false);
 
-    return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1);
+    return ResolveChainBeforeDot(document, pos.Line, pos.Character - 1, path2proc);
   }
 
   // Collects identifier tokens before `dot_column` on the given line, reconstructs
@@ -279,7 +288,8 @@ public class Workspace
   // and resolves it to a scope using annotations and the module namespace.
   // Returns (scope, static_only): static_only=true when the last symbol was a class/type name
   // (meaning only static members should be offered).
-  static (IScope scope, bool static_only) ResolveChainBeforeDot(BHLDocument document, int line, int dot_column)
+  static (IScope scope, bool static_only) ResolveChainBeforeDot(
+    BHLDocument document, int line, int dot_column, Dictionary<string, ANTLR_Processor> path2proc)
   {
     // Gather tokens on this line that end before the trailing dot, sorted by column.
     var line_tokens = new List<TerminalNodeImpl>();
@@ -352,9 +362,10 @@ public class Workspace
       Symbol sym;
       if(c == 0)
       {
-        // Root: check local declarations first, then module namespace
+        // Root: check local declarations first, then current module namespace, then all modules
         sym = FindSymbolByName(document, name)
-              ?? document.Processed.module.ns.ResolveWithFallback(name);
+              ?? document.Processed.module.ns.ResolveWithFallback(name)
+              ?? FindSymbolInAllModules(path2proc, document.Processed.module.ts, name);
       }
       else
       {
@@ -403,6 +414,75 @@ public class Workspace
     return null;
   }
 
+  // Collects own symbols from a module namespace into the completion list, recursing into
+  // sub-namespaces and emitting fully-qualified labels (e.g. "ns.NsFunc", "std.io.Write").
+  static void AddModuleNsCompletions(
+    Namespace ns, string prefix, List<CompletionItem> items, HashSet<Symbol> seen, HashSet<string> seenLabels)
+  {
+    foreach(var sym in ns.members)
+    {
+      if(sym is Namespace ns_sym)
+      {
+        if(ns_sym.IsLinkedShadow)
+          continue;
+        var label = prefix.Length > 0 ? prefix + "." + ns_sym.name : ns_sym.name;
+        if(seenLabels.Add(label))
+          AddCompletionItem(items, seen, ns_sym, label);
+        // Always recurse even if this namespace label was already seen — another module
+        // fragment may contribute new sub-symbols under the same namespace name.
+        AddModuleNsCompletions(ns_sym, label, items, seen, seenLabels);
+      }
+      else
+      {
+        var label = prefix.Length > 0 ? prefix + "." + sym.name : sym.name;
+        if(seenLabels.Add(label))
+          AddCompletionItem(items, seen, sym, label);
+      }
+    }
+  }
+
+  // Searches top-level own members of every module (BHL source + native registered modules).
+  // When multiple modules contribute fragments of the same namespace, returns a temporary
+  // merged Namespace so all fragments' members are visible in one scope.
+  static Symbol FindSymbolInAllModules(Dictionary<string, ANTLR_Processor> path2proc, Types types, string name)
+  {
+    Symbol found = null;
+    Namespace merged_ns = null;
+
+    foreach(var kv in path2proc)
+      CollectSymbolFromNs(kv.Value.module.ns, name, ref found, ref merged_ns);
+    foreach(var m in types.GetModules())
+      CollectSymbolFromNs(m.ns, name, ref found, ref merged_ns);
+
+    return found;
+  }
+
+  static void CollectSymbolFromNs(Namespace ns, string name, ref Symbol found, ref Namespace merged_ns)
+  {
+    foreach(var sym in ns.members)
+    {
+      if(sym is Namespace ns_sym && ns_sym.IsLinkedShadow)
+        continue;
+      if(sym.name != name)
+        continue;
+
+      if(sym is Namespace ns_frag)
+      {
+        // Namespace can be split across modules — merge all fragments into one temporary scope
+        if(merged_ns == null)
+        {
+          merged_ns = new Namespace(null, name);
+          merged_ns.TryLink(ns_frag);
+          found = merged_ns;
+        }
+        else
+          merged_ns.TryLink(ns_frag);
+      }
+      else if(found == null)
+        found = sym;
+    }
+  }
+
   static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope, bool static_only = false)
   {
     if(scope is IEnumerable<Symbol> ies)
@@ -412,18 +492,47 @@ public class Workspace
   }
 
   static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym)
+    => AddCompletionItem(items, seen, sym, sym.name);
+
+  static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym, string label)
   {
     if(!seen.Add(sym))
       return;
 
+    bool is_native = sym is FuncSymbolNative || sym is ClassSymbolNative || sym is EnumSymbolNative;
+    // Strip any existing "[native] " prefix from ToString() — we'll re-append it at the end.
+    // For class/enum symbols, ToString() returns only the name; prepend the kind keyword.
+    var base_desc = sym.ToString();
+    if(base_desc.StartsWith("[native] "))
+      base_desc = base_desc.Substring("[native] ".Length);
+    if(sym is ClassSymbol)
+      base_desc = "class " + base_desc;
+    else if(sym is EnumSymbol)
+      base_desc = "enum " + base_desc;
+
+    var module_name = GetSymbolModuleName(sym);
+    var suffix = (is_native ? " [native]" : "") + (module_name != null ? $" [{module_name}]" : "");
+    var detail = suffix.Length > 0 ? base_desc + suffix : base_desc;
+
     items.Add(new CompletionItem
     {
-      //TODO:?
-      //Label = sym.GetFullTypePath().ToString(),
-      Label = sym.name,
+      Label = label,
       Kind = GetCompletionKind(sym),
-      Detail = sym.ToString(),
+      Detail = detail,
     });
+  }
+
+  // Walks up the scope chain to find the module name for a symbol.
+  static string GetSymbolModuleName(Symbol sym)
+  {
+    var scope = sym.scope;
+    while(scope != null)
+    {
+      if(scope is Namespace ns && ns.module != null && !string.IsNullOrEmpty(ns.module.name))
+        return ns.module.name;
+      scope = (scope as Symbol)?.scope ?? (scope as IScope)?.GetFallbackScope();
+    }
+    return null;
   }
 
   static CompletionItemKind GetCompletionKind(Symbol sym) => sym switch

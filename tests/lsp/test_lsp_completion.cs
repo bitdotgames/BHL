@@ -95,10 +95,63 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
   ";
 
+  string bhl4 = @"
+  namespace ns {
+    class Bar {
+      int FIELD
+      static int STATIC_FIELD
+      static func int StaticBarMethod() { return 0 }
+    }
+
+    func int NsFunc() { return 0 }
+
+    namespace nested {
+      class DeepClass {
+        int DEEP_VAL
+      }
+    }
+  }
+  ";
+
+  // incomplete namespace access — dot already typed, cursor right after it
+  string bhl5 = @"
+  import ""bhl4""
+
+  func test_ns_dot()
+  {
+    ns.
+  }
+
+  func test_ns_nested_dot()
+  {
+    ns.nested.
+  }
+
+  func test_ns_bar_dot()
+  {
+    ns.Bar.
+  }
+  ";
+
+  // no imports — used to test that symbols from other (non-imported) modules are still offered
+  string bhl6 = @"
+  func test_no_imports()
+  {
+    Foo.
+    ns.
+    ns.nested.
+    std.
+    std.io.
+  }
+  ";
+
   TestLSPHost srv;
   DocumentUri uri1;
   DocumentUri uri2;
   DocumentUri uri3;
+  DocumentUri uri4;
+  DocumentUri uri5;
+  DocumentUri uri6;
 
   public TestLSPCompletion()
   {
@@ -107,6 +160,9 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     uri1 = MakeTestDocument("bhl1.bhl", bhl1);
     uri2 = MakeTestDocument("bhl2.bhl", bhl2);
     uri3 = MakeTestDocument("bhl3.bhl", bhl3);
+    uri4 = MakeTestDocument("bhl4.bhl", bhl4);
+    uri5 = MakeTestDocument("bhl5.bhl", bhl5);
+    uri6 = MakeTestDocument("bhl6.bhl", bhl6);
   }
 
   public void Dispose()
@@ -303,6 +359,179 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
 
     Assert.Contains("BAR", labels);
     Assert.Contains("inner", labels);
+  }
+
+  [Fact]
+  public async Task namespace_visible_in_global_completions()
+  {
+    await SendInit(srv);
+
+    // namespace symbol itself should appear in top-level completions
+    var result = await GetCompletions(srv, uri4);
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("ns", labels);
+    Assert.Equal(CompletionItemKind.Module, result.Items.First(i => i.Label == "ns").Kind);
+  }
+
+  [Fact]
+  public async Task namespace_member_completions()
+  {
+    await SendInit(srv);
+
+    // "ns." — shows members of the namespace: Bar, NsFunc, nested
+    var result = await GetMemberCompletionsInDoc(srv, uri5, "ns.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Bar", labels);
+    Assert.Contains("NsFunc", labels);
+    Assert.Contains("nested", labels);
+  }
+
+  [Fact]
+  public async Task namespace_nested_completions()
+  {
+    await SendInit(srv);
+
+    // "ns.nested." — shows members of the nested namespace
+    var result = await GetMemberCompletionsInDoc(srv, uri5, "ns.nested.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("DeepClass", labels);
+  }
+
+  [Fact]
+  public async Task namespace_class_static_members()
+  {
+    await SendInit(srv);
+
+    // "ns.Bar." — Bar is a class inside a namespace, should show only static members
+    var result = await GetMemberCompletionsInDoc(srv, uri5, "ns.Bar.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("STATIC_FIELD", labels);
+    Assert.Contains("StaticBarMethod", labels);
+    Assert.DoesNotContain("FIELD", labels);
+  }
+
+  [Fact]
+  public async Task non_imported_symbols_in_global_completions()
+  {
+    await SendInit(srv);
+
+    // bhl6 imports nothing, but all workspace symbols should be offered
+    var result = await GetCompletions(srv, uri6);
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    // from bhl1 (not imported by bhl6)
+    Assert.Contains("Foo", labels);
+    Assert.Contains("test1", labels);
+    Assert.Contains("ErrorCodes", labels);
+
+    // from bhl4 (not imported by bhl6)
+    Assert.Contains("ns", labels);
+  }
+
+  [Fact]
+  public async Task non_imported_class_member_completions()
+  {
+    await SendInit(srv);
+
+    // bhl6 doesn't import bhl1, but "Foo." should still resolve to Foo's members
+    var result = await GetMemberCompletionsInDoc(srv, uri6, "Foo.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("STATIC_VAL", labels);
+    Assert.Contains("StaticMethod", labels);
+    Assert.DoesNotContain("BAR", labels);
+    Assert.DoesNotContain("inner", labels);
+  }
+
+  [Fact]
+  public async Task non_imported_namespace_member_completions()
+  {
+    await SendInit(srv);
+
+    // bhl6 doesn't import bhl4, but "ns." should still resolve to ns members
+    var result = await GetMemberCompletionsInDoc(srv, uri6, "ns.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Bar", labels);
+    Assert.Contains("NsFunc", labels);
+    Assert.Contains("nested", labels);
+  }
+
+  [Fact]
+  public async Task non_imported_namespace_nested_completions()
+  {
+    await SendInit(srv);
+
+    // bhl6 doesn't import bhl4, but "ns.nested." should still resolve to nested's members
+    var result = await GetMemberCompletionsInDoc(srv, uri6, "ns.nested.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("DeepClass", labels);
+  }
+
+  [Fact]
+  public async Task nested_namespace_symbols_in_global_completions()
+  {
+    await SendInit(srv);
+
+    var result = await GetCompletions(srv, uri6);
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    // deeply nested symbols appear with fully-qualified labels so IDEs can
+    // match them by substring (e.g. typing "NewFunc" finds "std.bind.NewFuncSymbolNative")
+    Assert.Contains("std.bind.NewFuncSymbolNative", labels);
+    Assert.Contains("std.bind.NewFuncArgSymbol", labels);
+    Assert.Contains("std.bind", labels);
+    Assert.Contains("std.io.Write", labels);
+    Assert.Contains("std.io.WriteLine", labels);
+    // user-defined nested namespaces also get qualified entries
+    Assert.Contains("ns.NsFunc", labels);
+    Assert.Contains("ns.nested.DeepClass", labels);
+  }
+
+  [Fact]
+  public async Task std_namespace_visible_in_global_completions()
+  {
+    await SendInit(srv);
+
+    var result = await GetCompletions(srv, uri6);
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("std", labels);
+    Assert.Equal(CompletionItemKind.Module, result.Items.First(i => i.Label == "std").Kind);
+  }
+
+  [Fact]
+  public async Task std_namespace_member_completions()
+  {
+    await SendInit(srv);
+
+    // "std." should show functions declared in the std namespace
+    var result = await GetMemberCompletionsInDoc(srv, uri6, "std.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("GetType", labels);
+    Assert.Contains("Is", labels);
+    Assert.Contains("NextTrue", labels);
+    // nested std.io namespace should also be visible
+    Assert.Contains("io", labels);
+  }
+
+  [Fact]
+  public async Task std_io_namespace_member_completions()
+  {
+    await SendInit(srv);
+
+    // "std.io." should show functions declared in the std.io namespace
+    var result = await GetMemberCompletionsInDoc(srv, uri6, "std.io.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Write", labels);
+    Assert.Contains("WriteLine", labels);
   }
 
   [Fact]
