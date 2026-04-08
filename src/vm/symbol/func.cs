@@ -416,7 +416,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
         buf += ",";
       if(signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == signature.arg_types.Count - 1)
         buf += "...";
-      buf += signature.arg_types[i] + " " + members[i].name;
+      buf += signature.arg_types[i] + " " + GetArg(i).name;
     }
 
     buf += ")";
