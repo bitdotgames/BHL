@@ -21,7 +21,7 @@ contexts:
   main: []
 ```
 
-**Make sure** you can select bhl syntax in **View > Syntax** menu. Now you can proceed to LSP setup.
+**Make sure** you can select bhl syntax in **View > Syntax** menu. You might need to restart an editor. Now you can proceed to LSP setup.
 
 ## LSP setup
 
