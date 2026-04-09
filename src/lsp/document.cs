@@ -43,10 +43,11 @@ public class BHLDocument
 
   public TerminalNodeImpl FindTerminalNodeByByteIndex(int idx)
   {
-    //TODO: use binary search?
     foreach(var node in TermNodes)
     {
-      if(node.Symbol.StartIndex <= idx && node.Symbol.StopIndex >= idx)
+      if(node.Symbol.StartIndex > idx)
+        break;
+      if(node.Symbol.StopIndex >= idx)
         return node;
     }
 
@@ -97,7 +98,7 @@ public class BHLDocument
 
     if(tree is ParserRuleContext rule && rule.children != null)
     {
-      for(int i = rule.children.Count; i-- > 0;)
+      for(int i = 0; i < rule.children.Count; i++)
         GetTerminalNodes(rule.children[i], nodes);
     }
   }

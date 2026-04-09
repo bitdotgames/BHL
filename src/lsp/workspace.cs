@@ -336,11 +336,6 @@ public class Workspace
     if(tokens.Count == 0)
       return null;
 
-    tokens.Sort((a, b) => {
-      int d = a.Symbol.Line.CompareTo(b.Symbol.Line);
-      return d != 0 ? d : a.Symbol.Column.CompareTo(b.Symbol.Column);
-    });
-
     // Forward scan with a stack: push on '(', pop on ')'.
     // Each stack frame records the index of the '(' token and the running comma count.
     // At the end, the top of the stack is the innermost unmatched '(' — i.e., the call
@@ -486,8 +481,6 @@ public class Workspace
     }
     if(line_tokens.Count == 0)
       return (null, false);
-
-    line_tokens.Sort((a, b) => a.Symbol.Column.CompareTo(b.Symbol.Column));
 
     // Build chain: walk tokens right-to-left collecting (name, is_call) parts
     // separated by dots.  Stop when we hit something that isn't a NAME/dot/paren.
@@ -663,9 +656,6 @@ public class Workspace
     var imported = new HashSet<string>();
     int last_import_line = -1; // 0-based LSP line of the last import keyword seen
 
-    // TermNodes are stored in reverse source order (GetTerminalNodes walks children
-    // right-to-left).  Scan for IMPORT tokens; their associated NORMALSTRING sibling
-    // sits at a lower index (i - 1), so search backwards.
     var nodes = document.TermNodes;
     for(int i = 0; i < nodes.Count; i++)
     {
@@ -676,15 +666,15 @@ public class Workspace
       int import_line = tok.Symbol.Line; // ANTLR 1-based
       last_import_line = import_line - 1; // convert to 0-based
 
-      // The NORMALSTRING (the quoted path) is on the same line, at a lower index.
-      for(int j = i - 1; j >= 0; j--)
+      // NORMALSTRING (the quoted path) follows IMPORT on the same line.
+      for(int j = i + 1; j < nodes.Count; j++)
       {
-        var prev = nodes[j];
-        if(prev.Symbol.Line != import_line)
+        var next = nodes[j];
+        if(next.Symbol.Line != import_line)
           break;
-        if(prev.Symbol.Type == bhlLexer.NORMALSTRING)
+        if(next.Symbol.Type == bhlLexer.NORMALSTRING)
         {
-          var raw = prev.GetText(); // e.g. "bhl1"  (includes the quotes)
+          var raw = next.GetText(); // e.g. "bhl1"  (includes the quotes)
           if(raw.Length >= 2)
             imported.Add(raw.Substring(1, raw.Length - 2));
           break;
