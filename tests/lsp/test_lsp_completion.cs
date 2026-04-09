@@ -145,6 +145,19 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
   ";
 
+  // class with a method that uses 'this.' (incomplete expression) for completion
+  string bhl7 = @"
+  class MyClass {
+    int Field1
+    float Field2
+
+    func void MyMethod()
+    {
+      this.
+    }
+  }
+  ";
+
   TestLSPHost srv;
   DocumentUri uri1;
   DocumentUri uri2;
@@ -152,6 +165,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   DocumentUri uri4;
   DocumentUri uri5;
   DocumentUri uri6;
+  DocumentUri uri7;
 
   public TestLSPCompletion()
   {
@@ -163,6 +177,7 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     uri4 = MakeTestDocument("bhl4.bhl", bhl4);
     uri5 = MakeTestDocument("bhl5.bhl", bhl5);
     uri6 = MakeTestDocument("bhl6.bhl", bhl6);
+    uri7 = MakeTestDocument("bhl7.bhl", bhl7);
   }
 
   public void Dispose()
@@ -546,5 +561,19 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     Assert.Contains("float", labels);
     Assert.Contains("string", labels);
     Assert.Contains("bool", labels);
+  }
+
+  [Fact]
+  public async Task this_dot_member_completion()
+  {
+    await SendInit(srv);
+
+    // "this." inside a class method — should show the class fields
+    var result = await GetMemberCompletionsInDoc(srv, uri7, "this.");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("Field1", labels);
+    Assert.Contains("Field2", labels);
+    Assert.DoesNotContain("this", labels);
   }
 }

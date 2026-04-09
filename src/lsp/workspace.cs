@@ -528,6 +528,11 @@ public class Workspace
         sym = FindSymbolByName(document, name)
               ?? document.Processed.module.ns.ResolveWithFallback(name)
               ?? FindSymbolInAllModules(path2proc, document.Processed.module.ts, name);
+
+        // Special case: 'this' inside an incomplete expression may not be annotated.
+        // Fall back to scanning for the enclosing non-static class method at this line.
+        if(sym == null && name == "this")
+          sym = FindThisArgAtLine(document, line);
       }
       else
       {
@@ -562,6 +567,55 @@ public class Workspace
     if(sym is VariableSymbol vs)
       return (vs.type.Get() as IScope, false);
     return (null, false);
+  }
+
+  // Returns the 'this' FuncArgSymbol for the innermost non-static class method whose
+  // source range contains `lsp_line` (0-based).  Returns null if none found.
+  // Class method FuncSymbolScripts are NOT stored in annotated_nodes directly, so we
+  // scan for ClassSymbolScript entries and walk their members.
+  static Symbol FindThisArgAtLine(BHLDocument document, int lsp_line)
+  {
+    ClassSymbolScript best_class = null;
+    int best_span = int.MaxValue;
+
+    foreach(var kv in document.Processed.annotated_nodes)
+    {
+      if(kv.Value.lsp_symbol is not ClassSymbolScript class_sym)
+        continue;
+
+      // Check that the class's source range contains the cursor
+      var class_range = class_sym.origin.source_range;
+      int cls_start = class_range.start.line - 1;
+      int cls_end   = class_range.end.line   - 1;
+      if(lsp_line < cls_start || lsp_line > cls_end)
+        continue;
+
+      // Walk class members looking for the narrowest non-static method containing lsp_line
+      foreach(var sym in class_sym)
+      {
+        if(sym is not FuncSymbolScript fsym)
+          continue;
+        if(!fsym.IsInstanceMethod())
+          continue; // static method — skip
+
+        // FuncSymbolScript.origin.parsed is the AnnotatedParseTree for the funcDecl ctx
+        var fsym_range = fsym.origin.source_range;
+        int fstart = fsym_range.start.line - 1;
+        int fend   = fsym_range.end.line   - 1;
+
+        if(lsp_line < fstart || lsp_line > fend)
+          continue;
+
+        int span = fend - fstart;
+        if(span < best_span)
+        {
+          best_span = span;
+          best_class = class_sym;
+        }
+      }
+    }
+
+    return best_class != null ? new FuncArgSymbol("this", new ProxyType(best_class)) : null;
   }
 
   // Finds the first annotated declaration of `name` in the document and returns its scope type.

@@ -389,6 +389,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
       : 0;
   }
 
+  public bool IsInstanceMethod() => GetThisArgOffset() != 0;
+
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
     refs.Index(_signature);
