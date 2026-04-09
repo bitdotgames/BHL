@@ -241,8 +241,9 @@ public class TestLSPShared : BHL_TestBase
       LspResponse msg = null;
       await foreach(var tmp in RecvMsgsAsync(cts.Token))
       {
-        if(tmp.Method != method)
-          throw new InvalidOperationException($"Unexpected message method: {msg.Method}, expected {method}");
+        // Skip server-to-client requests (they have an id) and unrelated notifications.
+        if(tmp.Id != null || tmp.Method != method)
+          continue;
 
         msg = tmp;
         break;

@@ -89,7 +89,9 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
 
     var document = _workspace.GetOrLoadDocument(identifier.TextDocument.Uri);
 
-    foreach (var token in document.Processed.semantic_tokens)
+    var tokens = document.Processed.semantic_tokens;
+    tokens.Sort((a, b) => a.idx != b.idx ? a.idx - b.idx : a.column - b.column);
+    foreach (var token in tokens)
     {
       int line = token.line - 1;
       int column = token.column;

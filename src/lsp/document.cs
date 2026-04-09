@@ -77,19 +77,6 @@ public class BHLDocument
     return annotated.lsp_symbol;
   }
 
-  static T GoUpUntil<T>(TerminalNodeImpl node) where T : class, IParseTree
-  {
-    IParseTree tmp = node;
-    while(tmp.Parent != null)
-    {
-      if(tmp is T)
-        break;
-      tmp = tmp.Parent;
-    }
-
-    return tmp as T;
-  }
-
   public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
   {
     //Log.Logger.Debug("TREE " + tree.GetType().Name + " " + tree.GetText());

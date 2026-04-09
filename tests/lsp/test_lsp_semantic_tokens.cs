@@ -46,8 +46,8 @@ public class TestLSPSemanticTokens : TestLSPShared, IDisposable
         }
       );
 
-    //NOTE: used to be before migration to Omnisharp framework, check the difference?
-    //{1,4,5,6,0, + 0,6,13,0,0, + 2,8,6,5,0, + 0,7,15,2,2}
-    Assert.Equal(new int[] {1,4,5,6,0, 0,6,13,0,0, 2,15,15,2,2, 0,-7,6,5,0}, result.Data);
+    // Groups of 5: [deltaLine, deltaStartChar, length, tokenType, tokenModifiers]
+    // class(kw) BHL_M3Globals(class) string(type) match_chips_sfx(var,definition) — sorted by position
+    Assert.Equal(new int[] {1,4,5,6,0, 0,6,13,0,0, 2,8,6,5,0, 0,7,15,2,2}, result.Data);
   }
 }

@@ -38,7 +38,7 @@ public static partial class Tasks
     return cts;
   }
 
-  [Task]
+  [Task(verbose: false)]
   public static async ThreadTask lsp(Taskman tm, string[] args)
   {
     string log_file_path = "";

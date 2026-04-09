@@ -75,6 +75,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       );
 
     _server.PublishDiagnostics(_workspace.GetDiagnosticsToPublish());
+    _ = _server.SendRequest("workspace/semanticTokens/refresh", new SemanticTokensRefreshParams()).ReturningVoid(token);
 
     return Unit.Value;
   }
