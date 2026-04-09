@@ -254,7 +254,10 @@ public class Workspace
       var items = new List<CompletionItem>();
       var seen = new HashSet<Symbol>();
 
-      if(trigger_character == "." && Path2Doc.TryGetValue(path, out var document))
+      if(Path2Doc.TryGetValue(path, out var document) && IsInsideString(document, position))
+        return items;
+
+      if(trigger_character == "." && document != null)
       {
         var (scope, static_only) = GetScopeBeforeDot(document, position, Path2Proc);
         AddMemberCompletions(items, seen, scope, static_only);
@@ -295,6 +298,9 @@ public class Workspace
   {
     int cur_line = position.Line;     // 0-based (LSP)
     int cur_col  = position.Character;
+
+    if(IsInsideString(document, position))
+      return null;
 
     // Collect tokens strictly before the cursor, sorted forward by position.
     var tokens = new List<TerminalNodeImpl>();
@@ -413,6 +419,18 @@ public class Workspace
       ActiveSignature = 0,
       ActiveParameter = arg_count > 0 ? System.Math.Min(active_param, arg_count - 1) : 0,
     };
+  }
+
+  static bool IsInsideString(BHLDocument document, Position position)
+  {
+    int byte_idx = document.Index.CalcByteIndex(position.Line, position.Character);
+    foreach(var t in document.TermNodes)
+    {
+      if(t.Symbol.Type == bhlLexer.NORMALSTRING &&
+         t.Symbol.StartIndex <= byte_idx && t.Symbol.StopIndex >= byte_idx)
+        return true;
+    }
+    return false;
   }
 
   // Returns (scope, static_only): static_only=true when the identifier before the dot is a

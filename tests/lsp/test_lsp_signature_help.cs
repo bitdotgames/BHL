@@ -22,6 +22,9 @@ public class TestLSPSignatureHelp : TestLSPShared, IDisposable
     return 0
   }
 
+  func void takes_string(string s)
+  {}
+
   func Foo MakeFoo(int x, int y)
   {
     Foo f
@@ -34,6 +37,7 @@ public class TestLSPSignatureHelp : TestLSPShared, IDisposable
     MakeFoo(1, 2)
     Foo local_foo
     local_foo.Method(1, 2)
+    takes_string(""hello, world"")
   }
 
   func test_open_paren()
@@ -142,6 +146,16 @@ public class TestLSPSignatureHelp : TestLSPShared, IDisposable
     var result = await GetSignatureHelp(srv, uri2, "MakeFoo(1,");
     Assert.NotNull(result);
     Assert.Equal(1, result.ActiveParameter);
+  }
+
+  [Fact]
+  public async Task no_signature_inside_string()
+  {
+    await SendInit(srv);
+
+    // cursor is inside the string literal "hello, world" — no signature help
+    var result = await GetSignatureHelp(srv, uri1, "\"hello,");
+    Assert.Null(result);
   }
 
   [Fact]
