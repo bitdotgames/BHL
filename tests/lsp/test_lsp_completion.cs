@@ -576,4 +576,55 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     Assert.Contains("Field2", labels);
     Assert.DoesNotContain("this", labels);
   }
+
+  [Fact]
+  public async Task auto_import_added_for_non_imported_symbol()
+  {
+    await SendInit(srv);
+
+    // bhl6 has no imports; "Foo" comes from bhl1 — completion should carry an auto-import edit
+    var result = await GetCompletions(srv, uri6);
+    var foo = result.Items.First(i => i.Label == "Foo");
+    Assert.NotNull(foo.AdditionalTextEdits);
+    var edit = foo.AdditionalTextEdits.Single();
+    Assert.Equal("import \"bhl1\"\n", edit.NewText);
+  }
+
+  [Fact]
+  public async Task auto_import_not_added_when_already_imported()
+  {
+    await SendInit(srv);
+
+    // bhl2 already imports bhl1, so "Foo" from bhl1 should have no auto-import edit
+    var result = await GetCompletions(srv, uri2);
+    var foo = result.Items.First(i => i.Label == "Foo");
+    Assert.Null(foo.AdditionalTextEdits);
+  }
+
+  [Fact]
+  public async Task auto_import_not_added_for_own_module_symbols()
+  {
+    await SendInit(srv);
+
+    // "test1" is declared in bhl1 itself — no auto-import needed
+    var result = await GetCompletions(srv, uri1);
+    var test1 = result.Items.First(i => i.Label == "test1");
+    Assert.Null(test1.AdditionalTextEdits);
+  }
+
+  [Fact]
+  public async Task auto_import_inserts_after_last_existing_import()
+  {
+    await SendInit(srv);
+
+    // bhl2 already imports bhl1; bhl4 is not imported yet —
+    // ns from bhl4 should carry an auto-import edit inserted after the existing import
+    var result = await GetCompletions(srv, uri2);
+    var ns = result.Items.First(i => i.Label == "ns");
+    Assert.NotNull(ns.AdditionalTextEdits);
+    var edit = ns.AdditionalTextEdits.Single();
+    Assert.Equal("import \"bhl4\"\n", edit.NewText);
+    // Insertion must be AFTER the existing `import "bhl1"` line, not at the very top
+    Assert.True(edit.Range.Start.Line > 0);
+  }
 }

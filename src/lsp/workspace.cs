@@ -257,21 +257,44 @@ public class Workspace
       if(Path2Doc.TryGetValue(path, out var document) && IsInsideString(document, position))
         return items;
 
+      // Build auto-import edits for source modules not yet imported in the current document.
+      // Computed before the dot-trigger branch so both paths can attach them.
+      Dictionary<string, TextEdit> import_edits = null;
+      if(document != null)
+      {
+        var (already_imported, insert_pos) = GetImportContext(document);
+        var curr_module = document.Processed.module.name;
+        import_edits = new Dictionary<string, TextEdit>();
+        foreach(var kv in Path2Proc)
+        {
+          var mod_name = kv.Value.module.name;
+          if(mod_name == curr_module || already_imported.Contains(mod_name))
+            continue;
+          import_edits[mod_name] = new TextEdit
+          {
+            Range = new Range(insert_pos, insert_pos),
+            NewText = $"import \"{mod_name}\"\n",
+          };
+        }
+      }
+
       if(trigger_character == "." && document != null)
       {
         var (scope, static_only) = GetScopeBeforeDot(document, position, Path2Proc);
-        AddMemberCompletions(items, seen, scope, static_only);
+        AddMemberCompletions(items, seen, scope, static_only, import_edits);
         return items;
       }
 
       // Offer symbols from every module in the workspace, not just the current one and its imports.
       // A namespace can be split across multiple files, so deduplicate by qualified label.
       var seenLabels = new HashSet<string>();
+
       foreach(var kv in Path2Proc)
-        AddModuleNsCompletions(kv.Value.module.ns, "", items, seen, seenLabels);
+        AddModuleNsCompletions(kv.Value.module.ns, "", items, seen, seenLabels, import_edits);
 
       // Native modules (std, std.io, etc.) are registered in Types but not linked
       // into any source module namespace — add their top-level symbols explicitly.
+      // Native modules are always available without an import, so no import_edits here.
       foreach(var m in Types.GetModules())
         AddModuleNsCompletions(m.ns, "", items, seen, seenLabels);
 
@@ -632,8 +655,51 @@ public class Workspace
 
   // Collects own symbols from a module namespace into the completion list, recursing into
   // sub-namespaces and emitting fully-qualified labels (e.g. "ns.NsFunc", "std.io.Write").
+  // Scans the document for existing `import "..."` statements.
+  // Returns the set of already-imported module names and the position where a new
+  // import line should be inserted (right after the last existing import, or line 0).
+  static (HashSet<string> imported, Position insert_pos) GetImportContext(BHLDocument document)
+  {
+    var imported = new HashSet<string>();
+    int last_import_line = -1; // 0-based LSP line of the last import keyword seen
+
+    // TermNodes are stored in reverse source order (GetTerminalNodes walks children
+    // right-to-left).  Scan for IMPORT tokens; their associated NORMALSTRING sibling
+    // sits at a lower index (i - 1), so search backwards.
+    var nodes = document.TermNodes;
+    for(int i = 0; i < nodes.Count; i++)
+    {
+      var tok = nodes[i];
+      if(tok.Symbol.Type != bhlLexer.IMPORT)
+        continue;
+
+      int import_line = tok.Symbol.Line; // ANTLR 1-based
+      last_import_line = import_line - 1; // convert to 0-based
+
+      // The NORMALSTRING (the quoted path) is on the same line, at a lower index.
+      for(int j = i - 1; j >= 0; j--)
+      {
+        var prev = nodes[j];
+        if(prev.Symbol.Line != import_line)
+          break;
+        if(prev.Symbol.Type == bhlLexer.NORMALSTRING)
+        {
+          var raw = prev.GetText(); // e.g. "bhl1"  (includes the quotes)
+          if(raw.Length >= 2)
+            imported.Add(raw.Substring(1, raw.Length - 2));
+          break;
+        }
+      }
+    }
+
+    // Insert after the last import line, or at the very top if there are none.
+    var insert_pos = new Position(last_import_line + 1, 0);
+    return (imported, insert_pos);
+  }
+
   static void AddModuleNsCompletions(
-    Namespace ns, string prefix, List<CompletionItem> items, HashSet<Symbol> seen, HashSet<string> seenLabels)
+    Namespace ns, string prefix, List<CompletionItem> items, HashSet<Symbol> seen, HashSet<string> seenLabels,
+    Dictionary<string, TextEdit> import_edits = null)
   {
     foreach(var sym in ns.members)
     {
@@ -643,16 +709,16 @@ public class Workspace
           continue;
         var label = prefix.Length > 0 ? prefix + "." + ns_sym.name : ns_sym.name;
         if(seenLabels.Add(label))
-          AddCompletionItem(items, seen, ns_sym, label);
+          AddCompletionItem(items, seen, ns_sym, label, import_edits);
         // Always recurse even if this namespace label was already seen — another module
         // fragment may contribute new sub-symbols under the same namespace name.
-        AddModuleNsCompletions(ns_sym, label, items, seen, seenLabels);
+        AddModuleNsCompletions(ns_sym, label, items, seen, seenLabels, import_edits);
       }
       else
       {
         var label = prefix.Length > 0 ? prefix + "." + sym.name : sym.name;
         if(seenLabels.Add(label))
-          AddCompletionItem(items, seen, sym, label);
+          AddCompletionItem(items, seen, sym, label, import_edits);
       }
     }
   }
@@ -699,18 +765,20 @@ public class Workspace
     }
   }
 
-  static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope, bool static_only = false)
+  static void AddMemberCompletions(List<CompletionItem> items, HashSet<Symbol> seen, IScope scope, bool static_only = false, Dictionary<string, TextEdit> import_edits = null)
   {
     if(scope is IEnumerable<Symbol> ies)
       foreach(var sym in ies)
         if(static_only ? sym.IsStatic() : !sym.IsStatic())
-          AddCompletionItem(items, seen, sym);
+          AddCompletionItem(items, seen, sym, sym.name, import_edits);
   }
 
   static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym)
     => AddCompletionItem(items, seen, sym, sym.name);
 
-  static void AddCompletionItem(List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym, string label)
+  static void AddCompletionItem(
+    List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym, string label,
+    Dictionary<string, TextEdit> import_edits = null)
   {
     if(!seen.Add(sym))
       return;
@@ -730,11 +798,16 @@ public class Workspace
     var suffix = (is_native ? " [native]" : "") + (module_name != null ? $" [{module_name}]" : "");
     var detail = suffix.Length > 0 ? base_desc + suffix : base_desc;
 
+    TextEditContainer additional_edits = null;
+    if(import_edits != null && module_name != null && import_edits.TryGetValue(module_name, out var import_edit))
+      additional_edits = new TextEditContainer(import_edit);
+
     items.Add(new CompletionItem
     {
       Label = label,
       Kind = GetCompletionKind(sym),
       Detail = detail,
+      AdditionalTextEdits = additional_edits,
     });
   }
 
