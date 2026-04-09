@@ -262,7 +262,7 @@ public class Workspace
       Dictionary<string, TextEdit> import_edits = null;
       if(document != null)
       {
-        var (already_imported, insert_pos) = GetImportContext(document);
+        var (already_imported, insert_pos) = GetImportContext(document, ProjConf.inc_path);
         var curr_module = document.Processed.module.name;
         import_edits = new Dictionary<string, TextEdit>();
         foreach(var kv in Path2Proc)
@@ -276,6 +276,27 @@ public class Workspace
             NewText = $"import \"{mod_name}\"\n",
           };
         }
+        foreach(var m in Types.GetModules())
+        {
+          var mod_name = m.name;
+          if(string.IsNullOrEmpty(mod_name) || already_imported.Contains(mod_name))
+            continue;
+          import_edits[mod_name] = new TextEdit
+          {
+            Range = new Range(insert_pos, insert_pos),
+            NewText = $"import \"{mod_name}\"\n",
+          };
+        }
+      }
+
+      // Sublime Text (and some other clients) omit the context field entirely,
+      // so trigger_character is null even when the user just typed '.'.
+      // Fall back to inspecting the character immediately before the cursor.
+      if(trigger_character == null && document != null)
+      {
+        int idx = document.Index.CalcByteIndex(position.Line, position.Character - 1);
+        if(idx >= 0 && idx < document.Text.Length && document.Text[idx] == '.')
+          trigger_character = ".";
       }
 
       if(trigger_character == "." && document != null)
@@ -294,9 +315,8 @@ public class Workspace
 
       // Native modules (std, std.io, etc.) are registered in Types but not linked
       // into any source module namespace — add their top-level symbols explicitly.
-      // Native modules are always available without an import, so no import_edits here.
       foreach(var m in Types.GetModules())
-        AddModuleNsCompletions(m.ns, "", items, seen, seenLabels);
+        AddModuleNsCompletions(m.ns, "", items, seen, seenLabels, import_edits);
 
       foreach(var sym in Types.ns)
         AddCompletionItem(items, seen, sym);
@@ -651,10 +671,11 @@ public class Workspace
   // Scans the document for existing `import "..."` statements.
   // Returns the set of already-imported module names and the position where a new
   // import line should be inserted (right after the last existing import, or line 0).
-  static (HashSet<string> imported, Position insert_pos) GetImportContext(BHLDocument document)
+  static (HashSet<string> imported, Position insert_pos) GetImportContext(BHLDocument document, IncludePath inc_path)
   {
     var imported = new HashSet<string>();
     int last_import_line = -1; // 0-based LSP line of the last import keyword seen
+    var self_path = document.Uri.PathNormalized();
 
     var nodes = document.TermNodes;
     for(int i = 0; i < nodes.Count; i++)
@@ -674,9 +695,18 @@ public class Workspace
           break;
         if(next.Symbol.Type == bhlLexer.NORMALSTRING)
         {
-          var raw = next.GetText(); // e.g. "bhl1"  (includes the quotes)
+          var raw = next.GetText(); // e.g. "./utils" or "atf/utils" (includes quotes)
           if(raw.Length >= 2)
-            imported.Add(raw.Substring(1, raw.Length - 2));
+          {
+            var import_str = raw.Substring(1, raw.Length - 2);
+            // Normalize relative imports (e.g. "./utils") to module names (e.g. "atf/utils").
+            try
+            {
+              inc_path.ResolvePath(self_path, import_str, out _, out var mod_name);
+              imported.Add(mod_name);
+            }
+            catch { imported.Add(import_str); }
+          }
           break;
         }
       }

@@ -16,6 +16,8 @@ public class BHLDocument
 
   public List<TerminalNodeImpl> TermNodes { get; } = new List<TerminalNodeImpl>();
 
+  public string Text { get; private set; } = "";
+
   public BHLDocument(DocumentUri uri)
   {
     this.Uri = uri;
@@ -24,6 +26,7 @@ public class BHLDocument
   public void Update(string text, ANTLR_Processor proc)
   {
     this.Processed = proc;
+    this.Text = text;
 
     Index.Update(text);
 
