@@ -21,14 +21,19 @@ elif [[ -n "${BHL_REBUILD:-}" ]]; then
   needs_rebuild=true
 fi
 
+VERBOSITY=""
+if [[ -n "${BHL_SILENT:-}" ]]; then
+  VERBOSITY="--verbosity q -nologo"
+fi
+
 if [[ "$needs_rebuild" == true ]]; then
   (
     cd "$SCRIPT_DIR"
 
     # Best-effort clean; do not fail the whole script if clean fails.
-    dotnet clean "$PROJECT_FILE" || true
+    dotnet clean "$PROJECT_FILE" $VERBOSITY || true
 
-    dotnet publish "$PROJECT_FILE"
+    dotnet publish "$PROJECT_FILE" $VERBOSITY
   )
 
   # Refresh timestamp if the publish created the DLL.

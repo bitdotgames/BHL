@@ -6,6 +6,9 @@ set "PROJECT=%DIR%bhl.csproj"
 set "BHL_DLL=%DIR%build\bhl\Release\net8.0\bhl.dll"
 set "VERS=%DIR%src\vm\version.cs"
 
+set "VERBOSITY="
+IF DEFINED BHL_SILENT set "VERBOSITY=--verbosity q -nologo"
+
 IF DEFINED BHL_REBUILD GOTO :BUILD
 IF NOT EXIST "%BHL_DLL%" GOTO :BUILD
 
@@ -17,8 +20,8 @@ IF errorlevel 1 GOTO :BUILD
 GOTO :RUN
 
 :BUILD
-dotnet clean "%PROJECT%"
-dotnet publish "%PROJECT%" || GOTO :ERROR
+dotnet clean "%PROJECT%" %VERBOSITY%
+dotnet publish "%PROJECT%" %VERBOSITY% || GOTO :ERROR
 if EXIST "%BHL_DLL%" (
     powershell -NoProfile -Command "(Get-Item '%BHL_DLL%').LastWriteTime = Get-Date"
 )
