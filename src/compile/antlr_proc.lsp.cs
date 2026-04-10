@@ -67,6 +67,8 @@ public partial class ANTLR_Processor
 
   public List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
 
+  HashSet<int> semantic_token_idx = new HashSet<int>();
+
   List<uint> encoded_semantic_tokens = new List<uint>();
 
   void LSP_SetSymbol(AnnotatedParseTree ann, Symbol s)
@@ -91,6 +93,9 @@ public partial class ANTLR_Processor
   void LSP_AddSemanticToken(ITerminalNode token, SemanticToken idx, SemanticModifier mods = 0)
   {
     if(token == null)
+      return;
+
+    if(!semantic_token_idx.Add(token.Symbol.StartIndex))
       return;
 
     semantic_tokens.Add(new SemanticTokenNode()
@@ -120,6 +125,9 @@ public partial class ANTLR_Processor
       return;
 
     if(a.Line != b.Line)
+      return;
+
+    if(!semantic_token_idx.Add(a.StartIndex))
       return;
 
     semantic_tokens.Add(new SemanticTokenNode()

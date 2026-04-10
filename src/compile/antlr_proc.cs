@@ -143,6 +143,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     passes.Clear();
 
     semantic_tokens.Clear();
+    semantic_token_idx.Clear();
     encoded_semantic_tokens.Clear();
 
     InitScope();
