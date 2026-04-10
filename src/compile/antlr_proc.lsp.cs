@@ -28,6 +28,7 @@ public partial class ANTLR_Processor
     Definition  = 2,
     Readonly    = 4,
     Static      = 8,
+    Deprecated  = 16,
   }
 
   public static class SemanticTokens
@@ -52,6 +53,7 @@ public partial class ANTLR_Processor
       "definition",    // 2
       "readonly",      // 4
       "static",        // 8
+      "deprecated",    // 16
     };
   }
 

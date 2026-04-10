@@ -62,6 +62,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   //NOTE: non-normalized names
   Dictionary<bhlParser.MimportContext, string> raw_imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
+  Dictionary<Module, bhlParser.MimportContext> import_to_ctx = new Dictionary<Module, bhlParser.MimportContext>();
+
   //NOTE: module.ns linked with types.ns
   Namespace ns;
 
@@ -129,6 +131,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     errors = new CompileErrors();
 
     raw_imports_parsed.Clear();
+    import_to_ctx.Clear();
     imports.Clear();
     annotated_nodes.Clear();
 

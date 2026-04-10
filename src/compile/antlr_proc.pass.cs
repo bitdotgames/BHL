@@ -143,6 +143,9 @@ public partial class ANTLR_Processor
       WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
 
     foreach(var kv in proc_bundle.file2proc)
+      WrapError(kv.Value, () => kv.Value.Phase_CheckUnusedImports());
+
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_SetResult());
   }
 
@@ -269,6 +272,7 @@ public partial class ANTLR_Processor
       module.AddImportedGlobalVars(imported_module);
 
       imports.Add(imported_module);
+      import_to_ctx[imported_module] = kv.Key;
       ast_import.module_names.Add(imported_module.name);
     }
 
@@ -338,6 +342,38 @@ public partial class ANTLR_Processor
       Pass_ParseFuncBlock(pass);
 
       PopScope();
+    }
+  }
+
+  internal void Phase_CheckUnusedImports()
+  {
+    if(imports.Count == 0)
+      return;
+
+    var used_modules = new HashSet<Module>();
+    foreach(var ann in annotated_nodes.Values)
+    {
+      if(ann.lsp_symbol == null)
+        continue;
+      var m = ann.lsp_symbol.scope?.GetModule();
+      if(m != null)
+        used_modules.Add(m);
+    }
+
+    foreach(var imported_module in imports)
+    {
+      if(used_modules.Contains(imported_module))
+        continue;
+      if(!import_to_ctx.TryGetValue(imported_module, out var ctx))
+        continue;
+
+      int import_idx = ctx.IMPORT().Symbol.StartIndex;
+      int string_idx = ctx.NORMALSTRING().Symbol.StartIndex;
+      foreach(var tok in semantic_tokens)
+      {
+        if(tok.idx == import_idx || tok.idx == string_idx)
+          tok.mods |= SemanticModifier.Deprecated;
+      }
     }
   }
 

@@ -49,7 +49,8 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
       SemanticTokenModifier.Declaration,
       SemanticTokenModifier.Definition,
       SemanticTokenModifier.Readonly,
-      SemanticTokenModifier.Static
+      SemanticTokenModifier.Static,
+      SemanticTokenModifier.Deprecated
     };
 
     return new ()
