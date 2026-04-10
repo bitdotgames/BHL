@@ -27,6 +27,8 @@ public class Workspace
 
   public bool Indexed { get; private set; }
 
+  public int IndexedFileCount => Path2Proc.Count;
+
   HashSet<string> _filesWithDiagnostics = new HashSet<string>();
 
   ILogger _logger;

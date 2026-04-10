@@ -24,6 +24,41 @@ public class TestLSPSemanticTokens : TestLSPShared, IDisposable
   }
 
   [Fact]
+  public async Task TestSemanticTokensImports()
+  {
+    string bhl1 = @"
+func void foo() {}
+";
+    string bhl2 = @"
+func void bar() {}
+";
+    string bhl3 = @"
+import ""bhl1""
+import ""bhl2""
+func void test() {}
+";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    MakeTestDocument("bhl2.bhl", bhl2);
+    var uri3 = MakeTestDocument("bhl3.bhl", bhl3);
+
+    await SendInit(srv);
+
+    var result =
+      await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
+        "textDocument/semanticTokens/full",
+        new ()
+        {
+          TextDocument = uri3
+        }
+      );
+
+    // Print tokens for inspection:
+    // import(kw) "bhl1"(str) import(kw) "bhl2"(str) func(kw) void(type) test(func,def)
+    Console.WriteLine("Tokens: " + string.Join(",", result.Data));
+  }
+
+  [Fact]
   public async Task TestSemanticTokensBasic()
   {
     string bhl = @"

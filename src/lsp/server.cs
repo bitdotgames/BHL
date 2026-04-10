@@ -1,10 +1,10 @@
 using System;
 using System.IO;
-using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +17,6 @@ public static class ServerFactory
     Types types, Workspace workspace, CancellationToken ct = default)
   {
     logger.Information("BHL server starting...");
-    //IObserver<WorkDoneProgressReport> workDone = null;
 
     var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
@@ -86,28 +85,27 @@ public static class ServerFactory
           proj.LoadBindings().Register(types);
 
           workspace.Init(types, proj, logger);
-
-          //TODO: run it in async manner with progress
-          await workspace.IndexFilesAsync(token);
-
-          //var manager = server.WorkDoneManager.For(
-          //  request, new WorkDoneProgressBegin
-          //  {
-          //    Title = "Server is starting...",
-          //    Percentage = 10,
-          //  }
-          //);
-          //work_done = manager;
-          //work_done.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
         })
-        .OnInitialized((server, request, response, token) =>
+        .OnInitialized(async (server, request, response, token) =>
         {
           logger.Debug("OnInitialized");
 
+          server.SendNotification("window/showMessage", new ShowMessageParams
+          {
+            Type = MessageType.Log,
+            Message = "BHL: Indexing...",
+          });
+
+          await workspace.IndexFilesAsync(token);
+
+          server.SendNotification("window/showMessage", new ShowMessageParams
+          {
+            Type = MessageType.Log,
+            Message = $"BHL: {workspace.IndexedFileCount} file(s) indexed",
+          });
+
           var diagnostics = workspace.GetDiagnosticsToPublish();
           _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
-
-          return Task.CompletedTask;
         })
         .OnStarted((server, token) =>
         {
