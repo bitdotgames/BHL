@@ -632,7 +632,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ref int chain_offset
   )
   {
-    var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+    var name_text = curr_name.GetText();
+
+    if(name_text == "this" || name_text == "base")
+      LSP_AddSemanticToken(curr_name, SemanticToken.Keyword);
+
+    var name_symb = scope.ResolveWithFallback(name_text);
 
     TryProcessClassBaseCall(
       ref curr_name,
