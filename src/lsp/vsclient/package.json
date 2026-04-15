@@ -1,19 +1,47 @@
 {
-  "name": "vsclient",
-  "version": "0.0.1",
-  "description": "LSP client for BHL",
+  "name": "bhl",
+  "displayName": "BHL",
+  "version": "0.0.2",
+  "description": "BHL language support",
   "author": "BHL",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "engines": {
     "vscode": "^1.79.0"
   },
   "categories": ["Programming Languages"],
   "activationEvents": [
-    "onLanguage:mylanguage"
+    "onLanguage:bhl"
   ],
   "main": "./out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "bhl",
+        "aliases": ["BHL", "bhl"],
+        "extensions": [".bhl"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "BHL",
+      "properties": {
+        "bhl.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the bhl executable. Defaults to 'bhl' on PATH."
+        },
+        "bhl.logFile": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the LSP log file. If set, passes --log-file=<path> to the server."
+        },
+        "bhl.forceRebuild": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force full rebuild on startup by setting BHL_REBUILD=1."
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -21,10 +49,11 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "^1.79.0",
     "@types/node": "^16.18.0",
-    "vscode-languageclient": "^5.1.1",
-    "vscode-jsonrpc": "^4.0.0",
     "typescript": "^4.9.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
   }
 }

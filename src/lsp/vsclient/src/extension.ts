@@ -1,45 +1,47 @@
 'use strict';
 
-import { workspace, Disposable, ExtensionContext } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions,
-        TransportKind, InitializeParams } from 'vscode-languageclient';
-import { Trace } from 'vscode-jsonrpc';
+import * as path from 'path';
+import { workspace, ExtensionContext } from 'vscode';
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
+  const config = workspace.getConfiguration('bhl');
+  const executablePath = config.get<string>('executablePath') || 'bhl';
+  const logFile = config.get<string>('logFile') || '';
+  const forceRebuild = config.get<boolean>('forceRebuild') || false;
 
-    let cmd = {
-      command: process.env.HOME + '/dev/bhl/bhl',
-      args: ['lsp', '--log-file=' + process.env.HOME + '/tmp/bhl.lsp']
-    }
+  const args = ['lsp'];
+  if (logFile) {
+    args.push(`--log-file=${logFile}`);
+  }
 
-    // If the extension is launched in debug mode then the debug server options are used
-    // Otherwise the run options are used
-    let serverOptions: ServerOptions = {
-        run: cmd,
-        debug: cmd
-    }
+  const serverOptions: ServerOptions = {
+    command: executablePath,
+    args,
+    options: forceRebuild ? { env: { ...process.env, BHL_REBUILD: '1', BHL_SILENT: '1' } } : {},
+  };
 
-    // Options to control the language client
-    let clientOptions: LanguageClientOptions = {
-        // Register the server for plain text documents
-        documentSelector: [
-            {
-                pattern: '**/*.bhl',
-            }
-        ],
-        synchronize: {
-            // Synchronize the setting section 'languageServerExample' to the server
-            configurationSection: 'BHL',
-            fileEvents: workspace.createFileSystemWatcher('**/*.bhl')
-        },
-    }
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [
+      { scheme: 'file', language: 'bhl' }
+    ],
+    synchronize: {
+      fileEvents: workspace.createFileSystemWatcher('**/*.bhl')
+    },
+  };
 
-    // Create the language client and start the client.
-    const client = new LanguageClient('BHL', 'LSP client for BHL', serverOptions, clientOptions);
-    client.trace = Trace.Verbose;
-    let disposable = client.start();
+  client = new LanguageClient('bhl', 'BHL Language Server', serverOptions, clientOptions);
+  client.start();
 
-    // Push the disposable to the context's subscriptions so that the
-    // client can be deactivated on extension deactivation
-    context.subscriptions.push(disposable);
+  context.subscriptions.push(client);
+}
+
+export function deactivate(): Thenable<void> | undefined {
+  return client?.stop();
 }

@@ -1,10 +1,54 @@
+# Visual Studio Code
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) and npm
+- `vsce` packaging tool: `npm install -g @vscode/vsce`
+- The `bhl` executable on your PATH (or configure its path in settings)
+
+## Build and install the extension
+
+```sh
+cd src/lsp/vsclient
+npm install
+npm run package       # produces bhl-0.0.1.vsix
+code --install-extension bhl-0.0.1.vsix
+```
+
+Reload VS Code. The extension activates automatically when you open a `.bhl` file.
+
+## Settings
+
+Open **Code > Settings > Extensions ** and search for **BHL**, or add to `settings.json`:
+
+```json
+{
+  "bhl.executablePath": "/path/to/bhl",
+  "bhl.logFile": "/tmp/bhlsp.log",
+  "bhl.forceRebuild": false
+}
+```
+
+| Setting | Default | Description |
+|---|---|---|
+| `bhl.executablePath` | `""` (uses `bhl` on PATH) | Path to the `bhl` executable |
+| `bhl.logFile` | `""` (disabled) | Path for the LSP log file |
+| `bhl.forceRebuild` | `false` | Set `BHL_REBUILD=1` to force full rebuild on startup (recommended if you want to apply LSP server fixes on each client restart) |
+
+## Project setup
+
+Open the folder that contains your `bhl.proj` file as the workspace root (**File > Open Folder**).
+The LSP server detects this file and initializes properly.
+
+---
+
 # SublimeText
 
 ## Syntax file
 
-First you have to setup a proper syntax which declares scope for .bhl files. 
+First you have to setup a proper syntax which declares scope for .bhl files.
 
-* Tools > Developer > New Syntax 
+* Tools > Developer > New Syntax
 * Add the following contents and name the file as **bhl.sublime-syntax**
 
 ```
@@ -60,38 +104,64 @@ Once the bhl LSP server starts via Sublime it will detect this directory and wil
 
 # NeoVim
 
-* Install 'neovim/nvim-lspconfig' extension which simplifies configuration of LSP servers. For example 
-using Plug:
+## Neovim 0.11+ (built-in LSP)
+
+No plugins required. Add to your config:
+
+```lua
+vim.lsp.config("bhl", {
+  cmd = { "/path/to/bhl", "lsp", "--log-file=/tmp/bhlsp.log" },
+  filetypes = { "bhl" },
+  root_markers = { "bhl.proj" },
+})
+vim.lsp.enable("bhl")
+
+vim.filetype.add({ extension = { bhl = "bhl" } })
+```
+
+To force full rebuild on startup:
+
+```lua
+vim.env.BHL_REBUILD = 1
+```
+
+## Neovim (nvim-lspconfig)
+
+Install `nvim-lspconfig`:
 
 ```
 Plug 'neovim/nvim-lspconfig'
 ```
 
-* Install telescope extension and configure it for basic LSP actions:
+Configure LSP for bhl files:
 
-```
-Plug 'nvim-lua/plenary.nvim' 
-Plug 'nvim-telescope/telescope.nvim' 
-nnoremap <leader>r :Telescope lsp_references<CR>
-nnoremap <leader>d :Telescope lsp_definitions<CR>
-```
-
-* Configure LSP for bhl files using Lua:
-
-```
+```lua
 local configs = require('lspconfig.configs')
--- Check if it's already defined for when reloading this file.
 if not configs.bhl then
   configs.bhl = {
     default_config = {
-      cmd = {'/path/to//bhl/bhl', 'lsp', '--log-file=/tmp/bhlsp.log'},
-      filetypes = {'bhl'},
-      root_dir = lspconfig.util.root_pattern('bhl.proj'),
+      cmd = { '/path/to/bhl', 'lsp', '--log-file=/tmp/bhlsp.log' },
+      filetypes = { 'bhl' },
+      root_dir = require('lspconfig.util').root_pattern('bhl.proj'),
       settings = {},
-    };
+    },
   }
 end
-lspconfig.bhl.setup{}
-vim.cmd [[ au BufNewFile,BufRead /*.bhl setf bhl ]]
+require('lspconfig').bhl.setup{}
+
+vim.filetype.add({ extension = { bhl = "bhl" } })
 ```
+
+## Optional: Telescope for LSP navigation
+
+```lua
+-- Plug 'nvim-lua/plenary.nvim'
+-- Plug 'nvim-telescope/telescope.nvim'
+vim.keymap.set('n', '<leader>r', '<cmd>Telescope lsp_references<CR>')
+vim.keymap.set('n', '<leader>d', '<cmd>Telescope lsp_definitions<CR>')
+```
+
+## Project setup
+
+Open Neovim from the directory containing your `bhl.proj` file, or ensure that directory is an ancestor of the files you edit. The LSP server uses `bhl.proj` as the root marker.
 
