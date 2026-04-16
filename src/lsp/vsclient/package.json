@@ -1,7 +1,7 @@
 {
   "name": "bhl",
   "displayName": "BHL",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "BHL language support",
   "author": "BHL",
   "engines": {

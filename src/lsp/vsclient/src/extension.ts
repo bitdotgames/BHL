@@ -21,10 +21,16 @@ export function activate(context: ExtensionContext) {
     args.push(`--log-file=${logFile}`);
   }
 
+  const isWindows = process.platform === 'win32';
+  const spawnOptions = {
+    shell: isWindows,
+    ...(forceRebuild ? { env: { ...process.env, BHL_REBUILD: '1', BHL_SILENT: '1' } } : {}),
+  };
+
   const serverOptions: ServerOptions = {
     command: executablePath,
     args,
-    options: forceRebuild ? { env: { ...process.env, BHL_REBUILD: '1', BHL_SILENT: '1' } } : {},
+    options: spawnOptions,
   };
 
   const clientOptions: LanguageClientOptions = {
