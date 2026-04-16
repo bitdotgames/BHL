@@ -210,14 +210,20 @@ public static class StdioMonitor
   // -------------------- Windows --------------------
   private const int STD_INPUT_HANDLE = -10;
   private const int STD_OUTPUT_HANDLE = -11;
-  private const uint WAIT_OBJECT_0 = 0;
-  private const uint WAIT_TIMEOUT = 0x102;
+  private const int ERROR_BROKEN_PIPE = 109;
+  private const int ERROR_NO_DATA = 232;
 
   [DllImport("kernel32.dll", SetLastError = true)]
   private static extern SafeFileHandle GetStdHandle(int nStdHandle);
 
   [DllImport("kernel32.dll", SetLastError = true)]
-  private static extern uint WaitForSingleObject(SafeHandle hHandle, uint dwMilliseconds);
+  private static extern bool PeekNamedPipe(
+    SafeHandle hNamedPipe,
+    IntPtr lpBuffer,
+    uint nBufferSize,
+    IntPtr lpBytesRead,
+    IntPtr lpTotalBytesAvail,
+    IntPtr lpBytesLeftThisMsg);
 
   private static bool IsHandleClosedWin(int stdHandle)
   {
@@ -225,8 +231,16 @@ public static class StdioMonitor
     if (handle.IsInvalid)
       return true;
 
-    uint result = WaitForSingleObject(handle, 0);
-    return result == WAIT_OBJECT_0;
+    // PeekNamedPipe works on both anonymous and named pipes and correctly
+    // distinguishes "data available" from "pipe broken", unlike WaitForSingleObject
+    // which signals on both conditions.
+    bool ok = PeekNamedPipe(handle, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+    if (!ok)
+    {
+      int err = Marshal.GetLastWin32Error();
+      return err == ERROR_BROKEN_PIPE || err == ERROR_NO_DATA;
+    }
+    return false;
   }
 
   // -------------------- Unix --------------------
