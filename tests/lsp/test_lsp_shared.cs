@@ -332,6 +332,44 @@ public class TestLSPShared : BHL_TestBase
     return result;
   }
 
+  public static async Task<WorkspaceEdit> RenameSymbol(TestLSPHost srv, DocumentUri uri, string needle, string newName)
+  {
+    var pos = FindPos(File.ReadAllText(uri.PathNormalized()), needle);
+
+    return await srv.SendRequestAsync<RenameParams, WorkspaceEdit>(
+      "textDocument/rename",
+      new RenameParams()
+      {
+        TextDocument = uri,
+        Position = pos.ToPosition(),
+        NewName = newName,
+      }
+    );
+  }
+
+  // Returns a sorted list of (filePath, startLine, startChar, endLine, endChar, newText) tuples
+  // from a WorkspaceEdit, for easy comparison in tests.
+  public static List<(string file, int sl, int sc, int el, int ec, string newText)> FlattenEdits(WorkspaceEdit edit)
+  {
+    var result = new List<(string file, int sl, int sc, int el, int ec, string newText)>();
+    if(edit?.Changes == null)
+      return result;
+    foreach(var kv in edit.Changes)
+    {
+      var file = kv.Key.PathNormalized();
+      foreach(var e in kv.Value)
+        result.Add((file, e.Range.Start.Line, e.Range.Start.Character, e.Range.End.Line, e.Range.End.Character, e.NewText));
+    }
+    result.Sort((a, b) => {
+      int c = string.Compare(a.file, b.file, StringComparison.Ordinal);
+      if(c != 0) return c;
+      c = a.sl.CompareTo(b.sl);
+      if(c != 0) return c;
+      return a.sc.CompareTo(b.sc);
+    });
+    return result;
+  }
+
   public static async Task<LocationContainer> FindReferences(TestLSPHost srv, DocumentUri uri, string needle)
   {
     var pos = FindPos(File.ReadAllText(uri.PathNormalized()), needle);

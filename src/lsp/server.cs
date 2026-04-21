@@ -41,6 +41,7 @@ public static class ServerFactory
         .WithHandler<handlers.TextDocumentHoverHandler>()
         .WithHandler<handlers.TextDocumentCompletionHandler>()
         .WithHandler<handlers.TextDocumentSignatureHelpHandler>()
+        .WithHandler<handlers.TextDocumentRenameHandler>()
         .WithHandler<handlers.ExecuteCommandHandler>()
         .OnInitialize(async (server, request, token) =>
         {

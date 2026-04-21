@@ -730,6 +730,8 @@ public partial class ANTLR_Processor
           AddError(vd.NAME(), symb_err.Message);
           return;
         }
+
+        LSP_SetSymbol(vd.NAME(), fld_symb);
       }
 
       var fd = cm.funcDecl();
@@ -784,6 +786,8 @@ public partial class ANTLR_Processor
 
         if(!pass.class_symb.TryDefine(func_symb, out SymbolError symb_err))
           AddError(fd.NAME(), symb_err.Message);
+
+        LSP_SetSymbol(fd.NAME(), func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.AddChild(func_ast);
