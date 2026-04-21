@@ -1,12 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace bhl
 {
 
 public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 {
+  static int _type_id_counter = -1;
+
+  //unique runtime ID used for O(1) itable lookup
+  public readonly int type_id;
+
   internal SymbolsStorage members;
 
   public TypeSet<InterfaceSymbol> inherits = new TypeSet<InterfaceSymbol>();
@@ -16,6 +22,7 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbo
   public InterfaceSymbol(Origin origin, string name)
     : base(origin, name)
   {
+    type_id = Interlocked.Increment(ref _type_id_counter);
     this.members = new SymbolsStorage(this);
   }
 

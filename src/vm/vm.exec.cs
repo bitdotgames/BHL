@@ -1455,7 +1455,7 @@ public partial class VM
 
           var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
           var class_type = (ClassSymbol)self.type;
-          var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
+          var func_symb = (FuncSymbolScript)class_type._itable[iface_symb.type_id][iface_func_idx];
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();

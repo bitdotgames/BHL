@@ -21,8 +21,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   //to actual class methods indices:
   //  [IFoo][0=>3,1=>1,1=>0]
   //  [IBar][0=>2,1=>0]
-  internal Dictionary<InterfaceSymbol, List<FuncSymbol>> _itable;
-  internal Dictionary<int, FuncSymbol> _vtable;
+  //sparse array indexed by InterfaceSymbol.type_id for O(1) dispatch
+  internal FuncSymbol[][] _itable;
+  internal FuncSymbol[] _vtable;
 
   HashSet<IInstantiable> related_types;
 
@@ -320,7 +321,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       return;
 
     //virtual methods lookup table
-    _vtable = new Dictionary<int, FuncSymbol>();
+    _vtable = new FuncSymbol[_all_members.Length];
 
     for (int i = 0; i < _all_members.Length; ++i)
     {
@@ -329,8 +330,6 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     }
 
     //interfaces lookup table
-    _itable = new Dictionary<InterfaceSymbol, List<FuncSymbol>>();
-
     var all = new HashSet<IInstantiable>();
     if (super_class != null)
     {
@@ -341,20 +340,25 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     for (int i = 0; i < implements.Count; ++i)
       all.UnionWith(implements[i].GetAllRelatedTypesSet());
 
+    int max_type_id = -1;
+    foreach (var imp in all)
+      if (((InterfaceSymbol)imp).type_id > max_type_id)
+        max_type_id = ((InterfaceSymbol)imp).type_id;
+
+    _itable = new FuncSymbol[max_type_id + 1][];
     foreach (var imp in all)
     {
-      var ifs2fn = new List<FuncSymbol>();
       var ifs = (InterfaceSymbol)imp;
-      _itable.Add(ifs, ifs2fn);
-
+      var methods = new FuncSymbol[ifs.members.Count];
       for (int midx = 0; midx < ifs.members.Count; ++midx)
       {
         var m = ifs.members[midx];
         var symb = Resolve(m.name) as FuncSymbol;
         if (symb == null)
           throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
-        ifs2fn.Add(symb);
+        methods[midx] = symb;
       }
+      _itable[ifs.type_id] = methods;
     }
   }
 
