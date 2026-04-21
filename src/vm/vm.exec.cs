@@ -1579,16 +1579,8 @@ public partial class VM
           if(args_num > 0)
           {
             //moving args up the stack, replacing ptr
-            for(int i = 0; i < exec.stack.sp - ptr_idx - 1; ++i)
-              exec.stack.vals[ptr_idx + i] = exec.stack.vals[ptr_idx + 1 + i];
-            //alternative version
-            //Array.Copy(
-            //  exec.stack.vals,
-            //  ptr_idx + 1,
-            //  exec.stack.vals,
-            //  ptr_idx,
-            //  exec.stack.sp - ptr_idx - 1
-            //);
+            int count = exec.stack.sp - ptr_idx - 1;
+            Array.Copy(exec.stack.vals, ptr_idx + 1, exec.stack.vals, ptr_idx, count);
             ref var tail = ref exec.stack.vals[--exec.stack.sp];
             tail.obj = null;
             tail._refc = null;
