@@ -1341,8 +1341,7 @@ public partial class VM
           int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-          var args_info = new FuncArgsInfo(args_bits);
-          int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+          int self_idx = exec.stack.sp - (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK) - 1;
           ref var self = ref exec.stack.vals[self_idx];
           //NOTE: taking into account that 'this' is on the stack,
           //      args_bits doesn't include it we have to take it into
@@ -1355,7 +1354,7 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = args_info;
+          new_frame.args_info = new FuncArgsInfo(args_bits);
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
@@ -1403,8 +1402,7 @@ public partial class VM
           int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-          var args_info = new FuncArgsInfo(args_bits);
-          int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+          int self_idx = exec.stack.sp - (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK) - 1;
           ref var self = ref exec.stack.vals[self_idx];
           //NOTE: taking into account that 'this' is on the stack,
           //      args_bits doesn't include it we have to take it into
@@ -1418,7 +1416,7 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = args_info;
+          new_frame.args_info = new FuncArgsInfo(args_bits);
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
@@ -1437,8 +1435,7 @@ public partial class VM
           int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-          var args_info = new FuncArgsInfo(args_bits);
-          int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+          int self_idx = exec.stack.sp - (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK) - 1;
 
           var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
           var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
@@ -1465,8 +1462,7 @@ public partial class VM
           int virt_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-          var args_info = new FuncArgsInfo(args_bits);
-          int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+          int self_idx = exec.stack.sp - (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK) - 1;
           ref var self = ref exec.stack.vals[self_idx];
           //NOTE: taking into account that 'this' is on the stack,
           //      args_bits doesn't include it we have to take it into
@@ -1479,7 +1475,7 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = args_info;
+          new_frame.args_info = new FuncArgsInfo(args_bits);
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
