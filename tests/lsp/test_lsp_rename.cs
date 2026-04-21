@@ -209,4 +209,44 @@ public class TestLSPRename : TestLSPShared, IDisposable
     var bhl2_edits = edits.FindAll(e => e.file == uri2.PathNormalized());
     Assert.Equal(1, bhl2_edits.Count);
   }
+
+  [Fact]
+  public async Task rename_enum_item_via_usage()
+  {
+    await SendInit(srv);
+
+    // Rename via "Item.Type" usage in bhl2 — position on "Type" (after the dot)
+    // needle starts at 'T' of "Type" inside "Item.Type"
+    var edit = await RenameSymbol(srv, uri2, "Type\n", "Value");
+    var edits = FlattenEdits(edit);
+
+    // bhl1: declaration "Type = 1"; bhl2: "Item.Type" usage
+    Assert.Equal(2, edits.Count);
+    Assert.All(edits, e => Assert.Equal("Value", e.newText));
+
+    var bhl1_edits = edits.FindAll(e => e.file == uri1.PathNormalized());
+    Assert.Equal(1, bhl1_edits.Count);
+
+    var bhl2_edits = edits.FindAll(e => e.file == uri2.PathNormalized());
+    Assert.Equal(1, bhl2_edits.Count);
+  }
+
+  [Fact]
+  public async Task rename_enum_item_via_declaration()
+  {
+    await SendInit(srv);
+
+    // Rename via declaration "Type = 1" in bhl1 — must also rename all usages
+    var edit = await RenameSymbol(srv, uri1, "Type = 1", "Value");
+    var edits = FlattenEdits(edit);
+
+    Assert.Equal(2, edits.Count);
+    Assert.All(edits, e => Assert.Equal("Value", e.newText));
+
+    var bhl1_edits = edits.FindAll(e => e.file == uri1.PathNormalized());
+    Assert.Equal(1, bhl1_edits.Count);
+
+    var bhl2_edits = edits.FindAll(e => e.file == uri2.PathNormalized());
+    Assert.Equal(1, bhl2_edits.Count);
+  }
 }

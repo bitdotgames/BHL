@@ -3279,6 +3279,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(em.INT(), "duplicate value '" + em_val + "'");
         return null;
       }
+
+      LSP_SetSymbol(em.NAME(), (EnumItemSymbol)symb.members[symb.members.Count - 1]);
     }
 
     return null;
