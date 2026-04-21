@@ -254,6 +254,17 @@ public class BenchFibonacciAssorted : BHL_TestBase
   }
 
   [Benchmark]
+  public void FibonacciBHLJit()
+  {
+    // Force compile on first call; subsequent calls use the JIT fast path
+#if BHL_JIT
+    if(bhl_fib._jit_func == null)
+      BHLJit.TryCompile(bhl_fib);
+#endif
+    bhl_vm.Execute(bhl_fib, 15);
+  }
+
+  [Benchmark]
   public void FibonacciMoonsharp()
   {
     lua_vm.Call(lua_fib, DynValue.NewNumber(15));

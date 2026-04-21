@@ -3,7 +3,7 @@
     <AssemblyName>bhl_front</AssemblyName>
     <OutputType>Library</OutputType>
     <RootNamespace>bhl</RootNamespace>
-    <DefineConstants>BHL_FRONT</DefineConstants>
+    <DefineConstants>BHL_FRONT;BHL_JIT</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>CS8981</NoWarn>

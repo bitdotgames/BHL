@@ -235,6 +235,21 @@ public partial class VM
     //      (we keep it around just in case someone forgot to pop it after successful execution)
     stack.ClearAndRelease();
 
+#if BHL_JIT
+    // JIT fast path: scalar 1-arg functions compiled to native code
+    if(fs._jit_func != null && args.Count == 1)
+    {
+      ref var ret = ref stack.Push();
+      ret.num = fs._jit_func(args[0].num);
+      ret.type = fs.signature.return_type.Get() as IType;
+      return stack;
+    }
+
+    // Invocation counter — trigger JIT compilation after threshold
+    if(++fs._jit_invoke_count == BHLJit.JIT_THRESHOLD)
+      BHLJit.TryCompile(fs);
+#endif
+
     //NOTE: we push arguments using their 'natural' order since
     //      they are located exactly in this order in Frame's
     //      local arguments (stack is a part of contiguous memory)

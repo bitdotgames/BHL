@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>bhl</RootNamespace>
-    <DefineConstants>BHL_FRONT</DefineConstants>
+    <DefineConstants>BHL_FRONT;BHL_JIT</DefineConstants>
     <NoWarn>VSTHRD200</NoWarn>
   </PropertyGroup>
 

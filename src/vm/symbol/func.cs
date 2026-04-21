@@ -447,6 +447,12 @@ public class FuncSymbolScript : FuncSymbol
   internal int _ip_addr;
   public int ip_addr => _ip_addr;
 
+#if BHL_JIT
+  // JIT support — runtime only, not serialized
+  public int _jit_invoke_count;
+  public Func<double, double> _jit_func;
+#endif
+
   public FuncSymbolScript(
     Origin origin,
     FuncSignature sig,
