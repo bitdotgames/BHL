@@ -29,7 +29,7 @@ public class TestGlobals : BHL_TestBase
           .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
-          .EmitChain(Opcodes.GetGVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetGVarScalar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -59,12 +59,12 @@ public class TestGlobals : BHL_TestBase
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.MakeRef, new int[] { 0 })
-          .EmitChain(Opcodes.SetGVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetGVarScalar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
-          .EmitChain(Opcodes.SetGVar, new int[] { 0 })
-          .EmitChain(Opcodes.GetGVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetGVarScalar, new int[] { 0 })
+          .EmitChain(Opcodes.GetGVarScalar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -93,10 +93,10 @@ public class TestGlobals : BHL_TestBase
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.MakeRef, new int[] { 0 })
-          .EmitChain(Opcodes.SetGVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetGVarScalar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
-          .EmitChain(Opcodes.GetGVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetGVarScalar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);

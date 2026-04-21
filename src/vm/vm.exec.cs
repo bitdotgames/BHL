@@ -592,6 +592,8 @@ public partial class VM
 
       op_handlers[(int)Opcodes.GetGVar] = OpcodeGetGVar;
       op_handlers[(int)Opcodes.SetGVar] = OpcodeSetGVar;
+      op_handlers[(int)Opcodes.GetGVarScalar] = OpcodeGetGVarScalar;
+      op_handlers[(int)Opcodes.SetGVarScalar] = OpcodeSetGVarScalar;
 
       op_handlers[(int)Opcodes.Nop] = OpcodeNop;
 
@@ -704,6 +706,8 @@ public partial class VM
 
       op_handlers[(int)Opcodes.GetGVar] = &OpcodeGetGVar;
       op_handlers[(int)Opcodes.SetGVar] = &OpcodeSetGVar;
+      op_handlers[(int)Opcodes.GetGVarScalar] = &OpcodeGetGVarScalar;
+      op_handlers[(int)Opcodes.SetGVarScalar] = &OpcodeSetGVarScalar;
 
       op_handlers[(int)Opcodes.Nop] = &OpcodeNop;
 
@@ -1077,6 +1081,45 @@ public partial class VM
           ref Val v = ref exec.stack.Push();
           v = val_ref.val;
           v._refc?.Retain();
+        }
+#if BHL_USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if BHL_USE_OPCODE_SWITCH
+          case Opcodes.GetGVarScalar:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeGetGVarScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+
+          ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+          var val_ref = (ValRef)val_ref_holder._refc;
+
+          ref Val v = ref exec.stack.Push();
+          v.type = val_ref.val.type;
+          v.num = val_ref.val.num;
+        }
+#if BHL_USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if BHL_USE_OPCODE_SWITCH
+          case Opcodes.SetGVarScalar:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeSetGVarScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+
+          ref var new_val = ref exec.stack.vals[--exec.stack.sp];
+          ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+          var val_ref = (ValRef)val_ref_holder._refc;
+          val_ref.val.type = new_val.type;
+          val_ref.val.num = new_val.num;
         }
 #if BHL_USE_OPCODE_SWITCH
           break;

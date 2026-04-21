@@ -16,6 +16,8 @@ public enum Opcodes
   DeclVar               = 10,
   SetGVar               = 11,
   GetGVar               = 12,
+  GetGVarScalar         = 87,
+  SetGVarScalar         = 88,
 
   Nop                   = 13,
 
@@ -116,7 +118,7 @@ public enum Opcodes
   SetRef                = 86,
 
 
-  MAX                   = 87
+  MAX                   = 89
 }
 
 }

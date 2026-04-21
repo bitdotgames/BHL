@@ -530,6 +530,18 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.GetGVarScalar,
+        3 /*gvar idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetGVarScalar,
+        3 /*gvar idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.SetAttr,
         2 /*member idx*/
       )
@@ -1419,7 +1431,9 @@ public class ModuleCompiler : AST_Visitor
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
+            Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
+                Opcodes.GetGVarScalar : Opcodes.GetGVar,
+              new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
         }
         else if(field_symb != null)
         {
@@ -1472,7 +1486,9 @@ public class ModuleCompiler : AST_Visitor
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
+            Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
+                Opcodes.SetGVarScalar : Opcodes.SetGVar,
+              new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
         }
         else if(field_symb != null)
         {
