@@ -86,7 +86,9 @@ public partial class VM : INamedResolver
         return;
       stop_guard = true;
 
-      exec.ExitFrames();
+      //NOTE: frames may already be cleaned up by OpcodeReturn for naturally completed fibers
+      if(exec.frames_count > 0)
+        exec.ExitFrames();
 
       //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
       //      this way Fiber breaks its current Frame execution loop.
