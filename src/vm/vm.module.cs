@@ -30,7 +30,7 @@ public partial class VM : INamedResolver
   Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module_cache = new Dictionary<SymbolSpec, ModuleSymbol>();
 
   static int trampoline_ids_seq = 0;
-  FuncSymbolScript[] trampolines_cache = new FuncSymbolScript[128];
+  FuncSymbolScript[] trampolines_cache = new FuncSymbolScript[ToNextNearestPow2(trampoline_ids_seq + 1)];
 
   public enum LoadModuleSymbolError
   {
@@ -191,6 +191,7 @@ public partial class VM : INamedResolver
     return LoadModuleSymbolError.Ok;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static int ToNextNearestPow2(int x)
   {
     if(x < 0)
@@ -207,6 +208,20 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FuncSymbolScript GetOrMakeFuncTrampoline(ref int trampoline_idx, string module, string path)
   {
+    int idx = trampoline_idx;
+    //NOTE: unsigned cast covers both idx <= 0 and idx >= Length in one comparison
+    if((uint)idx < (uint)trampolines_cache.Length)
+    {
+      var fs = trampolines_cache[idx];
+      if(fs != null)
+        return fs;
+    }
+    return GetOrMakeFuncTrampolineSlow(ref trampoline_idx, module, path);
+  }
+
+  [MethodImpl(MethodImplOptions.NoInlining)]
+  FuncSymbolScript GetOrMakeFuncTrampolineSlow(ref int trampoline_idx, string module, string path)
+  {
     //NOTE: 0 idx is assumed to be 'unassigned'
     if(trampoline_idx == 0)
       trampoline_idx = Interlocked.Increment(ref trampoline_ids_seq);
@@ -214,17 +229,12 @@ public partial class VM : INamedResolver
     if(trampolines_cache.Length <= trampoline_idx)
       Array.Resize(ref trampolines_cache, ToNextNearestPow2(trampoline_idx + 1));
 
-    var fs = trampolines_cache[trampoline_idx];
-    if(fs == null)
-    {
-      var err = TryLoadModuleSymbol(new SymbolSpec(module, path), out var ms);
-      if(err != 0)
-        throw new Exception($"Module '{module}' symbol '{path}' not found: {err}");
+    var err = TryLoadModuleSymbol(new SymbolSpec(module, path), out var ms);
+    if(err != 0)
+      throw new Exception($"Module '{module}' symbol '{path}' not found: {err}");
 
-      fs = (FuncSymbolScript)ms.symbol;
-      trampolines_cache[trampoline_idx] = fs;
-    }
-
+    var fs = (FuncSymbolScript)ms.symbol;
+    trampolines_cache[trampoline_idx] = fs;
     return fs;
   }
 }
