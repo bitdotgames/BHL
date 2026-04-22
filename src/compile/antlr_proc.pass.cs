@@ -598,6 +598,8 @@ public partial class ANTLR_Processor
           return;
         }
 
+        LSP_SetSymbol(fd.NAME(), func_symb);
+
         var func_params = fd.funcParams();
         if(func_params != null)
         {

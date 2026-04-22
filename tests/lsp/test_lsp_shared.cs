@@ -559,6 +559,8 @@ public class TestLSPShared : BHL_TestBase
 
   public static bhl.SourcePos FindPos(string code, string needle)
   {
+    // Normalize line endings so needles with \n work on Windows (\r\n checkouts) too
+    code = code.Replace("\r\n", "\n");
     int idx = code.IndexOf(needle);
     if(idx == -1)
       throw new Exception("Needle not found: " + needle);
