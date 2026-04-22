@@ -1,7 +1,12 @@
 {
   "name": "bhl",
   "displayName": "BHL",
-  "version": "0.0.7",
+  "publisher": "vscodebhl",
+  "version": "0.0.9",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bitdotgames/BHL"
+  },
   "description": "BHL language support",
   "author": "BHL",
   "engines": {
