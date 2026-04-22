@@ -204,22 +204,18 @@ public partial class VM : INamedResolver
   //returns true if still has running fibers
   static public bool Tick(List<Fiber> fibers, ref Fiber last_fiber)
   {
+    int alive = 0;
     for(int i = 0; i < fibers.Count; ++i)
     {
       var fiber = fibers[i];
       last_fiber = fiber;
       fiber.Tick();
-    }
-
-    for(int i = fibers.Count; i-- > 0;)
-    {
-      var fiber = fibers[i];
       if(fiber.IsStopped())
-      {
         fiber.Release();
-        fibers.RemoveAt(i);
-      }
+      else
+        fibers[alive++] = fiber;
     }
+    fibers.RemoveRange(alive, fibers.Count - alive);
 
     return fibers.Count != 0;
   }
