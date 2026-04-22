@@ -125,6 +125,36 @@ public partial class VM
     exec.ip = frame.start_ip - 1;
   }
 
+  // Combined CallFrame + OpcodeEnterFrame: the Frame opcode is always the first
+  // instruction of every script function (at func_ip). Its two operands are at
+  // func_ip+1 (locals_vars_num) and func_ip+2 (return_vars_num). Reading them here
+  // and doing the frame setup inline saves one full ExecuteOnce iteration per call.
+  // After this returns, the dispatch loop's ++ip lands on func_ip+3 (first real opcode).
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static internal unsafe void CallFrameAndEnterFrame(ExecState exec, ref Frame new_frame, int new_frame_idx, byte* callee_bytes, int func_ip, FuncArgsInfo args_info)
+  {
+    new_frame.return_ip = exec.ip;
+    new_frame.region_offset_idx = exec.regions_count;
+    exec.PushRegion(new_frame_idx);
+
+    int locals_vars_num = callee_bytes[func_ip + 1];
+    int return_vars_num = callee_bytes[func_ip + 2];
+
+    new_frame.locals_vars_num = locals_vars_num;
+    new_frame.return_vars_num = return_vars_num;
+
+    var stack = exec.stack;
+    int args_num = args_info.CountArgs();
+    new_frame.locals_offset = stack.sp - args_num;
+    new_frame.locals = stack;
+
+    int rest_local_vars_num = locals_vars_num - args_num;
+    stack.Reserve(rest_local_vars_num);
+    stack.sp += rest_local_vars_num;
+
+    exec.ip = func_ip + 2;
+  }
+
   //NOTE: returns whether further execution should be stopped and
   //      status returned immediately (e.g in case of RUNNING or FAILURE)
   //      returns false if execution completed immediately
@@ -513,12 +543,71 @@ public partial class VM
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Execute(int region_stop_idx = 0)
+    public unsafe void Execute(int region_stop_idx = 0)
     {
       status = BHS.SUCCESS;
 
+#if BHL_USE_OPCODE_SWITCH
       while(regions_count > region_stop_idx && status == BHS.SUCCESS)
         ExecuteOnce();
+#else
+      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
+      {
+        ref var region = ref regions[regions_count - 1];
+        ref var frame = ref frames[region.frame_idx];
+
+        //1. active coroutine has priority
+        if(coroutine != null)
+        {
+          ExecuteCoroutine(ref region, this);
+          continue;
+        }
+
+        //2. out of current region?
+        if(ip < region.min_ip || ip > region.max_ip)
+        {
+          if(region.defers != null && region.defers.count > 0)
+            region.defers.ExitScope(this);
+          --regions_count;
+          continue;
+        }
+
+        //3. frame exit requested
+        if(ip == EXIT_FRAME_IP)
+        {
+          for(int i = regions_count; i-- > frame.region_offset_idx;)
+          {
+            ref var tmp_region = ref regions[i];
+            if(tmp_region.defers != null && tmp_region.defers.count > 0)
+              tmp_region.defers.ExitScope(this);
+          }
+          regions_count = frame.region_offset_idx;
+          frame.ReleaseLocals();
+
+          if(frame.return_vars_num > 0)
+            frame.ReturnVars(stack);
+          stack.sp = frame.locals_offset + frame.return_vars_num;
+          --frames_count;
+
+          ip = frame.return_ip + 1;
+          continue;
+        }
+
+        //4. inner tight dispatch loop: no array re-loads, no redundant checks per opcode
+        var bytes = frame.bytecode;
+        int saved_regions = regions_count;
+        do
+        {
+          op_handlers[bytes[ip]](vm, this, ref region, ref frame, bytes);
+          ++ip;
+        }
+        while(regions_count == saved_regions &&
+              coroutine == null &&
+              status == BHS.SUCCESS &&
+              ip != EXIT_FRAME_IP &&
+              ip <= region.max_ip);
+      }
+#endif
     }
 
     static unsafe void InitOpcodeHandlers()
@@ -1296,7 +1385,7 @@ public partial class VM
           ref var new_frame = ref exec.PushFrame();
           new_frame.args_info = args_info;
           new_frame.InitWithOrigin(ref frame, func_ip);
-          CallFrame(exec, ref new_frame, new_frame_idx);
+          CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, bytes, func_ip, args_info);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -1339,9 +1428,10 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = new FuncArgsInfo(args_bits);
+          var args_info_call = new FuncArgsInfo(args_bits);
+          new_frame.args_info = args_info_call;
           new_frame.InitWithModule(func_mod, func_ip);
-          CallFrame(exec, ref new_frame, new_frame_idx);
+          CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_ip, args_info_call);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -1397,9 +1487,10 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = new FuncArgsInfo(args_bits);
+          var args_info_cm = new FuncArgsInfo(args_bits);
+          new_frame.args_info = args_info_cm;
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
-          CallFrame(exec, ref new_frame, new_frame_idx);
+          CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cm);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -1459,9 +1550,10 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = new FuncArgsInfo(args_bits);
+          var args_info_cmi = new FuncArgsInfo(args_bits);
+          new_frame.args_info = args_info_cmi;
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
-          CallFrame(exec, ref new_frame, new_frame_idx);
+          CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cmi);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -1518,9 +1610,10 @@ public partial class VM
 
           int new_frame_idx = exec.frames_count;
           ref var new_frame = ref exec.PushFrame();
-          new_frame.args_info = new FuncArgsInfo(args_bits);
+          var args_info_cmv = new FuncArgsInfo(args_bits);
+          new_frame.args_info = args_info_cmv;
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
-          CallFrame(exec, ref new_frame, new_frame_idx);
+          CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cmv);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
