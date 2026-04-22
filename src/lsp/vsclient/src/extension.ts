@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, commands, ExtensionContext } from 'vscode';
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -46,7 +46,12 @@ export function activate(context: ExtensionContext) {
   client = new LanguageClient('bhl', 'BHL Language Server', serverOptions, clientOptions);
   client.start();
 
-  context.subscriptions.push(client);
+  context.subscriptions.push(
+    client/*,
+    commands.registerCommand('bhl.reload', () => {
+      client.sendRequest('workspace/executeCommand', { command: 'bhl.reload' });
+    })*/
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {

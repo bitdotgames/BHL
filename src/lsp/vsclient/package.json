@@ -1,7 +1,7 @@
 {
   "name": "bhl",
   "displayName": "BHL",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "description": "BHL language support",
   "author": "BHL",
   "engines": {
@@ -19,6 +19,12 @@
         "aliases": ["BHL", "bhl"],
         "extensions": [".bhl"],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "bhl.reload",
+        "title": "BHL: Reload Project"
       }
     ],
     "configuration": {
