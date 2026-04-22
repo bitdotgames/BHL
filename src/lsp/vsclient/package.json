@@ -2,7 +2,7 @@
   "name": "bhl",
   "displayName": "BHL",
   "publisher": "vscodebhl",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "repository": {
     "type": "git",
     "url": "https://github.com/bitdotgames/BHL"
@@ -32,6 +32,32 @@
         "title": "BHL: Reload Project"
       }
     ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "class": ["entity.name.type.class"],
+          "function": ["entity.name.function"],
+          "variable": ["variable.other.readwrite"],
+          "number": ["constant.numeric"],
+          "string": ["string.quoted.double"],
+          "type": ["entity.name.type"],
+          "keyword": ["keyword.control"],
+          "property": ["variable.other.property"],
+          "operator": ["keyword.operator"],
+          "parameter": ["variable.parameter"]
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "editor.semanticTokenColorCustomizations": {
+        "rules": {
+          "*.deprecated": {
+            "strikethrough": true,
+            "opacity": 0.6
+          }
+        }
+      }
+    },
     "configuration": {
       "title": "BHL",
       "properties": {
