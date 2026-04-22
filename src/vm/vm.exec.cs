@@ -1239,10 +1239,10 @@ public partial class VM
         {
           int return_ip = frame.return_ip;
           ExitFrame(exec, ref frame);
-          //NOTE: tight dispatch loop does ++ip after this handler returns
-          //      for inner frames: return_ip + 1 resumes the caller
-          //      for the outermost frame (regions_count == 0): EXIT_FRAME_IP signals completion
-          //      and propagates up through nested Tick() calls
+          //NOTE: tight dispatch loop does ++ip after this handler returns;
+          //      for inner frames (regions_count > 0) return_ip + 1 resumes the caller;
+          //      for the outermost frame (regions_count == 0) EXIT_FRAME_IP is used as a
+          //      completion signal that propagates up through paral Tick() layers
           exec.ip = exec.regions_count == 0 ? EXIT_FRAME_IP - 1 : return_ip;
         }
 #if BHL_USE_OPCODE_SWITCH
