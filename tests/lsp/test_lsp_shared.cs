@@ -29,6 +29,9 @@ public class TestLSPShared : BHL_TestBase
     // client-facing ends
     private readonly Stream _clientInput;   // what we write requests into
     private readonly Stream _clientOutput;  // what we read responses from
+    // Single persistent reader: a per-call StreamReader buffers ahead and silently discards
+    // unread bytes on dispose, causing the next read to start at the wrong pipe position.
+    private readonly StreamReader _reader;
 
     private static readonly JsonSerializerSettings _jsonOptions = new()
     {
@@ -117,6 +120,7 @@ public class TestLSPShared : BHL_TestBase
       _cts = cts;
       _clientInput = clientInput;
       _clientOutput = clientOutput;
+      _reader = new StreamReader(clientOutput, Encoding.UTF8, leaveOpen: true);
     }
 
     public async Task SendAsync(string json, CancellationToken ct = default)
@@ -143,15 +147,13 @@ public class TestLSPShared : BHL_TestBase
 
     public async IAsyncEnumerable<LspResponse> RecvMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
-      using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
-
       while(!ct.IsCancellationRequested)
       {
         // ---- Read headers ----
         string line;
         int contentLength = 0;
 
-        while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync().WaitAsync(ct)))
+        while(!string.IsNullOrEmpty(line = await _reader.ReadLineAsync().WaitAsync(ct)))
         {
           if(line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
             contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
@@ -165,7 +167,7 @@ public class TestLSPShared : BHL_TestBase
         int read = 0;
         while(read < contentLength)
         {
-          int r = await reader.ReadAsync(buffer, read, contentLength - read).WaitAsync(ct);
+          int r = await _reader.ReadAsync(buffer, read, contentLength - read).WaitAsync(ct);
           if (r == 0) break;
           read += r;
         }
@@ -281,6 +283,7 @@ public class TestLSPShared : BHL_TestBase
     public void Dispose()
     {
       _cts.Cancel();
+      _reader.Dispose();
       _clientInput.Dispose();
       _clientOutput.Dispose();
     }
@@ -550,7 +553,7 @@ public class TestLSPShared : BHL_TestBase
   {
     string full_path = bhl.BuildUtils.NormalizeFilePath(GetTestDirPath() + "/" + path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
-    File.WriteAllText(full_path, text);
+    File.WriteAllText(full_path, text.Replace("\r\n", "\n"));
     if(files != null)
       files.Add(full_path);
     var uri = DocumentUri.File(full_path);
