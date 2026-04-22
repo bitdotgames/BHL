@@ -575,21 +575,9 @@ public partial class VM
         //3. frame exit requested
         if(ip == EXIT_FRAME_IP)
         {
-          for(int i = regions_count; i-- > frame.region_offset_idx;)
-          {
-            ref var tmp_region = ref regions[i];
-            if(tmp_region.defers != null && tmp_region.defers.count > 0)
-              tmp_region.defers.ExitScope(this);
-          }
-          regions_count = frame.region_offset_idx;
-          frame.ReleaseLocals();
-
-          if(frame.return_vars_num > 0)
-            frame.ReturnVars(stack);
-          stack.sp = frame.locals_offset + frame.return_vars_num;
-          --frames_count;
-
-          ip = frame.return_ip + 1;
+          int return_ip = frame.return_ip;
+          ExitFrame(this, ref frame);
+          ip = return_ip + 1;
           continue;
         }
 
@@ -604,7 +592,6 @@ public partial class VM
         while(regions_count == saved_regions &&
               coroutine == null &&
               status == BHS.SUCCESS &&
-              ip != EXIT_FRAME_IP &&
               ip <= region.max_ip);
       }
 #endif
@@ -878,27 +865,12 @@ public partial class VM
           region.defers.ExitScope(this);
         --regions_count;
       }
-      //TODO: move this to some opcode handler
       //3. exit frame requested
       else if(ip == EXIT_FRAME_IP)
       {
-        //exiting all regions which belong to the frame
-        for(int i = regions_count; i-- > frame.region_offset_idx;)
-        {
-          ref var tmp_region = ref regions[i];
-          if(tmp_region.defers != null && tmp_region.defers.count > 0)
-            tmp_region.defers.ExitScope(this);
-        }
-        regions_count = frame.region_offset_idx;
-        frame.ReleaseLocals();
-
-        if(frame.return_vars_num > 0)
-          frame.ReturnVars(stack);
-        //stack pointer now at the last returned value
-        stack.sp = frame.locals_offset + frame.return_vars_num;
-        --frames_count;
-
-        ip = frame.return_ip + 1;
+        int return_ip = frame.return_ip;
+        ExitFrame(this, ref frame);
+        ip = return_ip + 1;
       }
       else
       {
@@ -1265,7 +1237,13 @@ public partial class VM
         unsafe static void OpcodeReturn(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
 #endif
         {
-          exec.ip = EXIT_FRAME_IP - 1;
+          int return_ip = frame.return_ip;
+          ExitFrame(exec, ref frame);
+          //NOTE: tight dispatch loop does ++ip after this handler returns
+          //      for inner frames: return_ip + 1 resumes the caller
+          //      for the outermost frame (regions_count == 0): EXIT_FRAME_IP signals completion
+          //      and propagates up through nested Tick() calls
+          exec.ip = exec.regions_count == 0 ? EXIT_FRAME_IP - 1 : return_ip;
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -2940,9 +2918,8 @@ public partial class VM
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    unsafe static void OpcodeReturn_TODO(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+    static void ExitFrame(ExecState exec, ref Frame frame)
     {
-      //exiting all regions which belong to the frame
       for(int i = exec.regions_count; i-- > frame.region_offset_idx;)
       {
         ref var tmp_region = ref exec.regions[i];
@@ -2951,15 +2928,10 @@ public partial class VM
       }
       exec.regions_count = frame.region_offset_idx;
       frame.ReleaseLocals();
-
       if(frame.return_vars_num > 0)
         frame.ReturnVars(exec.stack);
-
-      //stack pointer now at the last returned value
       exec.stack.sp = frame.locals_offset + frame.return_vars_num;
       --exec.frames_count;
-
-      exec.ip = frame.return_ip;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
