@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -434,6 +433,10 @@ public class FuncSymbolScript : FuncSymbol
   //cached value of Module, it's set upon module loading in VM
   internal Module _module;
   public Module module => _module;
+
+  //pre-initialized frame template with fixed per-function fields (module, bytecode*, start_ip, constants, type_refs)
+  //set once during module Setup; Execute copies it to avoid re-dereferencing module.compiled on every call
+  internal VM.Frame _frame_template;
 
   //used for up values resolving during parsing
   internal LocalScope _current_scope;

@@ -237,6 +237,7 @@ public partial class VM : INamedResolver
     trampolines_cache[trampoline_idx] = fs;
     return fs;
   }
+
 }
 
 }

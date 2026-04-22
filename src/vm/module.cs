@@ -171,6 +171,17 @@ public class Module : INamedResolver
     );
 
     compiled.ResolveTypeRefs();
+
+    //NOTE: initialize frame templates now that type_refs_resolved is ready
+    if(flags.HasFlag(SetupFlags.Funcs))
+    {
+      ns.ForAllLocalSymbols(delegate(Symbol s)
+        {
+          if(s is FuncSymbolScript fss && fss._module == this)
+            fss._frame_template.InitWithModule(this, fss._ip_addr);
+        }
+      );
+    }
   }
 
   public void ImportGlobalVars()

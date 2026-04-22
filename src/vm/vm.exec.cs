@@ -276,8 +276,10 @@ public partial class VM
 
     int frame_idx = exec.frames_count;
     ref var frame = ref exec.PushFrame();
+    //NOTE: copy pre-initialized template (module, bytecode*, start_ip, return_ip, constants, type_refs)
+    //      to avoid re-dereferencing module.compiled on every call
+    frame = fs._frame_template;
     frame.args_info = args_info;
-    frame.InitWithModule(fs._module, fs._ip_addr);
     exec.PushFrameRegion(ref frame, frame_idx);
 
 #if BHL_STACKTRACE
