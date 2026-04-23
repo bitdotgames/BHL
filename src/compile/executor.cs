@@ -660,7 +660,7 @@ public class CompilationExecutor
         {
           try
           {
-            interim.cached = CompiledModule.FromFile(compiled_file, conf.ts);
+            interim.cached = ModuleDeclared.FromFile(compiled_file, conf.ts);
             ++cache_hits;
           }
           catch(Exception)
@@ -866,7 +866,7 @@ public class CompilationExecutor
         if(file2compiler.TryGetValue(current_file, out var c))
         {
           var module = c.Compile_Finish();
-          CompiledModule.ToFile(module, interim.compiled_file);
+          module.ToFile(interim.compiled_file);
           file2module.Add(current_file, module);
         }
       }

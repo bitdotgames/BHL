@@ -728,9 +728,9 @@ public class BHL_TestBase
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
     var ms = new MemoryStream();
-    CompiledModule.ToStream(orig_cm, ms);
+    orig_cm.ToStream(ms);
 
-    var decl = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
+    var decl = ModuleDeclared.FromStream(ts, new MemoryStream(ms.GetBuffer()));
 
     var vm = new VM(ts);
     vm.LoadModule(new bhl.Module(decl));

@@ -56,14 +56,14 @@ public class TestMarshall : BHL_TestBase
       Enum.TryAddItem(null, "Type2", 2);
       ns.Define(Enum);
 
-      CompiledModule.ToStream(m, s, leave_open: true);
+      m.ToStream(s, leave_open: true);
     }
 
     {
       var ts = new Types();
 
       s.Position = 0;
-      var m = CompiledModule.FromStream(ts, s);
+      var m = ModuleDeclared.FromStream(ts, s);
 
       //NOTE: right after un-marshalling module must be setup explicitly
       m.Setup(name => null);
@@ -200,14 +200,14 @@ public class TestMarshall : BHL_TestBase
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       ns.Define(Test);
 
-      CompiledModule.ToStream(m, s, leave_open: true);
+      m.ToStream(s, leave_open: true);
     }
 
     {
       var ts = new Types();
 
       s.Position = 0;
-      var m = CompiledModule.FromStream(ts, s);
+      var m = ModuleDeclared.FromStream(ts, s);
 
       //NOTE: right after un-marshalling module must be setup explicitly
       m.Setup(name => null);

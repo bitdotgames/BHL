@@ -100,7 +100,7 @@ public class ModuleLoader : IModuleLoader
 
     module_stream.SetData(bytes, 0, bytes_len);
 
-    var decl = CompiledModule.FromStream(types, module_stream, resolver);
+    var decl = ModuleDeclared.FromStream(types, module_stream, resolver);
 
     if(return_to_pool)
       ArrayPool<byte>.Shared.Return(bytes);
@@ -194,14 +194,14 @@ public class CachingModuleLoader : IModuleLoader
         ++misses;
         var module = loader.Load(module_name, resolver);
         ms = new MemoryStream();
-        CompiledModule.ToStream(module, ms, leave_open: true);
+        module.ToStream(ms, leave_open: true);
         name2prefab[module_name] = ms;
       }
       else
         ++hits;
 
       ms.Position = 0;
-      return CompiledModule.FromStream(types, ms, resolver);
+      return ModuleDeclared.FromStream(types, ms, resolver);
     }
   }
 }
