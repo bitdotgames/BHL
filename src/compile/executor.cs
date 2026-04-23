@@ -865,10 +865,9 @@ public class CompilationExecutor
         //      we should check for this situation
         if(file2compiler.TryGetValue(current_file, out var c))
         {
-          var cm = c.Compile_Finish();
-
-          CompiledModule.ToFile(cm, interim.compiled_file);
-          file2module.Add(current_file, cm);
+          var module = c.Compile_Finish();
+          CompiledModule.ToFile(module, interim.compiled_file);
+          file2module.Add(current_file, module);
         }
       }
     }

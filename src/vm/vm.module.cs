@@ -8,9 +8,8 @@ namespace bhl
 
 public partial class VM : INamedResolver
 {
-  //NOTE: key is a Module's name
-  //TODO: why not use ModuleDeclared as a key?
-  Dictionary<string, Module> registered_modules = new Dictionary<string, Module>();
+  Dictionary<ModuleDeclared, Module> modules = new Dictionary<ModuleDeclared, Module>();
+  internal Module[] modules_by_id = new Module[8];
 
   internal class LoadingModule
   {
@@ -32,8 +31,6 @@ public partial class VM : INamedResolver
 
   static int trampoline_ids_seq = 0;
   FuncSymbolScript[] trampolines_cache = new FuncSymbolScript[ToNextNearestPow2(trampoline_ids_seq + 1)];
-
-  internal Module[] modules_by_id = new Module[8];
 
   public enum LoadModuleSymbolError
   {
@@ -75,31 +72,24 @@ public partial class VM : INamedResolver
 
   public Module FindModule(string module_name)
   {
-    var decl = types.FindRegisteredModule(module_name);
-    if(decl != null)
-      return GetOrMakeRuntimeModule(decl);
-
-    if(registered_modules.TryGetValue(module_name, out var module))
-      return module;
+    foreach(var kv in modules)
+      if(kv.Key.name == module_name)
+        return kv.Value;
 
     return null;
   }
 
-  Module GetOrMakeRuntimeModule(ModuleDeclared decl)
+  void RegisterModule(Module module)
   {
-    int id = decl.id;
+    int id = module.decl.id;
     if(id == 0)
       throw new Exception("Module is not assigned id");
 
-    if(id < modules_by_id.Length && modules_by_id[id] != null)
-      return modules_by_id[id];
+    modules[module.decl] = module;
 
     if(modules_by_id.Length <= id)
       Array.Resize(ref modules_by_id, ToNextNearestPow2(id + 1));
-
-    var module = new Module(decl);
     modules_by_id[id] = module;
-    return module;
   }
 
   //NOTE: returns false if module is already loaded
@@ -144,18 +134,7 @@ public partial class VM : INamedResolver
 
   void Init_Phase1(Module module)
   {
-    //NOTE: for simplicity we add it to the modules at once,
-    //      this is probably a bit 'smelly' but makes further
-    //      symbols setup logic easier
-    registered_modules[module.name] = module;
-
-    int id = module.decl.id;
-    if(id > 0)
-    {
-      if(modules_by_id.Length <= id)
-        Array.Resize(ref modules_by_id, ToNextNearestPow2(id + 1));
-      modules_by_id[id] = module;
-    }
+    RegisterModule(module);
   }
 
   void Init_Phase2(Module module)
@@ -172,20 +151,28 @@ public partial class VM : INamedResolver
 
   public void UnloadModule(string module_name)
   {
-    if(!registered_modules.TryGetValue(module_name, out var rm))
-      return;
+    foreach(var kv in modules)
+    {
+      if(kv.Key.name == module_name)
+      {
+        UnloadModule(kv.Key);
+        return;
+      }
+    }
+  }
 
-    rm.ClearGlobalVars();
-
-    registered_modules.Remove(module_name);
+  void UnloadModule(ModuleDeclared decl)
+  {
+    modules[decl].ClearGlobalVars();
+    modules.Remove(decl);
   }
 
   public void UnloadModules()
   {
-    var keys = new List<string>();
-    foreach(var kv in registered_modules)
+    var keys = new List<ModuleDeclared>();
+    foreach(var kv in modules)
       keys.Add(kv.Key);
-    foreach(string key in keys)
+    foreach(var key in keys)
       UnloadModule(key);
 
     loading_modules.Clear();
@@ -209,7 +196,7 @@ public partial class VM : INamedResolver
 
     //TODO: should we actually check if loaded module matches
     //      the module where the found symbol actually resides?
-    var module = registered_modules[((Namespace)symb.scope).module.name];
+    var module = modules[((Namespace)symb.scope).module];
 
     ms.module = module;
     ms.symbol = symb;

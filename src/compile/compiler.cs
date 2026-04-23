@@ -11,6 +11,7 @@ public class ModuleCompiler : AST_Visitor
   AST_Tree ast;
   ModuleDeclared interim;
   Types ts;
+  //NOTE: 'interim' is assigned to 'result'
   ModuleDeclared result;
 
   List<Const> constants = new List<Const>();
@@ -302,6 +303,7 @@ public class ModuleCompiler : AST_Visitor
       Compile_VisitAST();
       Compile_PatchInstructions();
       result = Compile_Finish();
+      result.AssignId();
     }
 
     return result;

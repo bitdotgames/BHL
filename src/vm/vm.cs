@@ -109,6 +109,9 @@ public partial class VM : INamedResolver
       types = new Types();
     this.types = types;
     this.loader = loader;
+
+    foreach(var kv in types.modules)
+      RegisterModule(new Module(kv.Value));
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)
@@ -120,7 +123,7 @@ public partial class VM : INamedResolver
       return false;
 
     var fss = fs as FuncSymbolScript;
-    registered_modules.TryGetValue(((Namespace)fs.scope).module.name, out var module);
+    modules.TryGetValue(((Namespace)fs.scope).module, out var module);
 
     addr = new FuncAddr()
     {
@@ -141,7 +144,7 @@ public partial class VM : INamedResolver
     if(vs == null)
       return false;
 
-    var cm = registered_modules[((Namespace)vs.scope).module.name];
+    var cm = modules[((Namespace)vs.scope).module];
 
     addr = new VarAddr()
     {
@@ -155,7 +158,7 @@ public partial class VM : INamedResolver
 
   public INamed ResolveNamedByPath(NamePath path)
   {
-    foreach(var kv in registered_modules)
+    foreach(var kv in modules)
     {
       var s = kv.Value.ns.ResolveSymbolByPath(path);
       if(s != null)
