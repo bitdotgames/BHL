@@ -25,7 +25,7 @@ public class TestDefer : BHL_TestBase
     FuncSymbolNative fn = null;
     var ts_fn = new Action<Types>((ts) => { fn = BindTrace(ts, log); });
 
-    var c = Compile(bhl, ts_fn);
+    var c = Compile(bhl, out var ts, ts_fn);
 
     var expected =
         new ModuleCompiler()
@@ -33,9 +33,9 @@ public class TestDefer : BHL_TestBase
           .EmitChain(Opcodes.Frame, new int[] { 0, 0})
           .EmitChain(Opcodes.Defer, new int[] { 12 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
       ;
 

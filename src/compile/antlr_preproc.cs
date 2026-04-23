@@ -8,7 +8,7 @@ namespace bhl;
 
 public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 {
-  Module module;
+  ModuleDeclared module;
 
   //NOTE: passed from above
   CompileErrorsHub err_hub;
@@ -44,7 +44,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   const int SHARP_CODE = 35;
 
   public static Stream ProcessStream(
-    Module module,
+    ModuleDeclared module,
     CompileErrorsHub err_hub,
     Stream src,
     HashSet<string> defines,
@@ -95,7 +95,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   }
 
   public ANTLR_Preprocessor(
-    Module module,
+    ModuleDeclared module,
     CompileErrorsHub err_hub,
     Stream src,
     HashSet<string> defines

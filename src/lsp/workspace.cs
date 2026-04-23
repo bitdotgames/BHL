@@ -99,7 +99,7 @@ public class Workspace
   ANTLR_Processor ParseFile(string file, Stream stream)
   {
     var imports = CompilationExecutor.ParseWorker.ParseMaybeImports(ProjConf.inc_path, file, stream);
-    var module = new bhl.Module(Types, ProjConf.inc_path.FilePath2ModuleName(file), file);
+    var module = new bhl.ModuleDeclared(ProjConf.inc_path.FilePath2ModuleName(file), file);
 
     //TODO: use different error handlers?
     var err_hub = CompileErrorsHub.MakeStandard(file);
@@ -415,7 +415,7 @@ public class Workspace
     {
       sym = FindSymbolByName(document, name_tok)
             ?? document.Processed.module.ns.ResolveWithFallback(name_tok)
-            ?? FindSymbolInAllModules(path2proc, document.Processed.module.ts, name_tok);
+            ?? FindSymbolInAllModules(path2proc, document.Processed.types, name_tok);
     }
 
     if(sym is not FuncSymbol func_sym)
@@ -565,7 +565,7 @@ public class Workspace
         // Root: check local declarations first, then current module namespace, then all modules
         sym = FindSymbolByName(document, name)
               ?? document.Processed.module.ns.ResolveWithFallback(name)
-              ?? FindSymbolInAllModules(path2proc, document.Processed.module.ts, name);
+              ?? FindSymbolInAllModules(path2proc, document.Processed.types, name);
 
         // Special case: 'this' inside an incomplete expression may not be annotated.
         // Fall back to scanning for the enclosing non-static class method at this line.

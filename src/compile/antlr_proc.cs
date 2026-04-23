@@ -11,7 +11,7 @@ namespace bhl;
 public class AnnotatedParseTree
 {
   public IParseTree tree;
-  public Module module;
+  public ModuleDeclared module;
   public ITokenStream tokens;
   public IType eval_type;
   public Symbol lsp_symbol;
@@ -31,30 +31,33 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 {
   public class Result
   {
-    public Module module { get; private set; }
+    public ModuleDeclared module { get; private set; }
+    public Types types { get; private set; }
     public AST_Module ast { get; private set; }
     public CompileErrors errors { get; private set; }
 
-    public Result(Module module, AST_Module ast, CompileErrors errors)
+    public Result(ModuleDeclared module, Types types, AST_Module ast, CompileErrors errors)
     {
       this.module = module;
+      this.types = types;
       this.ast = ast;
       this.errors = errors;
     }
   }
 
-  Types types;
+  Types _types;
+  public Types types => _types;
 
   AST_Module root_ast;
   public Result result { get; private set; }
 
   public ANTLR_Parsed parsed { get; private set; }
 
-  public Module module { get; private set; }
+  public ModuleDeclared module { get; private set; }
 
   public FileImports imports_maybe { get; private set; }
 
-  public List<Module> imports { get; private set; } = new List<Module>();
+  public List<ModuleDeclared> imports { get; private set; } = new List<ModuleDeclared>();
 
   //NOTE: passed from above
   CompileErrors errors;
@@ -62,7 +65,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   //NOTE: non-normalized names
   Dictionary<bhlParser.MimportContext, string> raw_imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
-  Dictionary<Module, bhlParser.MimportContext> import_to_ctx = new Dictionary<Module, bhlParser.MimportContext>();
+  Dictionary<ModuleDeclared, bhlParser.MimportContext> import_to_ctx = new Dictionary<ModuleDeclared, bhlParser.MimportContext>();
 
   //NOTE: module.ns linked with types.ns
   Namespace ns;
@@ -96,7 +99,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public ANTLR_Processor(
     ANTLR_Parsed parsed,
-    Module module,
+    ModuleDeclared module,
     FileImports imports_maybe,
     Types types,
     CompileErrors errors
@@ -105,7 +108,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     this.parsed = parsed;
     this.tokens = parsed.tokens;
 
-    this.types = types;
+    this._types = types;
     this.module = module;
     this.imports_maybe = imports_maybe;
 
@@ -118,13 +121,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     scopes.Clear();
     ns = module.ns;
-    ns.Link(types.ns);
+    ns.Link(_types.ns);
     PushScope(ns);
   }
 
   public void Reset()
   {
-    module = new Module(types, module.path);
+    module = new ModuleDeclared(module.name, module.file_path);
 
     root_ast = null;
     result = null;
@@ -350,12 +353,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return at;
   }
 
-  bool ResolveImportedModule(string raw_import, ProjectCompilationStateBundle proc_bundle, out Module module)
+  bool ResolveImportedModule(string raw_import, ProjectCompilationStateBundle proc_bundle, out ModuleDeclared module)
   {
     module = null;
 
     //let's check if it's a global native module
-    var native = types.FindRegisteredModule(raw_import);
+    var native = _types.FindRegisteredModule(raw_import);
     if(native != null)
     {
       module = native;
@@ -1152,7 +1155,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(!TryVisit(arr_exp))
         return false;
 
-      if(!types.CheckAssign(map_type.key_type.Get(), Annotate(arr_exp), errors))
+      if(!_types.CheckAssign(map_type.key_type.Get(), Annotate(arr_exp), errors))
         return false;
 
       type = map_type.val_type.Get();
@@ -1351,7 +1354,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           PopJsonType();
           PopCallByRef();
 
-          if(!types.CheckAssign(func_arg_type, Annotate(na.ca), errors))
+          if(!_types.CheckAssign(func_arg_type, Annotate(na.ca), errors))
           {
             PopAST();
             return;
@@ -1384,7 +1387,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           bool ok = TryVisit(variadic_args[0]);
           PopJsonType();
 
-          if(!ok || !types.CheckAssign(varg_arr_type, Annotate(variadic_args[0]), errors))
+          if(!ok || !_types.CheckAssign(varg_arr_type, Annotate(variadic_args[0]), errors))
           {
             PopAST();
             return;
@@ -1413,7 +1416,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
             if(vidx + 1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
 
-            if(!types.CheckAssign(varg_type, Annotate(vca), errors))
+            if(!_types.CheckAssign(varg_type, Annotate(vca), errors))
               break;
           }
 
@@ -1467,7 +1470,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopCallByRef();
 
       if(!ok ||
-         !types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
+         !_types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
       {
         PopAST();
         return;
@@ -2074,7 +2077,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(TryVisit(exp))
     {
       Annotate(ctx).eval_type = Annotate(exp).eval_type;
-      types.CheckAssign(curr_type, Annotate(exp), errors);
+      _types.CheckAssign(curr_type, Annotate(exp), errors);
     }
 
     return null;
@@ -2365,11 +2368,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(ok)
     {
       if(type == EnumUnaryOp.NOT)
-        Annotate(ctx).eval_type = types.CheckLogicalNot(Annotate(exp), errors);
+        Annotate(ctx).eval_type = _types.CheckLogicalNot(Annotate(exp), errors);
       else if(type == EnumUnaryOp.NEG)
-        Annotate(ctx).eval_type = types.CheckUnaryMinus(Annotate(exp), errors);
+        Annotate(ctx).eval_type = _types.CheckUnaryMinus(Annotate(exp), errors);
       else if(type == EnumUnaryOp.BIT_NOT)
-        Annotate(ctx).eval_type = types.CheckBitNot(Annotate(exp), errors);
+        Annotate(ctx).eval_type = _types.CheckBitNot(Annotate(exp), errors);
       else
         throw new Exception("Unexpected token");
     }
@@ -2465,7 +2468,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(_one_literal_exp == null)
       {
         _one_literal_exp = Stream2Parser(
-          new Module(types),
+          new ModuleDeclared(),
           CompileErrorsHub.MakeEmpty(),
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")),
           defines: null,
@@ -2612,7 +2615,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: checking if there's binary operator overload
     if(op_overload != null)
     {
-      Annotate(ctx).eval_type = types.CheckBinOpOverload(ns, ann_lhs, ann_rhs, op_overload, errors);
+      Annotate(ctx).eval_type = _types.CheckBinOpOverload(ns, ann_lhs, ann_rhs, op_overload, errors);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -2623,21 +2626,21 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       ast = over_ast;
     }
     else if(op_type == EnumBinaryOp.EQ || op_type == EnumBinaryOp.NEQ)
-      Annotate(ctx).eval_type = types.CheckEqBinOp(ann_lhs, ann_rhs, errors);
+      Annotate(ctx).eval_type = _types.CheckEqBinOp(ann_lhs, ann_rhs, errors);
     else if(
       op_type == EnumBinaryOp.GT ||
       op_type == EnumBinaryOp.GTE ||
       op_type == EnumBinaryOp.LT ||
       op_type == EnumBinaryOp.LTE
     )
-      Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
+      Annotate(ctx).eval_type = _types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
     {
       if(op_type == EnumBinaryOp.ADD &&
          CheckImplicitCastToString(ctx, ast, ops_edge_idx, ann_lhs, ann_rhs, lhs_self_op))
         Annotate(ctx).eval_type = Types.String;
       else
-        Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
+        Annotate(ctx).eval_type = _types.CheckBinOp(ann_lhs, ann_rhs, errors);
     }
 
     PeekAST().AddChild(ast);
@@ -2712,7 +2715,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = types.CheckBitOp(Annotate(exp_0), Annotate(exp_1), errors);
+    Annotate(ctx).eval_type = _types.CheckBitOp(Annotate(exp_0), Annotate(exp_1), errors);
 
     PeekAST().AddChild(ast);
 
@@ -2743,7 +2746,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
+    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
 
     PeekAST().AddChild(ast);
 
@@ -2774,7 +2777,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
+    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
 
     PeekAST().AddChild(ast);
 
@@ -2997,7 +3000,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(Annotate(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
-        if(!types.CheckAssign(func_symb.origin.parsed, Annotate(exp_item), errors))
+        if(!_types.CheckAssign(func_symb.origin.parsed, Annotate(exp_item), errors))
           return null;
         Annotate(ctx).eval_type = Annotate(exp_item).eval_type;
       }
@@ -3034,7 +3037,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         for(int i = 0; i < explen; ++i)
         {
           var exp = ret_val.exp()[i];
-          if(!types.CheckAssign(fmret_type[i].Get(), Annotate(exp), errors))
+          if(!_types.CheckAssign(fmret_type[i].Get(), Annotate(exp), errors))
             return null;
         }
 
@@ -3563,7 +3566,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     PeekAST().AddChild(decl_ast);
 
     if(assign_exp != null)
-      types.CheckAssign(Annotate(name), Annotate(assign_exp), errors);
+      _types.CheckAssign(Annotate(name), Annotate(assign_exp), errors);
     return null;
   }
 
@@ -3744,7 +3747,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       var_symb.type = new ProxyType(auto_type);
     }
 
-    return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
+    return _types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
@@ -3804,7 +3807,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !_types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     var func_symb = PeekFuncDecl();
@@ -3864,7 +3867,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       bool item_ok = TryVisit(item.exp());
       PopAST();
 
-      if(!item_ok || !types.CheckAssign(Types.Bool, Annotate(item.exp()), errors))
+      if(!item_ok || !_types.CheckAssign(Types.Bool, Annotate(item.exp()), errors))
         return null;
 
       seen_return = return_found.Contains(func_symb);
@@ -3917,7 +3920,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool ok1 = TryVisit(exp_0);
     PopAST();
 
-    if(!ok1 || !types.CheckAssign(Types.Bool, Annotate(exp_0), errors))
+    if(!ok1 || !_types.CheckAssign(Types.Bool, Annotate(exp_0), errors))
       return null;
 
     ast.AddChild(condition);
@@ -3939,7 +3942,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     var ann_exp_1 = Annotate(exp_1);
     Annotate(ctx).eval_type = ann_exp_1.eval_type;
 
-    if(!ok2 || !types.CheckAssign(ann_exp_1, Annotate(exp_2), errors))
+    if(!ok2 || !_types.CheckAssign(ann_exp_1, Annotate(exp_2), errors))
       return null;
     PeekAST().AddChild(ast);
     return null;
@@ -3958,7 +3961,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !_types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4005,7 +4008,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !_types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4052,7 +4055,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool ok = TryVisit(for_cond);
     PopAST();
 
-    if(!ok || !types.CheckAssign(Types.Bool, Annotate(for_cond), errors))
+    if(!ok || !_types.CheckAssign(Types.Bool, Annotate(for_cond), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4141,7 +4144,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !_types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4234,7 +4237,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       //evaluating array expression
       bool ok = TryVisit(exp);
       PopJsonType();
-      if(!ok || !types.CheckAssign(arr_type, Annotate(exp), errors))
+      if(!ok || !_types.CheckAssign(arr_type, Annotate(exp), errors))
         goto Bail;
 
       var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
@@ -4401,7 +4404,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       //evaluating array expression
       bool ok = TryVisit(exp);
       PopJsonType();
-      if(!ok || !types.CheckAssign(map_type, Annotate(exp), errors))
+      if(!ok || !_types.CheckAssign(map_type, Annotate(exp), errors))
         goto Bail;
 
       var map_tmp_en_name = "$foreach_en" + exp.Start.Line + "_" + exp.Start.Column;

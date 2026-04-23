@@ -14,7 +14,7 @@ public class ProjectCompilationStateBundle
     public ANTLR_Parsed parsed;
 
     //NOTE: if not null, it's a compiled module cached result
-    public Module cached;
+    public ModuleDeclared cached;
   }
 
   public Types types;
@@ -27,14 +27,14 @@ public class ProjectCompilationStateBundle
 
   //NOTE: can be null, contains already cached compile modules.
   //      An entry present in file2compiled *doesn't exist* in file2proc
-  public Dictionary<string, Module> file2cached = new Dictionary<string, Module>();
+  public Dictionary<string, ModuleDeclared> file2cached = new Dictionary<string, ModuleDeclared>();
 
   public ProjectCompilationStateBundle(Types types)
   {
     this.types = types;
   }
 
-  public Module FindModule(string file_path)
+  public ModuleDeclared FindModule(string file_path)
   {
     //let's check if it's a compiled module and
     //try to fetch it from the cache first
@@ -46,7 +46,7 @@ public class ProjectCompilationStateBundle
       return null;
   }
 
-  public Module GetModule(string file_path)
+  public ModuleDeclared GetModule(string file_path)
   {
     var m = FindModule(file_path);
     if(m == null)
@@ -54,11 +54,11 @@ public class ProjectCompilationStateBundle
     return m;
   }
 
-  public Dictionary<string, Module> GroupModulesByName()
+  public Dictionary<string, ModuleDeclared> GroupModulesByName()
   {
-    var all = new Dictionary<string, Module>();
+    var all = new Dictionary<string, ModuleDeclared>();
 
-    //NOTE: adding globally registered modules
+    //NOTE: adding globally registered native modules
     foreach(var kv in types.modules)
       all.Add(kv.Key, kv.Value);
 

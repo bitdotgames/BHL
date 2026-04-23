@@ -35,7 +35,7 @@ public static class ErrorUtils
   }
 
 #if BHL_FRONT
-  public static string MakeMessage(Module module, IParseTree place, ITokenStream tokens, string msg)
+  public static string MakeMessage(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg)
   {
     var range = new SourceRange(place.SourceInterval, tokens);
     return MakeMessage(module.file_path, range, msg);

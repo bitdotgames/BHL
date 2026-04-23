@@ -10,7 +10,7 @@ public class Namespace : Symbol, IScope,
 {
   public const uint CLASS_ID = 20;
 
-  public Module module;
+  public ModuleDeclared module;
 
   internal List<Namespace> links = new List<Namespace>();
 
@@ -32,19 +32,19 @@ public class Namespace : Symbol, IScope,
     return CLASS_ID;
   }
 
-  public Namespace(Module module, string name)
+  public Namespace(ModuleDeclared module, string name)
     : base(null, name)
   {
     this.module = module;
     this.members = new SymbolsStorage(this);
   }
 
-  public Namespace(Module module)
+  public Namespace(ModuleDeclared module)
     : this(module, "")
   {
   }
 
-  //marshall version 
+  //marshall version
   public Namespace()
     : this(null, "")
   {
@@ -276,11 +276,11 @@ public class Namespace : Symbol, IScope,
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
 
     if(sym is FuncSymbolNative fsn)
-      module.nfunc_index.Index(fsn);
+      module?.nfunc_index.Index(fsn);
     else if(sym is FuncSymbolScript fss)
-      module.func_index.Index(fss);
+      module?.func_index.Index(fss);
     else if(sym is VariableSymbol vs)
-      module.gvar_index.Index(vs);
+      module?.gvar_index.Index(vs);
 
     //NOTE: let's reset 'indirectness', it's now considered a 'real' namespace
     //      since it now contains real symbols

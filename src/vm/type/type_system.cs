@@ -100,7 +100,7 @@ public class Types : INamedResolver
   };
 
   //global module
-  public Module module;
+  public ModuleDeclared module;
 
   public Namespace ns
   {
@@ -109,9 +109,9 @@ public class Types : INamedResolver
 
   //NOTE: each symbol belongs to a Module but there are also global static symbols,
   //      for them we have a special static global Module
-  static Module static_module = new Module(null);
+  static ModuleDeclared static_module = new ModuleDeclared();
 
-  internal Dictionary<string, Module> modules = new Dictionary<string, Module>();
+  internal Dictionary<string, ModuleDeclared> modules = new Dictionary<string, ModuleDeclared>();
 
   static Types()
   {
@@ -221,7 +221,7 @@ public class Types : INamedResolver
 
   public Types()
   {
-    module = new Module(this, "");
+    module = new ModuleDeclared();
 
     CopyFromStaticModule();
 
@@ -230,12 +230,12 @@ public class Types : INamedResolver
     RegisterModule(std.bind.MakeModule(this));
   }
 
-  public bool IsImported(Module m)
+  public bool IsImported(ModuleDeclared d)
   {
-    return !(static_module == m || module == m);
+    return !(d == static_module || d == module);
   }
 
-  public IEnumerable<Module> GetModules()
+  public IEnumerable<ModuleDeclared> GetModules()
   {
     yield return static_module;
 
@@ -250,15 +250,15 @@ public class Types : INamedResolver
     ns.members.UnionWith(static_module.ns.members);
   }
 
-  public void RegisterModule(Module m)
+  public void RegisterModule(ModuleDeclared m)
   {
+    m.AssignId();
     modules.Add(m.name, m);
   }
 
-  public Module FindRegisteredModule(string name)
+  public ModuleDeclared FindRegisteredModule(string name)
   {
-    Module m;
-    modules.TryGetValue(name, out m);
+    modules.TryGetValue(name, out var m);
     return m;
   }
 

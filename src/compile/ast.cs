@@ -407,14 +407,14 @@ public class AST_Call  : AST_Tree
     get { return symbol is IScopeIndexed ? ((IScopeIndexed)symbol).scope_idx : -1; }
   }
 
-  public Module module
+  public ModuleDeclared module
   {
     get
     {
       if(symbol == null)
         return null;
       var ns = symbol.scope.GetNamespace();
-      return ns == null ? null : ns.module;
+      return ns?.module;
     }
   }
 

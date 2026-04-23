@@ -23,13 +23,13 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void InitWithModule(Module module, int start_ip)
     {
-      Init(module, module.compiled.bytecode_ptr, start_ip);
+      Init(module, module.decl.compiled.bytecode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void InitForModuleInit(Module module, int start_ip = 0)
     {
-      Init(module, module.compiled.initcode_ptr, start_ip);
+      Init(module, module.decl.compiled.initcode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,8 +48,8 @@ public partial class VM : INamedResolver
       region_offset_idx = -1;
 
       //caching for faster access
-      constants = module.compiled.constants;
-      type_refs = module.compiled.type_refs_resolved;
+      constants = module.decl.compiled.constants;
+      type_refs = module.decl.compiled.type_refs_resolved;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

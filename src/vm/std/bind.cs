@@ -11,9 +11,9 @@ public static partial class std
   {
     public static ClassSymbolNative TypesSymbol;
 
-    static public Module MakeModule(Types ts)
+    static public ModuleDeclared MakeModule(Types ts)
     {
-      var m = new Module(ts, "std/bind");
+      var m = new ModuleDeclared("std/bind");
 
       var bind = m.ns.Nest("std").Nest("bind");
 

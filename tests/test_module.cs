@@ -1831,8 +1831,8 @@ public class TestModule : BHL_TestBase
 
       fn3_first = (FuncSymbolScript)vm.ResolveNamedByPath("bhl3");
       Assert.Equal("bhl3", fn3_first.name);
-      Assert.NotNull(fn3_first.module);
-      Assert.Equal(vm.FindModule("bhl3"), fn3_first.module);
+      Assert.NotNull(fn3_first.GetModule());
+      Assert.Equal(vm.FindModule("bhl3")?.decl, fn3_first.GetModule());
 
       vm.UnloadModules();
       CommonChecks(vm);
@@ -1844,10 +1844,10 @@ public class TestModule : BHL_TestBase
 
       var fn3 = (FuncSymbolScript)vm.ResolveNamedByPath("bhl3");
       Assert.Equal("bhl3", fn3.name);
-      Assert.NotNull(fn3.module);
-      Assert.Equal(vm.FindModule("bhl3"), fn3.module);
+      Assert.NotNull(fn3.GetModule());
+      Assert.Equal(vm.FindModule("bhl3")?.decl, fn3.GetModule());
 
-      Assert.NotEqual(fn3_first.module, fn3.module);
+      Assert.NotEqual(fn3_first.GetModule(), fn3.GetModule());
 
       CommonChecks(vm);
     }

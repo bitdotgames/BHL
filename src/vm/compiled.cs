@@ -101,18 +101,16 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
+  //NOTE: sentinel ctor for CompiledModule.Empty
   public CompiledModule()
-    : this(
-      -1,
-      new List<string>(),
-      0,
-      Array.Empty<Const>(),
-      new TypeRefIndex(),
-      new byte[0],
-      new byte[0],
-      new Ip2SrcLine()
-    )
   {
+    imports = new List<string>();
+    constants = Array.Empty<Const>();
+    type_refs = new TypeRefIndex();
+    initcode = new byte[0];
+    bytecode = new byte[0];
+    ip2src_line = new Ip2SrcLine();
+    init_func_idx = -1;
   }
 
   ~CompiledModule()
@@ -133,9 +131,9 @@ public class CompiledModule
     }
   }
 
-  static public Module FromStream(Types types, Stream src, INamedResolver resolver = null)
+  static public ModuleDeclared FromStream(Types types, Stream src, INamedResolver resolver = null)
   {
-    var module = new Module(types);
+    var module = new ModuleDeclared();
 
     //NOTE: if resolver (used for type proxies resolving) is not
     //      passed we use the namespace itself
@@ -169,7 +167,8 @@ public class CompiledModule
 
       name = r.ReadString();
       file_path = r.ReadString();
-      module.path = new ModulePath(name, file_path);
+      module.name = name;
+      module.file_path = file_path;
 
       init_func_idx = r.ReadInt32();
 
@@ -224,7 +223,9 @@ public class CompiledModule
 
     marshall.Marshall.ReadTypeRefs(ctx);
 
-    marshall.Marshall.Sync(ctx, ref module.ns);
+    var module_ns = module.ns;
+    marshall.Marshall.Sync(ctx, ref module_ns);
+    module.ns = module_ns;
 
     //NOTE: we link(import) the global native namespace once the module was loaded
     module.ns.Link(types.ns);
@@ -255,6 +256,7 @@ public class CompiledModule
     );
 
     module.InitWithCompiled(compiled);
+    module.AssignId();
 
     return module;
   }
@@ -287,7 +289,7 @@ public class CompiledModule
     }
   }
 
-  static public void ToStream(Module module, Stream dst, bool leave_open = false)
+  static public void ToStream(ModuleDeclared module, Stream dst, bool leave_open = false)
   {
     using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8, leave_open))
     {
@@ -377,7 +379,7 @@ public class CompiledModule
     return dst.GetBuffer();
   }
 
-  static public void ToFile(Module module, string file)
+  static public void ToFile(ModuleDeclared module, string file)
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -385,7 +387,7 @@ public class CompiledModule
     }
   }
 
-  static public Module FromFile(string file, Types types)
+  static public ModuleDeclared FromFile(string file, Types types)
   {
     using(FileStream rfs = new FileStream(file, FileMode.Open, System.IO.FileAccess.Read))
     {

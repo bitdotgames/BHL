@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -17,105 +16,33 @@ public class ModulePath
   }
 }
 
-//NOTE: represents a module which can be both a compiled one or
-//      the one registered in C#
+//NOTE: runtime container for a module; holds gvars and imported module refs.
+//      Static/declared data (indices, bytecode, namespace) lives in ModuleDeclared.
 public class Module : INamedResolver
 {
-  public string name
-  {
-    get { return path.name; }
-  }
+  public ModuleDeclared decl;
 
-  public string file_path
-  {
-    get { return path.file_path; }
-  }
+  public string name => decl.name;
+  public string file_path => decl.file_path;
 
-  public List<string> imports
-  {
-    get { return compiled.imports; }
-  }
-
-  public bool is_compiled
-  {
-    get { return compiled != CompiledModule.Empty; }
-  }
-
-  public ModulePath path;
-  public Types ts;
-
-  public Namespace ns;
-
-  //used for assigning incremental indexes to module global vars,
-  //contains imported variables as well
-  public VarScopeIndexer gvar_index = new VarScopeIndexer();
-
-  //used for assigning incremental module indexes to funcs
-  public FuncModuleIndexer func_index = new FuncModuleIndexer();
-
-  //used for assigning incremental module indexes to native funcs
-  public FuncNativeModuleIndexer nfunc_index = new FuncNativeModuleIndexer();
+  public Namespace ns => decl.ns;
 
   public ValStack gvars = new ValStack(16);
-
-  //if set this mark is the index starting from which
-  //*imported* module variables are stored in gvars
-  public int local_gvars_mark = -1;
-
-  //an amount of *local* to this module global variables
-  //stored in gvars
-  public int local_gvars_num
-  {
-    get { return local_gvars_mark == -1 ? gvar_index.Count : local_gvars_mark; }
-  }
 
   //filled during runtime module setup procedure since
   //until this moment we don't know about other modules
   internal Module[] _imported;
 
-  public CompiledModule compiled = CompiledModule.Empty;
-
-  public Module(Types ts, ModulePath path)
-    : this(ts, path, new Namespace())
+  public Module(ModuleDeclared decl)
   {
-  }
-
-  public Module(Types ts, string name = "", string file_path = "")
-    : this(ts, new ModulePath(name, file_path), new Namespace())
-  {
-  }
-
-  public Module(Types ts, ModulePath path, Namespace ns)
-  {
-    this.ts = ts;
-    //let's setup the link
-    ns.module = this;
-    this.path = path;
-    this.ns = ns;
-  }
-
-  public FuncSymbolScript TryMapIp2Func(int ip)
-  {
-    FuncSymbolScript fsymb = null;
-    ns.ForAllLocalSymbols(delegate(Symbol s)
-    {
-      if(s is FuncSymbolScript ftmp && ftmp._ip_addr == ip)
-        fsymb = ftmp;
-      else if(s is FuncSymbolVirtual fsv && fsv.GetTopOverride() is FuncSymbolScript fssv && fssv._ip_addr == ip)
-        fsymb = fssv;
-    });
-    return fsymb;
+    this.decl = decl;
+    if(!decl.is_native)
+      gvars.Reserve(decl.compiled.total_gvars_num);
   }
 
   public INamed ResolveNamedByPath(NamePath path)
   {
     return ns.ResolveSymbolByPath(path);
-  }
-
-  public void InitWithCompiled(CompiledModule compiled)
-  {
-    this.compiled = compiled;
-    gvars.Reserve(compiled.total_gvars_num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,75 +51,32 @@ public class Module : INamedResolver
     gvars.ClearAndRelease();
   }
 
-  [System.Flags]
-  public enum SetupFlags
+  public void Setup(Func<string, Module> import2module)
   {
-    All        = 255,
-    Imports    = 1,
-    Funcs      = 2,
-    Gvars      = 4,
-    Classes    = 8,
-    Namespaces = 16,
-  }
+    _imported = new Module[decl.compiled.imports.Count];
 
-  public void Setup(Func<string, Module> import2module, SetupFlags flags = SetupFlags.All)
-  {
-    if(flags.HasFlag(SetupFlags.Imports))
+    for(int i = 0; i < decl.compiled.imports.Count; ++i)
     {
-      _imported = new Module[compiled.imports.Count];
+      var imported = import2module(decl.compiled.imports[i]);
+      if(imported == null)
+        throw new Exception("Module '" + decl.compiled.imports[i] + "' not found");
 
-      for(int i = 0; i < compiled.imports.Count; ++i)
-      {
-        var imported = import2module(compiled.imports[i]);
-        if (imported == null)
-          throw new Exception("Module '" + compiled.imports[i] + "' not found");
-
-        _imported[i] = imported;
-      }
-
-      foreach(var imp in compiled.imports)
-        ns.Link(import2module(imp).ns);
+      _imported[i] = imported;
     }
 
-    ns.ForAllLocalSymbols(delegate(Symbol s)
-      {
-        if(flags.HasFlag(SetupFlags.Funcs) && s is FuncSymbolScript fs)
-          SetupFuncSymbol(fs);
-        else if(flags.HasFlag(SetupFlags.Funcs) && s is FuncSymbolVirtual fssv &&
-                fssv.GetTopOverride() is FuncSymbolScript vsf)
-          SetupFuncSymbol(vsf);
-        else if(flags.HasFlag(SetupFlags.Gvars) && s is VariableSymbol vs && vs.scope is Namespace)
-          gvar_index.index.Add(vs);
-        else if(flags.HasFlag(SetupFlags.Classes) && s is ClassSymbol cs)
-          cs.Setup();
-        else if(flags.HasFlag(SetupFlags.Namespaces) && s is Namespace sns)
-          sns.module = this;
-      }
-    );
-
-    compiled.ResolveTypeRefs();
-
-    //NOTE: initialize frame templates now that type_refs_resolved is ready
-    if(flags.HasFlag(SetupFlags.Funcs))
-    {
-      ns.ForAllLocalSymbols(delegate(Symbol s)
-        {
-          if(s is FuncSymbolScript fss && fss._module == this)
-            fss._frame_template.InitWithModule(this, fss._ip_addr);
-        }
-      );
-    }
+    if(!decl.is_fully_setup)
+      decl.Setup(name => import2module(name)?.decl);
   }
 
   public void ImportGlobalVars()
   {
-    int gvars_offset = local_gvars_num;
+    int gvars_offset = decl.local_gvars_num;
 
     for(int i = 0; i < _imported.Length; ++i)
     {
       var imported = _imported[i];
       //NOTE: taking only local imported module's gvars
-      for(int g = 0; g < imported.local_gvars_num; ++g)
+      for(int g = 0; g < imported.decl.local_gvars_num; ++g)
       {
         ref var imp_gvar = ref imported.gvars.vals[g];
         imp_gvar._refc?.Retain();
@@ -204,45 +88,6 @@ public class Module : INamedResolver
     gvars.sp = gvars_offset;
   }
 
-  void SetupFuncSymbol(FuncSymbolScript fss)
-  {
-    //NOTE: the func symbol might be from another module (e.g in case of class inheritance with the base class
-    //      located in a different module). Here we check if module was already set up and if so ignore the symbol
-    if(fss._module != null)
-      return;
-
-    //interface methods are skipped
-    if(fss.scope is InterfaceSymbol)
-      return;
-
-    //NOTE: let's ignore not 'our' functions, e.g methods from other base classes located in other modules.
-    //      This is especially important for cases when the cached module is being setup during the compilation,
-    //      while the module which actually contains the func symbol is not yet parsed and the function is not
-    //      assigned ip_addr yet
-    if(fss.GetModule()?.name != name)
-      return;
-
-    if(fss._ip_addr == -1)
-      throw new Exception("Func " + fss.GetFullTypePath() + " ip_addr is not set, module '" + name + "'");
-
-    //for faster runtime module lookups we cache it here and also it serves as a guard the symbol was setup
-    fss._module = this;
-
-    //TODO: there's definitely questionable code duplication - we add script functions
-    //      to index when defining them in the scope them and here, when setting up the module
-    func_index.index.Add(fss);
-  }
-
-  public void AddImportedGlobalVars(Module imported_module)
-  {
-    //NOTE: let's add imported global vars to module's global vars index
-    if(local_gvars_mark == -1)
-      local_gvars_mark = gvar_index.Count;
-
-    //NOTE: adding directly without indexing
-    for(int i = 0; i < imported_module.local_gvars_num; ++i)
-      gvar_index.index.Add(imported_module.gvar_index[i]);
-  }
 }
 
 }

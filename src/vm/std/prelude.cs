@@ -10,7 +10,7 @@ public static class Prelude
   static public FuncSymbolNative DumpOpcodesOn = null;
   static public FuncSymbolNative DumpOpcodesOff = null;
 
-  public static void Define(Module m)
+  public static void Define(ModuleDeclared m)
   {
     {
       //NOTE: it's a builtin non-directly available function

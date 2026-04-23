@@ -44,7 +44,7 @@ public partial class VM : INamedResolver
     //TODO: add ctor for FuncSymbolNative?
     public FuncAddr(FuncSymbolScript fss)
     {
-      module = fss._module;
+      module = null;
       fs = fss;
       ip = fss._ip_addr;
       fsn = null;
@@ -58,7 +58,7 @@ public partial class VM : INamedResolver
       else if(fsn != null)
         return fsn;
       else if(module != null)
-        return module.TryMapIp2Func(ip);
+        return module.decl.TryMapIp2Func(ip);
 
       return null;
     }

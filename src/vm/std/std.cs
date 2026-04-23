@@ -28,9 +28,9 @@ public static partial class std
     }
   }
 
-  static public Module MakeModule(Types ts)
+  static public ModuleDeclared MakeModule(Types ts)
   {
-    var m = new Module(ts, "std");
+    var m = new ModuleDeclared("std");
 
     var std = m.ns.Nest("std");
 
@@ -82,9 +82,9 @@ public static partial class std
 
   public static class io
   {
-    static public Module MakeModule(Types ts)
+    static public ModuleDeclared MakeModule(Types ts)
     {
-      var m = new Module(ts, "std/io");
+      var m = new ModuleDeclared("std/io");
 
       var io = m.ns.Nest("std").Nest("io");
 
@@ -119,3 +119,4 @@ public static partial class std
 }
 
 }
+

@@ -15,7 +15,7 @@ public enum ModuleBinaryFormat
 
 public interface IModuleLoader
 {
-  Module Load(string module_name, INamedResolver resolver);
+  ModuleDeclared Load(string module_name, INamedResolver resolver);
 }
 
 public class ModuleLoader : IModuleLoader
@@ -91,7 +91,7 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public Module Load(string module_name, INamedResolver resolver)
+  public ModuleDeclared Load(string module_name, INamedResolver resolver)
   {
     if(!name2entry.TryGetValue(module_name, out var entry))
       return null;
@@ -100,12 +100,12 @@ public class ModuleLoader : IModuleLoader
 
     module_stream.SetData(bytes, 0, bytes_len);
 
-    var module = CompiledModule.FromStream(types, module_stream, resolver);
+    var decl = CompiledModule.FromStream(types, module_stream, resolver);
 
     if(return_to_pool)
       ArrayPool<byte>.Shared.Return(bytes);
 
-    return module;
+    return decl;
   }
 
   void DecodeBin(Entry ent, out byte[] bytes, out int bytes_len, out bool return_to_pool)
@@ -185,7 +185,7 @@ public class CachingModuleLoader : IModuleLoader
     this.loader = loader;
   }
 
-  public Module Load(string module_name, INamedResolver resolver)
+  public ModuleDeclared Load(string module_name, INamedResolver resolver)
   {
     lock(name2prefab)
     {

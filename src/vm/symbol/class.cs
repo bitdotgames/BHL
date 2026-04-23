@@ -79,6 +79,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     return this.scope;
   }
 
+  FuncNativeModuleIndexer GetNfuncIndex() => this.GetModule()?.nfunc_index;
+
+  VarScopeIndexer GetGvarIndex() => this.GetModule()?.gvar_index;
+
   public string GetNativeStaticFieldGetFuncName(FieldSymbol fld)
   {
     return "$__" + ((Symbol)this).GetFullTypePath() + "_get_" + fld.name;
@@ -125,14 +129,14 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         CheckBinaryOpOverload(fs);
 
       if (fs is FuncSymbolScript fss)
-        this.GetModule().func_index.Index(fss);
+        this.GetModule()?.func_index.Index(fss);
       //NOTE: for now indexing at the module level only static native methods
       //      due to possible unavailability of module for 'generic classes'
       //      created on the fly (array, map)
       else if (fs is FuncSymbolNative fsn)
       {
         if(fs.attribs.HasFlag(FuncAttrib.Static))
-          this.GetModule().nfunc_index.Index(fsn);
+          GetNfuncIndex()?.Index(fsn);
       }
     }
     else if (sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static))
@@ -155,7 +159,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
             exec.stack.Push(res);
             return null;
           });
-        this.GetModule().nfunc_index.Index(static_get);
+        GetNfuncIndex()?.Index(static_get);
 
         var static_set = new FuncSymbolNative(
           new Origin(),
@@ -168,10 +172,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
             val._refc?.Release();
             return null;
           });
-        this.GetModule().nfunc_index.Index(static_set);
+        GetNfuncIndex()?.Index(static_set);
       }
       else
-        this.GetModule().gvar_index.Index(fld);
+        GetGvarIndex()?.Index(fld);
     }
 
     //NOTE: we don't check if there are any parent symbols with the same name,

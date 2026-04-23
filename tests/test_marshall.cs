@@ -15,7 +15,7 @@ public class TestMarshall : BHL_TestBase
     var s = new MemoryStream();
     {
       var ts = new Types();
-      var m = new Module(ts, "dummy");
+      var m = new ModuleDeclared("dummy");
 
       var ns = m.ns;
       ns.Link(ts.ns);
@@ -189,7 +189,7 @@ public class TestMarshall : BHL_TestBase
     var s = new MemoryStream();
     {
       var ts = new Types();
-      var m = new Module(ts, "dummy");
+      var m = new ModuleDeclared("dummy");
 
       var ns = m.ns;
       ns.Link(ts.ns);

@@ -141,7 +141,7 @@ public static class ScopeExtensions
     return scope.GetRootScope() as Namespace;
   }
 
-  public static Module GetModule(this IScope scope)
+  public static ModuleDeclared GetModule(this IScope scope)
   {
     return scope.GetNamespace()?.module;
   }

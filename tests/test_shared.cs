@@ -720,7 +720,7 @@ public class BHL_TestBase
       ts_fn);
   }
 
-  public static VM MakeVM(bhl.Module orig_cm, Action<Types> ts_fn = null)
+  public static VM MakeVM(bhl.ModuleDeclared orig_cm, Action<Types> ts_fn = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
@@ -730,10 +730,10 @@ public class BHL_TestBase
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
 
-    var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
+    var decl = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
 
     var vm = new VM(ts);
-    vm.LoadModule(cm);
+    vm.LoadModule(new bhl.Module(decl));
     return vm;
   }
 
@@ -799,9 +799,9 @@ public class BHL_TestBase
 
   public class TestImporter : IModuleLoader
   {
-    public Dictionary<string, bhl.Module> mods = new Dictionary<string, bhl.Module>();
+    public Dictionary<string, bhl.ModuleDeclared> mods = new Dictionary<string, bhl.ModuleDeclared>();
 
-    public bhl.Module Load(string name, INamedResolver resolver)
+    public bhl.ModuleDeclared Load(string name, INamedResolver resolver)
     {
       return mods[name];
     }
@@ -825,7 +825,7 @@ public class BHL_TestBase
     return files.Count - 1;
   }
 
-  public static int ConstIdx(bhl.Module module, string str)
+  public static int ConstIdx(bhl.ModuleDeclared module, string str)
   {
     for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
@@ -837,7 +837,7 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + str);
   }
 
-  public static int ConstIdx(bhl.Module module, int num)
+  public static int ConstIdx(bhl.ModuleDeclared module, int num)
   {
     for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
@@ -849,7 +849,7 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstIdx(bhl.Module module, double num)
+  public static int ConstIdx(bhl.ModuleDeclared module, double num)
   {
     for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
@@ -861,7 +861,7 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstIdx(bhl.Module module, bool v)
+  public static int ConstIdx(bhl.ModuleDeclared module, bool v)
   {
     for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
@@ -873,12 +873,12 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int TypeIdx(bhl.Module module, ProxyType v)
+  public static int TypeIdx(bhl.ModuleDeclared module, ProxyType v)
   {
     return module.compiled.type_refs.GetIndex(v);
   }
 
-  public static int ConstNullIdx(bhl.Module module)
+  public static int ConstNullIdx(bhl.ModuleDeclared module)
   {
     for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
@@ -1162,7 +1162,7 @@ public class BHL_TestBase
     return CompileFiles(executor ?? new CompilationExecutor(), conf, show_bytes: show_bytes);
   }
 
-  public bhl.Module Compile(
+  public bhl.ModuleDeclared Compile(
     string bhl,
     Action<Types> ts_fn = null,
     bool show_ast = false,
@@ -1171,7 +1171,27 @@ public class BHL_TestBase
     HashSet<string> defines = null
   )
   {
-    var ts = new Types();
+    return Compile(
+      bhl,
+      out var ts,
+      ts_fn,
+      show_ast,
+      show_bytes,
+      show_parse_tree,
+      defines);
+  }
+
+  public bhl.ModuleDeclared Compile(
+    string bhl,
+    out Types ts,
+    Action<Types> ts_fn = null,
+    bool show_ast = false,
+    bool show_bytes = false,
+    bool show_parse_tree = false,
+    HashSet<string> defines = null
+  )
+  {
+    ts = new Types();
     ts_fn?.Invoke(ts);
 
     var proc = Parse(
@@ -1199,7 +1219,7 @@ public class BHL_TestBase
     HashSet<string> defines = null
   )
   {
-    var mdl = new bhl.Module(ts, TestModuleName);
+    var mdl = new bhl.ModuleDeclared(TestModuleName);
     var proc = ANTLR_Processor.ParseAndMakeProcessor(
       mdl,
       new FileImports(),
@@ -1311,12 +1331,12 @@ public class BHL_TestBase
     AssertEqual(ca.Compile(), cb.Compile());
   }
 
-  public static void AssertEqual(bhl.Module ca, ModuleCompiler cb)
+  public static void AssertEqual(bhl.ModuleDeclared ca, ModuleCompiler cb)
   {
     AssertEqual(ca, cb.Compile());
   }
 
-  public static void AssertEqual(bhl.Module ca, bhl.Module cb)
+  public static void AssertEqual(bhl.ModuleDeclared ca, bhl.ModuleDeclared cb)
   {
     string cmp;
 
@@ -1338,7 +1358,7 @@ public class BHL_TestBase
     Dump(c.Compile());
   }
 
-  static void Dump(Module module)
+  static void Dump(ModuleDeclared module)
   {
     if(module.compiled?.initcode?.Length > 0)
     {

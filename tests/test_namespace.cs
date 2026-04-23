@@ -10,7 +10,7 @@ public class TestNamespace : BHL_TestBase
   [Fact]
   public void TestSimpleLink()
   {
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -61,7 +61,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -201,7 +201,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -326,7 +326,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types(), "1");
+    var m = new ModuleDeclared("1");
 
     var ns1 = new Namespace(m);
     {
@@ -409,7 +409,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -524,7 +524,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -638,7 +638,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -737,7 +737,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -825,7 +825,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -921,7 +921,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m = new ModuleDeclared();
 
     var ns1 = new Namespace(m);
     {
@@ -1376,9 +1376,9 @@ public class TestNamespace : BHL_TestBase
     Assert.True(foo.module == m.ns.module);
     Assert.Equal(1, foo.members.Count);
 
-    Assert.Equal(2, m.gvar_index.Count);
-    AssertEqual(m.gvar_index[0].name, "A");
-    AssertEqual(m.gvar_index[1].name, "B");
+    Assert.Equal(2, m.decl.gvar_index.Count);
+    AssertEqual(m.decl.gvar_index[0].name, "A");
+    AssertEqual(m.decl.gvar_index[1].name, "B");
 
     CommonChecks(vm);
   }

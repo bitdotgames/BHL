@@ -50,7 +50,7 @@ public static class VMExtensions
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public VM.Fiber Start(this VM vm, FuncSymbolScript fs, StackList<Val> args, VM.FiberOptions opts = 0)
   {
-    var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs._ip_addr };
+    var addr = new VM.FuncAddr() { fs = fs, ip = fs._ip_addr };
     return vm.Start(addr, new FuncArgsInfo(args.Count), args, opts);
   }
 

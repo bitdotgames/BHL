@@ -312,7 +312,7 @@ public partial class VM : INamedResolver
     }
     else
     {
-      frame.InitWithModule(addr.module, addr.ip);
+      frame.InitWithModule(addr.module ?? modules_by_id[addr.fs._module.id], addr.ip);
       fb.exec.PushFrameRegion(ref frame, frame_idx, args);
     }
 

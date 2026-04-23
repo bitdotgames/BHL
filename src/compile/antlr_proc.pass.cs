@@ -113,9 +113,9 @@ public partial class ANTLR_Processor
     SetupCachedModules(
       name2module,
       proc_bundle,
-      Module.SetupFlags.Namespaces |
-      Module.SetupFlags.Imports |
-      Module.SetupFlags.Gvars
+      ModuleDeclared.SetupFlags.Namespaces |
+      ModuleDeclared.SetupFlags.Imports |
+      ModuleDeclared.SetupFlags.Gvars
     );
 
     foreach(var kv in proc_bundle.file2proc)
@@ -135,8 +135,8 @@ public partial class ANTLR_Processor
     SetupCachedModules(
       name2module,
       proc_bundle,
-      Module.SetupFlags.Funcs |
-      Module.SetupFlags.Classes
+      ModuleDeclared.SetupFlags.Funcs |
+      ModuleDeclared.SetupFlags.Classes
     );
 
     foreach(var kv in proc_bundle.file2proc)
@@ -166,9 +166,9 @@ public partial class ANTLR_Processor
   }
 
   static void SetupCachedModules(
-    Dictionary<string, Module> name2module,
+    Dictionary<string, ModuleDeclared> name2module,
     ProjectCompilationStateBundle proc_bundle,
-    Module.SetupFlags flags
+    ModuleDeclared.SetupFlags flags
   )
   {
     if(proc_bundle.file2cached == null)
@@ -213,7 +213,7 @@ public partial class ANTLR_Processor
 
   internal void Phase_LinkImports1(ProjectCompilationStateBundle proc_bundle)
   {
-    var already_imported = new HashSet<Module>();
+    var already_imported = new HashSet<ModuleDeclared>();
 
     //NOTE: getting a copy of keys since we might modify the dictionary during traversal
     var keys = new List<bhlParser.MimportContext>(raw_imports_parsed.Keys);
@@ -350,7 +350,7 @@ public partial class ANTLR_Processor
     if(imports.Count == 0)
       return;
 
-    var used_modules = new HashSet<Module>();
+    var used_modules = new HashSet<ModuleDeclared>();
     foreach(var ann in annotated_nodes.Values)
     {
       if(ann.lsp_symbol == null)
@@ -379,7 +379,7 @@ public partial class ANTLR_Processor
 
   internal void Phase_SetResult()
   {
-    result = new Result(module, root_ast, errors);
+    result = new Result(module, _types, root_ast, errors);
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)
@@ -1033,7 +1033,7 @@ public partial class ANTLR_Processor
     PeekAST().AddChild(ast);
 
     if(assign_exp != null)
-      types.CheckAssign(Annotate(vd.NAME()), Annotate(assign_exp), errors);
+      _types.CheckAssign(Annotate(vd.NAME()), Annotate(assign_exp), errors);
 
     PopAST();
 

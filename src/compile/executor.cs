@@ -281,8 +281,7 @@ public class CompilationExecutor
     string file,
     ProjectCompilationStateBundle.InterimParseResult interim)
   {
-    var file_module = new Module(
-      conf.ts,
+    var file_module = new ModuleDeclared(
       conf.proj.inc_path.FilePath2ModuleName(file),
       file
     );
@@ -677,7 +676,7 @@ public class CompilationExecutor
           //var sw = Stopwatch.StartNew();
 
           interim.parsed = ANTLR_Processor.Parse(
-            new Module(conf.ts, interim.module_path),
+            new ModuleDeclared(interim.module_path),
             sfs,
             CompileErrorsHub.MakeStandard(current_file, errors),
             defines: new HashSet<string>(conf.proj.defines),
@@ -793,7 +792,7 @@ public class CompilationExecutor
 
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
-    public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
+    public Dictionary<string, ModuleDeclared> file2module = new Dictionary<string, ModuleDeclared>();
     string current_file;
 
     public void Phase1_ProcessAST()
@@ -886,12 +885,13 @@ public class CompilationExecutor
 
       foreach(var proc_import in proc.imports)
       {
-        //for C# modules file_path is empty
-        if(string.IsNullOrEmpty(proc_import.file_path))
+        //for C# (native) modules file_path is empty or not available
+        var proc_import_fp = proc_import.file_path;
+        if(string.IsNullOrEmpty(proc_import_fp))
           continue;
 
         //if there's no such a processor for file then file is already compiled
-        if(!file2proc.TryGetValue(proc_import.file_path, out var import_proc))
+        if(!file2proc.TryGetValue(proc_import_fp, out var import_proc))
           continue;
 
         if(seen.Contains(import_proc))

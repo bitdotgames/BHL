@@ -9,13 +9,9 @@ namespace bhl;
 public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
-  Module interim;
-  Module result;
-
-  Types ts
-  {
-    get { return interim.ts;  }
-  }
+  ModuleDeclared interim;
+  Types ts;
+  ModuleDeclared result;
 
   List<Const> constants = new List<Const>();
   TypeRefIndex type_refs = new TypeRefIndex();
@@ -193,6 +189,7 @@ public class ModuleCompiler : AST_Visitor
   public ModuleCompiler(ANTLR_Processor.Result proc_res)
   {
     interim = proc_res.module;
+    ts = proc_res.types;
     ast = proc_res.ast;
     curr_scope = interim.ns;
 
@@ -202,7 +199,8 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    interim = new Module(new Types());
+    ts = new Types();
+    interim = new ModuleDeclared();
     curr_scope = interim.ns;
 
     UseInit();
@@ -274,7 +272,7 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  public Module Compile_Finish()
+  public ModuleDeclared Compile_Finish()
   {
     int init_func_idx = FindInitFuncIdx();
 
@@ -283,22 +281,21 @@ public class ModuleCompiler : AST_Visitor
     Ip2SrcLine ip2src_line;
     GetByteCode(out init_bytes, out code_bytes, out ip2src_line);
 
-    interim.InitWithCompiled(
-      new CompiledModule(
-        init_func_idx,
-        imports,
-        interim.gvar_index.Count,
-        constants.ToArray(),
-        type_refs,
-        init_bytes,
-        code_bytes,
-        ip2src_line
-      )
+    var compiled = new CompiledModule(
+      init_func_idx,
+      imports,
+      interim.gvar_index.Count,
+      constants.ToArray(),
+      type_refs,
+      init_bytes,
+      code_bytes,
+      ip2src_line
     );
+    interim.InitWithCompiled(compiled);
     return interim;
   }
 
-  public Module Compile()
+  public ModuleDeclared Compile()
   {
     if(result == null)
     {
@@ -1710,7 +1707,7 @@ public class ModuleCompiler : AST_Visitor
 
   //NOTE: we need to patch only in case the native function is imported from some module,
   //      for built-in native functions we don't do that
-  void TrySetFuncInstructionImportModule(Instruction inst_op, Module mod)
+  void TrySetFuncInstructionImportModule(Instruction inst_op, ModuleDeclared mod)
   {
     if(inst_op.operands[1] == -1)
       throw new Exception("Invalid func index for module '" +  mod.name + "'");

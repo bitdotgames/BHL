@@ -3074,14 +3074,14 @@ public class TestVM : BHL_TestBase
     FuncSymbolNative fn = null;
     var ts_fn = new Action<Types>((ts) => { fn = BindTrace(ts, log); });
 
-    var c = Compile(bhl, ts_fn);
+    var c = Compile(bhl, out var ts, ts_fn);
 
     var expected =
         new ModuleCompiler()
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -6621,14 +6621,14 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { fn = BindWaitTicks(ts, log); });
 
-    var c = Compile(bhl, ts_fn);
+    var c = Compile(bhl, out var ts, ts_fn);
 
     var expected =
         new ModuleCompiler()
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -8995,10 +8995,10 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl);
+    var c = Compile(bhl, out var ts);
 
     var vm = new VM();
-    vm.LoadModule(c);
+    vm.LoadModule(new Module(c));
     Assert.Equal(123, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }

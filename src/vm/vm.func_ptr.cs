@@ -95,7 +95,7 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(FuncAddr addr)
     {
-      this.module = addr.module;
+      this.module = addr.module ?? vm.modules_by_id[addr.fs._module.id];
       this.func_ip = addr.ip;
       this.native = null;
     }

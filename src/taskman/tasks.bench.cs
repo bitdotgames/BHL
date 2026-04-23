@@ -85,7 +85,7 @@ public static partial class Tasks
     for(int i = 0; i < iterations; ++i)
     {
       Console.WriteLine($"== Iteration: {i + 1} ==");
-      var module = new Module(null, "dummy", file);
+      var module = new ModuleDeclared("dummy", file);
 
       Stopwatch sw = null;
 

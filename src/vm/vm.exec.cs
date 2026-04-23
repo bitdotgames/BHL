@@ -78,7 +78,7 @@ public partial class VM
 
   void ExecInitByteCode(Module module)
   {
-    if((module.compiled.initcode?.Length ?? 0) == 0)
+    if((module.decl.compiled.initcode?.Length ?? 0) == 0)
       return;
 
     init_exec.vm = this;
@@ -89,10 +89,10 @@ public partial class VM
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_exec.stack = module.gvars;
     //NOTE: need to setup the temporary stack offset
-    init_exec.stack.sp = module.local_gvars_num;
+    init_exec.stack.sp = module.decl.local_gvars_num;
     init_frame.locals = init_exec.stack;
     init_frame.locals_offset = 0;
-    init_exec.PushRegion(0, 0, module.compiled.initcode.Length - 1);
+    init_exec.PushRegion(0, 0, module.decl.compiled.initcode.Length - 1);
 
     while(init_exec.regions_count > 0)
     {
@@ -107,10 +107,10 @@ public partial class VM
 
   void ExecModuleInitFunc(Module module)
   {
-    if(module.compiled.init_func_idx == -1)
+    if(module.decl.compiled.init_func_idx == -1)
       return;
 
-    var fs = (FuncSymbolScript)module.ns.members[module.compiled.init_func_idx];
+    var fs = (FuncSymbolScript)module.ns.members[module.decl.compiled.init_func_idx];
     Execute(fs);
   }
 
@@ -276,10 +276,8 @@ public partial class VM
 
     int frame_idx = exec.frames_count;
     ref var frame = ref exec.PushFrame();
-    //NOTE: copy pre-initialized template (module, bytecode*, start_ip, return_ip, constants, type_refs)
-    //      to avoid re-dereferencing module.compiled on every call
-    frame = fs._frame_template;
     frame.args_info = args_info;
+    frame.InitWithModule(modules_by_id[fs._module.id], fs._ip_addr);
     exec.PushFrameRegion(ref frame, frame_idx);
 
 #if BHL_STACKTRACE
@@ -447,14 +445,14 @@ public partial class VM
 
         if(frm.module != null)
         {
-          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
+          var fsymb = frm.module.decl.TryMapIp2Func(calls[i].start_ip);
           //NOTE: if symbol is missing let's write at least the module
           if(fsymb == null)
             item.file = frm.module.name + ".bhl";
           else
-            item.file = fsymb._module.name + ".bhl";
+            item.file = fsymb.GetModule()?.name + ".bhl";
           item.func = fsymb == null ? "?" : fsymb.name;
-          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
+          item.line = frm.module.decl.compiled.ip2src_line.TryMap(item.ip);
         }
         else
         {
@@ -1430,7 +1428,7 @@ public partial class VM
 
           //NOTE: using convention where built-in global module is always at index 0
           //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+          var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1].decl;
           var nfunc_symb = func_mod.nfunc_index[func_idx];
 
           if(CallNative(exec, nfunc_symb, args_bits))
@@ -1469,7 +1467,7 @@ public partial class VM
           ref var new_frame = ref exec.PushFrame();
           var args_info_cm = new FuncArgsInfo(args_bits);
           new_frame.args_info = args_info_cm;
-          new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+          new_frame.InitWithModule(vm.modules_by_id[func_symb._module.id], func_symb._ip_addr);
           CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cm);
         }
 #if BHL_USE_OPCODE_SWITCH
@@ -1532,7 +1530,7 @@ public partial class VM
           ref var new_frame = ref exec.PushFrame();
           var args_info_cmi = new FuncArgsInfo(args_bits);
           new_frame.args_info = args_info_cmi;
-          new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+          new_frame.InitWithModule(vm.modules_by_id[func_symb._module.id], func_symb._ip_addr);
           CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cmi);
         }
 #if BHL_USE_OPCODE_SWITCH
@@ -1592,7 +1590,7 @@ public partial class VM
           ref var new_frame = ref exec.PushFrame();
           var args_info_cmv = new FuncArgsInfo(args_bits);
           new_frame.args_info = args_info_cmv;
-          new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+          new_frame.InitWithModule(vm.modules_by_id[func_symb._module.id], func_symb._ip_addr);
           CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cmv);
         }
 #if BHL_USE_OPCODE_SWITCH
@@ -1755,7 +1753,7 @@ public partial class VM
         {
           int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
-          var func_symb = frame.module.func_index.index[func_idx];
+          var func_symb = frame.module.decl.func_index.index[func_idx];
 
           var ptr = FuncPtr.New(vm);
           ptr.Init(frame.module, func_symb._ip_addr);
@@ -1776,7 +1774,7 @@ public partial class VM
           int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
           var func_mod = frame.module._imported[import_idx];
-          var func_symb = func_mod.func_index.index[func_idx];
+          var func_symb = func_mod.decl.func_index.index[func_idx];
 
           var ptr = FuncPtr.New(vm);
           ptr.Init(func_mod, func_symb._ip_addr);
@@ -1799,7 +1797,7 @@ public partial class VM
 
           //NOTE: using convention where built-in global module is always at index 0
           //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+          var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1].decl;
           var nfunc_symb = func_mod.nfunc_index.index[func_idx];
 
           var ptr = FuncPtr.New(vm);

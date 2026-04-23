@@ -270,7 +270,7 @@ public class TestClass : BHL_TestBase
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
     var ts_fn = new Action<Types>((ts) => { fn = BindTrace(ts, log); });
-    var c = Compile(bhl, ts_fn);
+    var c = Compile(bhl, out var ts, ts_fn);
 
     var expected =
         new ModuleCompiler()
@@ -295,7 +295,7 @@ public class TestClass : BHL_TestBase
           .EmitChain(Opcodes.Concat)
           .EmitChain(Opcodes.GetVarAttr, new int[] { 0, 2 })
           .EmitChain(Opcodes.Concat)
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -2663,7 +2663,7 @@ public class TestClass : BHL_TestBase
       fn = BindTrace(ts, log);
       BindBar(ts);
     });
-    var c = Compile(bhl, ts_fn);
+    var c = Compile(bhl, out var ts, ts_fn);
 
     var expected =
         new ModuleCompiler()
@@ -2688,7 +2688,7 @@ public class TestClass : BHL_TestBase
           .EmitChain(Opcodes.Concat)
           .EmitChain(Opcodes.GetVarAttr, new int[] { 0, 2 })
           .EmitChain(Opcodes.Concat)
-          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);

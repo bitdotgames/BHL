@@ -137,11 +137,11 @@ public class ParseError : Exception, ICompileError
     get { return module.file_path; }
   }
 
-  public Module module { get; }
+  public ModuleDeclared module { get; }
   public IParseTree place { get; }
   public ITokenStream tokens { get; }
 
-  public ParseError(Module module, IParseTree place, ITokenStream tokens, string msg)
+  public ParseError(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg)
     : base(ErrorUtils.MakeMessage(module, place, tokens, msg))
   {
     this.text = msg;

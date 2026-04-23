@@ -430,13 +430,7 @@ public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13;
 
-  //cached value of Module, it's set upon module loading in VM
-  internal Module _module;
-  public Module module => _module;
-
-  //pre-initialized frame template with fixed per-function fields (module, bytecode*, start_ip, constants, type_refs)
-  //set once during module Setup; Execute copies it to avoid re-dereferencing module.compiled on every call
-  internal VM.Frame _frame_template;
+  internal ModuleDeclared _module;
 
   //used for up values resolving during parsing
   internal LocalScope _current_scope;

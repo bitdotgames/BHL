@@ -70,7 +70,7 @@ public partial class ANTLR_Processor
   }
 
   public static bhlParser Stream2Parser(
-    Module module,
+    ModuleDeclared module,
     CompileErrorsHub err_hub,
     Stream src,
     //can be null
@@ -97,7 +97,7 @@ public partial class ANTLR_Processor
   }
 
   public static ANTLR_Parsed Parse(
-    Module module,
+    ModuleDeclared module,
     CompileErrorsHub err_hub,
     //can be null
     HashSet<string> defines,
@@ -117,7 +117,7 @@ public partial class ANTLR_Processor
   }
 
   public static ANTLR_Parsed Parse(
-    Module module,
+    ModuleDeclared module,
     Stream src,
     CompileErrorsHub err_hub,
     //can be null
@@ -140,7 +140,7 @@ public partial class ANTLR_Processor
   }
 
   public static ANTLR_Processor ParseAndMakeProcessor(
-    Module module,
+    ModuleDeclared module,
     FileImports imports_maybe,
     Stream src,
     Types ts,
