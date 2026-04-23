@@ -38,6 +38,34 @@ public static partial class Tasks
     return cts;
   }
 
+  [DllImport("kernel32.dll", SetLastError = true)]
+  static extern IntPtr GetStdHandle(int nStdHandle);
+
+  const int STD_INPUT_HANDLE_ID  = -10;
+  const int STD_OUTPUT_HANDLE_ID = -11;
+
+  static Stream OpenStdinStream()
+  {
+    if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    {
+      var handle = new SafeFileHandle(GetStdHandle(STD_INPUT_HANDLE_ID), ownsHandle: false);
+      if(!handle.IsInvalid)
+        return new FileStream(handle, FileAccess.Read, bufferSize: 1, isAsync: false);
+    }
+    return Console.OpenStandardInput();
+  }
+
+  static Stream OpenStdoutStream()
+  {
+    if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    {
+      var handle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE_ID), ownsHandle: false);
+      if(!handle.IsInvalid)
+        return new FileStream(handle, FileAccess.Write, bufferSize: 1, isAsync: false);
+    }
+    return Console.OpenStandardOutput();
+  }
+
   [Task(verbose: false)]
   public static async ThreadTask lsp(Taskman tm, string[] args)
   {
@@ -66,7 +94,10 @@ public static partial class Tasks
 
     Log.Logger = logger_conf.CreateLogger();
 
-    Console.OutputEncoding = new UTF8Encoding();
+    Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
+    Stream stdin = OpenStdinStream();
+    Stream stdout = OpenStdoutStream();
 
     StdioMonitor.StartWatcher(() =>
     {
@@ -78,8 +109,8 @@ public static partial class Tasks
     {
       var server = await bhl.lsp.ServerFactory.CreateAsync(
         Log.Logger,
-        new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
-        new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
+        new LoggingStream(stdin, Log.Logger, "IN:"),
+        new LoggingStream(stdout, Log.Logger, "OUT:"),
         new Types(),
         new Workspace(),
         cts.Token
@@ -122,13 +153,28 @@ public class LoggingStream : Stream
   public override int Read(byte[] buffer, int offset, int count)
   {
     int read = _inner.Read(buffer, offset, count);
-    if (read > 0)
+    if(read > 0)
     {
       var text = Encoding.UTF8.GetString(buffer, offset, read);
       _logger.Debug("{Prefix} {Payload}", _prefix, text);
     }
-
     return read;
+  }
+
+  public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    => Task.Run(() => Read(buffer, offset, count), cancellationToken);
+
+  public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+  {
+    return new ValueTask<int>(Task.Run(() =>
+    {
+      if(System.Runtime.InteropServices.MemoryMarshal.TryGetArray<byte>(buffer, out var seg))
+        return Read(seg.Array, seg.Offset, seg.Count);
+      var tmp = new byte[buffer.Length];
+      int n = Read(tmp, 0, tmp.Length);
+      tmp.AsMemory(0, n).CopyTo(buffer);
+      return n;
+    }, cancellationToken));
   }
 
   public override bool CanRead => _inner.CanRead;
