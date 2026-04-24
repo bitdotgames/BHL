@@ -31,5 +31,5 @@ dotnet "%BHL_DLL%" %* || GOTO :ERROR
 GOTO :EOF
 
 :ERROR
-echo Failed with error #%errorlevel%
+echo Failed with error #%errorlevel% 1>&2
 EXIT /b %errorlevel%

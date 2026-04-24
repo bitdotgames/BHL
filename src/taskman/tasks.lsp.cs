@@ -68,8 +68,6 @@ public static partial class Tasks
 
     Log.Logger = logger_conf.CreateLogger();
 
-    Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-
     Stream stdin = OpenStdinStream();
     Stream stdout = OpenStdoutStream();
 
@@ -98,7 +96,7 @@ public static partial class Tasks
     }
     catch (Exception e)
     {
-      Log.Logger.Error(e.Message);
+      Log.Logger.Error(e, "Unhandled exception");
       Environment.Exit(-1);
     }
   }
