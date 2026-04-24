@@ -20,8 +20,8 @@ IF errorlevel 1 GOTO :BUILD
 GOTO :RUN
 
 :BUILD
-dotnet clean "%PROJECT%" %VERBOSITY%
-dotnet publish "%PROJECT%" %VERBOSITY% || GOTO :ERROR
+dotnet clean "%PROJECT%" %VERBOSITY% 1>&2
+dotnet publish "%PROJECT%" %VERBOSITY% 1>&2 || GOTO :ERROR
 if EXIST "%BHL_DLL%" (
     powershell -NoProfile -Command "(Get-Item '%BHL_DLL%').LastWriteTime = Get-Date"
 )

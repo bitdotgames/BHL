@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Mono.Options;
 using Serilog;
 using bhl.lsp;
-using Microsoft.Win32.SafeHandles;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
@@ -38,33 +37,8 @@ public static partial class Tasks
     return cts;
   }
 
-  [DllImport("kernel32.dll", SetLastError = true)]
-  static extern IntPtr GetStdHandle(int nStdHandle);
-
-  const int STD_INPUT_HANDLE_ID  = -10;
-  const int STD_OUTPUT_HANDLE_ID = -11;
-
-  static Stream OpenStdinStream()
-  {
-    if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    {
-      var handle = new SafeFileHandle(GetStdHandle(STD_INPUT_HANDLE_ID), ownsHandle: false);
-      if(!handle.IsInvalid)
-        return new FileStream(handle, FileAccess.Read, bufferSize: 1, isAsync: false);
-    }
-    return Console.OpenStandardInput();
-  }
-
-  static Stream OpenStdoutStream()
-  {
-    if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-    {
-      var handle = new SafeFileHandle(GetStdHandle(STD_OUTPUT_HANDLE_ID), ownsHandle: false);
-      if(!handle.IsInvalid)
-        return new FileStream(handle, FileAccess.Write, bufferSize: 1, isAsync: false);
-    }
-    return Console.OpenStandardOutput();
-  }
+  static Stream OpenStdinStream()  => Console.OpenStandardInput();
+  static Stream OpenStdoutStream() => Console.OpenStandardOutput();
 
   [Task(verbose: false)]
   public static async ThreadTask lsp(Taskman tm, string[] args)
