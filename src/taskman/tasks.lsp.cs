@@ -260,27 +260,29 @@ public static class StdioMonitor
   private const int ERROR_NO_DATA = 232;
 
   [DllImport("kernel32.dll", SetLastError = true)]
-  private static extern SafeFileHandle GetStdHandle(int nStdHandle);
+  private static extern IntPtr GetStdHandle(int nStdHandle);
 
   [DllImport("kernel32.dll", SetLastError = true)]
   private static extern bool PeekNamedPipe(
-    SafeHandle hNamedPipe,
+    IntPtr hNamedPipe,
     IntPtr lpBuffer,
     uint nBufferSize,
     IntPtr lpBytesRead,
     IntPtr lpTotalBytesAvail,
     IntPtr lpBytesLeftThisMsg);
 
+  static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+
   private static bool IsHandleClosedWin(int stdHandle)
   {
-    using var handle = GetStdHandle(stdHandle);
-    if (handle.IsInvalid)
+    var ptr = GetStdHandle(stdHandle);
+    if (ptr == IntPtr.Zero || ptr == INVALID_HANDLE_VALUE)
       return true;
 
     // PeekNamedPipe works on both anonymous and named pipes and correctly
     // distinguishes "data available" from "pipe broken", unlike WaitForSingleObject
     // which signals on both conditions.
-    bool ok = PeekNamedPipe(handle, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+    bool ok = PeekNamedPipe(ptr, IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
     if (!ok)
     {
       int err = Marshal.GetLastWin32Error();
