@@ -355,13 +355,26 @@ public class TestLSPShared : BHL_TestBase
   public static List<(string file, int sl, int sc, int el, int ec, string newText)> FlattenEdits(WorkspaceEdit edit)
   {
     var result = new List<(string file, int sl, int sc, int el, int ec, string newText)>();
-    if(edit?.Changes == null)
+    if(edit == null)
       return result;
-    foreach(var kv in edit.Changes)
+    if(edit.DocumentChanges != null)
     {
-      var file = kv.Key.PathNormalized();
-      foreach(var e in kv.Value)
-        result.Add((file, e.Range.Start.Line, e.Range.Start.Character, e.Range.End.Line, e.Range.End.Character, e.NewText));
+      foreach(var change in edit.DocumentChanges)
+      {
+        if(!change.IsTextDocumentEdit) continue;
+        var file = change.TextDocumentEdit.TextDocument.Uri.PathNormalized();
+        foreach(var e in change.TextDocumentEdit.Edits)
+          result.Add((file, e.Range.Start.Line, e.Range.Start.Character, e.Range.End.Line, e.Range.End.Character, e.NewText));
+      }
+    }
+    else if(edit.Changes != null)
+    {
+      foreach(var kv in edit.Changes)
+      {
+        var file = kv.Key.PathNormalized();
+        foreach(var e in kv.Value)
+          result.Add((file, e.Range.Start.Line, e.Range.Start.Character, e.Range.End.Line, e.Range.End.Character, e.NewText));
+      }
     }
     result.Sort((a, b) => {
       int c = string.Compare(a.file, b.file, StringComparison.Ordinal);

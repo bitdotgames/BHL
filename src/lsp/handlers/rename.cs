@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -41,31 +42,42 @@ public class TextDocumentRenameHandler : RenameHandlerBase
     if(symb == null)
       return null;
 
-    var refs = _workspace.FindRefs(symb);
+    var refs = _workspace.FindRefs(symb)
+      .Where(loc => !loc.Uri.Path.EndsWith(".cs", System.StringComparison.OrdinalIgnoreCase))
+      .ToList();
     if(refs.Count == 0)
       return null;
 
     var new_name = request.NewName;
 
-    // Group edits by document URI
-    var changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>();
-    var by_uri = new Dictionary<string, List<TextEdit>>();
+    // Group edits by document URI, preserving insertion order for deterministic output
+    var by_uri = new Dictionary<string, (DocumentUri Uri, List<TextEdit> Edits)>();
+    var uri_order = new List<string>();
 
     foreach(var loc in refs)
     {
       var uri_key = loc.Uri.ToString();
-      if(!by_uri.TryGetValue(uri_key, out var edits))
+      if(!by_uri.TryGetValue(uri_key, out var entry))
       {
-        edits = new List<TextEdit>();
-        by_uri[uri_key] = edits;
-        changes[loc.Uri] = edits;
+        entry = (loc.Uri, new List<TextEdit>());
+        by_uri[uri_key] = entry;
+        uri_order.Add(uri_key);
       }
       // FindRefs stores inclusive end positions (ANTLR convention); LSP needs exclusive end.
       var range = new Range(loc.Range.Start, new Position(loc.Range.End.Line, loc.Range.End.Character + 1));
-      edits.Add(new TextEdit { Range = range, NewText = new_name });
+      entry.Edits.Add(new TextEdit { Range = range, NewText = new_name });
     }
 
-    return new WorkspaceEdit { Changes = changes };
+    var document_changes = uri_order.Select(k => (WorkspaceEditDocumentChange)new TextDocumentEdit
+    {
+      TextDocument = new OptionalVersionedTextDocumentIdentifier { Uri = by_uri[k].Uri },
+      Edits = new TextEditContainer(by_uri[k].Edits),
+    });
+
+    return new WorkspaceEdit
+    {
+      DocumentChanges = new Container<WorkspaceEditDocumentChange>(document_changes),
+    };
   }
 
 }
