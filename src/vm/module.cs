@@ -36,8 +36,7 @@ public class Module : INamedResolver
   public Module(ModuleDeclared decl)
   {
     this.decl = decl;
-    if(!decl.is_native)
-      gvars.Reserve(decl.compiled.total_gvars_num);
+    gvars.Reserve(decl.total_gvars_num);
   }
 
   public INamed ResolveNamedByPath(NamePath path)
@@ -53,19 +52,19 @@ public class Module : INamedResolver
 
   public void Setup(Func<string, Module> import2module)
   {
-    _imported = new Module[decl.compiled.imports.Count];
+    _imported = new Module[decl.imports.Count];
 
-    for(int i = 0; i < decl.compiled.imports.Count; ++i)
+    for(int i = 0; i < decl.imports.Count; ++i)
     {
-      var imported = import2module(decl.compiled.imports[i]);
+      var imported = import2module(decl.imports[i]);
       if(imported == null)
-        throw new Exception("Module '" + decl.compiled.imports[i] + "' not found");
+        throw new Exception("Module '" + decl.imports[i] + "' not found");
 
       _imported[i] = imported;
     }
 
     if(!decl.is_fully_setup)
-      decl.Setup(name => import2module(name)?.decl);
+      decl.Setup(name => import2module(name).decl);
   }
 
   public void ImportGlobalVars()

@@ -24,6 +24,10 @@ public class ModuleDeclared : INamedResolver
   public VarScopeIndexer gvar_index = new VarScopeIndexer();
   public FuncModuleIndexer func_index = new FuncModuleIndexer();
 
+  //TODO: this probably must be more generic since native modules might have imports as well
+  public List<string> imports => compiled.imports;
+  public int total_gvars_num => compiled.total_gvars_num;
+
   public int local_gvars_mark = -1;
   public int local_gvars_num => local_gvars_mark == -1 ? gvar_index.Count : local_gvars_mark;
 

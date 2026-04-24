@@ -70,6 +70,7 @@ public partial class VM : INamedResolver
     Init_Phase3(module);
   }
 
+  //TODO: store a 'by name' parallel dictionary?
   public Module FindModule(string module_name)
   {
     foreach(var kv in modules)
@@ -122,7 +123,7 @@ public partial class VM : INamedResolver
     {
       var module = new Module(declared);
       //let's add all imported modules as well
-      foreach(var imported in declared.compiled.imports)
+      foreach(var imported in declared.imports)
         TryAddToLoadingList(imported);
       lm.loaded = module;
 
