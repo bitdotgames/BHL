@@ -12,25 +12,24 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
   const config = workspace.getConfiguration('bhl');
-  const executablePath = config.get<string>('executablePath') || 'bhl';
+  const serverCommand = config.get<string>('executablePath') || 'bhl';
   const logFile = config.get<string>('logFile') || '';
-  const forceRebuild = config.get<boolean>('forceRebuild') || false;
+  const forceRebuild = config.get<boolean>('forceRebuild') ?? true;
 
-  const args = ['lsp'];
+  const parts = serverCommand.trim().split(/\s+/);
+  const command = parts[0];
+  const args = [...parts.slice(1), 'lsp'];
   if (logFile) {
     args.push(`--log-file=${logFile}`);
   }
 
-  const isWindows = process.platform === 'win32';
-  const command = isWindows ? 'cmd.exe' : executablePath;
-  const spawnArgs = isWindows ? ['/c', executablePath, ...args] : args;
   const spawnOptions = forceRebuild
     ? { env: { ...process.env, BHL_REBUILD: '1', BHL_SILENT: '1' } }
     : undefined;
 
   const serverOptions: ServerOptions = {
     command,
-    args: spawnArgs,
+    args,
     ...(spawnOptions ? { options: spawnOptions } : {}),
   };
 

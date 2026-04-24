@@ -61,12 +61,15 @@ public static partial class Tasks
       .Enrich.FromLogContext()
       .MinimumLevel.Verbose();
 
+    var silent = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_SILENT"));
+
     if(!string.IsNullOrEmpty(log_file_path))
       logger_conf = logger_conf.WriteTo.File(log_file_path /*, rollingInterval: RollingInterval.Day*/);
-    else
+    else if(!silent)
       logger_conf = logger_conf.WriteTo.Console(standardErrorFromLevel: Serilog.Events.LogEventLevel.Verbose);
 
-    Log.Logger = logger_conf.CreateLogger();
+    if(!silent || !string.IsNullOrEmpty(log_file_path))
+      Log.Logger = logger_conf.CreateLogger();
 
     Stream stdin = OpenStdinStream();
     Stream stdout = OpenStdoutStream();
