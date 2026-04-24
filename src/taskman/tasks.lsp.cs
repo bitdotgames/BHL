@@ -90,7 +90,7 @@ public static partial class Tasks
     if(!string.IsNullOrEmpty(log_file_path))
       logger_conf = logger_conf.WriteTo.File(log_file_path /*, rollingInterval: RollingInterval.Day*/);
     else
-      logger_conf = logger_conf.WriteTo.Console();
+      logger_conf = logger_conf.WriteTo.Console(standardErrorFromLevel: Serilog.Events.LogEventLevel.Verbose);
 
     Log.Logger = logger_conf.CreateLogger();
 
