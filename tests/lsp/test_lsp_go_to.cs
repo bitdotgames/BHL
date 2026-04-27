@@ -274,4 +274,17 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
       await GoToDefinition(srv, uri2, "pval + 1")
     );
   }
+
+  [Fact]
+  public async Task import_opens_file()
+  {
+    await SendInit(srv);
+
+    var result = await GoToDefinition(srv, uri2, "bhl1\"");
+    Assert.NotNull(result);
+    Assert.Single(result);
+    Assert.Equal(uri1.PathNormalized(), result.First().Location!.Uri.PathNormalized());
+    Assert.Equal(0, result.First().Location!.Range.Start.Line);
+    Assert.Equal(0, result.First().Location!.Range.Start.Character);
+  }
 }

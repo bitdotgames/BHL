@@ -58,6 +58,17 @@ public class TextDocumentDefinitionHandler : DefinitionHandlerBase
             Range = symb.origin.source_range.FromAntlr2LspRange()
           });
       }
+
+      var import_file = _workspace.FindImportFile(document, request.Position);
+      if(import_file != null)
+      {
+        return new LocationOrLocationLinks(
+          new Location()
+          {
+            Uri = import_file,
+            Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(0, 0, 0, 0)
+          });
+      }
     }
 
     return null;

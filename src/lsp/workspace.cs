@@ -936,6 +936,41 @@ public class Workspace
     _                => CompletionItemKind.Variable,
   };
 
+  // If the cursor is on the quoted path of an import statement, returns the resolved absolute file path.
+  public string FindImportFile(BHLDocument document, Position position)
+  {
+    var node = document.FindTerminalNode(position.Line, position.Character);
+    if(node == null || node.Symbol.Type != bhlLexer.NORMALSTRING)
+      return null;
+
+    // Confirm that an IMPORT token appears earlier on the same line
+    bool has_import = false;
+    foreach(var t in document.TermNodes)
+    {
+      if(t.Symbol.Line != node.Symbol.Line)
+        continue;
+      if(t.Symbol.Type == bhlLexer.IMPORT)
+      {
+        has_import = true;
+        break;
+      }
+    }
+    if(!has_import)
+      return null;
+
+    var raw = node.GetText(); // includes surrounding quotes
+    if(raw.Length < 2)
+      return null;
+    var import_str = raw.Substring(1, raw.Length - 2);
+
+    try
+    {
+      ProjConf.inc_path.ResolvePath(document.Uri.PathNormalized(), import_str, out var resolved_path, out _);
+      return resolved_path;
+    }
+    catch { return null; }
+  }
+
   public List<Location> FindRefs(Symbol symb)
   {
     var refs = new List<Location>();
