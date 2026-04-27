@@ -85,10 +85,11 @@ public class CompilationExecutor
     var sw = Stopwatch.StartNew();
 
     var errors = new CompileErrors();
+    var warnings = new CompileWarnings();
 
     try
     {
-      await _Exec(conf, errors);
+      await _Exec(conf, errors, warnings);
     }
     catch(Exception e)
     {
@@ -98,7 +99,10 @@ public class CompilationExecutor
     sw.Stop();
 
     conf.logger.Log(1,
-      $"BHL all done(hits/miss/errs: {cache_hits}/{cache_miss}/{errors.Count}) ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+      $"BHL all done(hits/miss/errs/warns: {cache_hits}/{cache_miss}/{errors.Count}/{warnings.Count}) ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+
+    foreach(var warn in warnings)
+      ErrorUtils.OutputWarning(warn.file, warn.range.start.line, warn.range.start.column, warn.text);
 
     if(errors.Count > 0)
     {
@@ -129,7 +133,7 @@ public class CompilationExecutor
     return errors;
   }
 
-  async Task _Exec(CompileConf conf, CompileErrors errors)
+  async Task _Exec(CompileConf conf, CompileErrors errors, CompileWarnings warnings)
   {
     if(!CheckModuleNamesCollision(conf, errors))
       return;
@@ -192,9 +196,12 @@ public class CompilationExecutor
           {
             //TODO: can it be made parallel?
             ANTLR_Processor.ProcessAll(bundle);
-            //NOTE: let's add processors errors to the all errors but continue execution
+            //NOTE: let's add processors errors/warnings to the all errors but continue execution
             foreach(var kv in bundle.file2proc)
+            {
               errors.AddRange(kv.Value.result.errors);
+              warnings.AddRange(kv.Value.result.warnings);
+            }
 
             if(errors.Count > conf.max_errors_num)
               throw new TooManyErrorsException();

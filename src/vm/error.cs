@@ -95,6 +95,11 @@ public static class ErrorUtils
     else //it can be a generic error non related to any source .bhl file
       Console.Error.WriteLine(text);
   }
+
+  public static void OutputWarning(string file, int line, int char_pos, string text)
+  {
+    Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": warning: " + text);
+  }
 }
 
 public class SymbolError : Exception
