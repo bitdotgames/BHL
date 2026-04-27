@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -24,6 +25,7 @@ public class Module : INamedResolver
 
   public string name => decl.name;
   public string file_path => decl.file_path;
+  public List<string> imports => decl.imports;
 
   public Namespace ns;
 
