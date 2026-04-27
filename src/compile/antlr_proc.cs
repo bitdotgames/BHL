@@ -35,13 +35,15 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     public Types types { get; private set; }
     public AST_Module ast { get; private set; }
     public CompileErrors errors { get; private set; }
+    public CompileWarnings warnings { get; private set; }
 
-    public Result(ModuleDeclared module, Types types, AST_Module ast, CompileErrors errors)
+    public Result(ModuleDeclared module, Types types, AST_Module ast, CompileErrors errors, CompileWarnings warnings)
     {
       this.module = module;
       this.types = types;
       this.ast = ast;
       this.errors = errors;
+      this.warnings = warnings;
     }
   }
 
@@ -61,6 +63,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   //NOTE: passed from above
   CompileErrors errors;
+  CompileWarnings warnings;
 
   //NOTE: non-normalized names
   Dictionary<bhlParser.MimportContext, string> raw_imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
@@ -102,7 +105,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ModuleDeclared module,
     FileImports imports_maybe,
     Types types,
-    CompileErrors errors
+    CompileErrors errors,
+    CompileWarnings warnings = null
   )
   {
     this.parsed = parsed;
@@ -113,6 +117,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     this.imports_maybe = imports_maybe;
 
     this.errors = errors;
+    this.warnings = warnings ?? new CompileWarnings();
 
     InitScope();
   }
@@ -132,6 +137,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     root_ast = null;
     result = null;
     errors = new CompileErrors();
+    warnings = new CompileWarnings();
 
     raw_imports_parsed.Clear();
     import_to_ctx.Clear();

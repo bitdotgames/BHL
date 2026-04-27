@@ -41,6 +41,56 @@ public class CompileErrors : List<ICompileError>
   }
 }
 
+public interface ICompileWarning
+{
+  string text { get; }
+  string file { get; }
+  SourceRange range { get; }
+}
+
+public class CompileWarnings : List<ICompileWarning>
+{
+  public override string ToString()
+  {
+    string str = "";
+    for(int i = 0; i < Count; ++i)
+      str += "#" + (i + 1) + " " + this[i] + "\n";
+    return str;
+  }
+
+  public void Dump()
+  {
+    Console.WriteLine(this);
+  }
+}
+
+public class ParseWarning : ICompileWarning
+{
+  public string text { get; }
+
+  public SourceRange range
+  {
+    get { return new SourceRange(place.SourceInterval, tokens); }
+  }
+
+  public string file
+  {
+    get { return module.file_path; }
+  }
+
+  public ModuleDeclared module { get; }
+  public IParseTree place { get; }
+  public ITokenStream tokens { get; }
+
+  public ParseWarning(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg)
+  {
+    this.text = msg;
+    this.module = module;
+    this.place = place;
+    this.tokens = tokens;
+  }
+}
+
 public class CompileErrorsException : Exception
 {
   public CompileErrors errors;
@@ -188,11 +238,13 @@ public class ErrorHandlers
 public class CompileErrorsHub
 {
   public CompileErrors errors;
+  public CompileWarnings warnings;
   public ErrorHandlers handlers;
 
-  public CompileErrorsHub(CompileErrors errors, ErrorHandlers handlers)
+  public CompileErrorsHub(CompileErrors errors, CompileWarnings warnings, ErrorHandlers handlers)
   {
     this.errors = errors;
+    this.warnings = warnings;
     this.handlers = handlers;
   }
 
@@ -201,6 +253,7 @@ public class CompileErrorsHub
     var errs = new CompileErrors();
     return new CompileErrorsHub(
       errs,
+      new CompileWarnings(),
       ErrorHandlers.MakeStandard("", errs)
     );
   }
@@ -210,6 +263,7 @@ public class CompileErrorsHub
     var errs = new CompileErrors();
     return new CompileErrorsHub(
       errs,
+      new CompileWarnings(),
       ErrorHandlers.MakeStandard(file, errs)
     );
   }
@@ -218,6 +272,7 @@ public class CompileErrorsHub
   {
     return new CompileErrorsHub(
       errs,
+      new CompileWarnings(),
       ErrorHandlers.MakeStandard(file, errs)
     );
   }

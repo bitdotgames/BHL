@@ -163,7 +163,8 @@ public partial class ANTLR_Processor
       module,
       imports_maybe,
       ts,
-      err_hub.errors
+      err_hub.errors,
+      err_hub.warnings
     );
   }
 

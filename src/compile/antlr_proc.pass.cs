@@ -374,12 +374,15 @@ public partial class ANTLR_Processor
         if(tok.idx == import_idx || tok.idx == string_idx)
           tok.mods |= SemanticModifier.Deprecated;
       }
+
+      warnings.Add(new ParseWarning(module, ctx.NORMALSTRING(), tokens,
+        $"Unused import '{imported_module.name}'"));
     }
   }
 
   internal void Phase_SetResult()
   {
-    result = new Result(module, _types, root_ast, errors);
+    result = new Result(module, _types, root_ast, errors, warnings);
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)

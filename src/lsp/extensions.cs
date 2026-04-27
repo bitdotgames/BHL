@@ -72,19 +72,21 @@ public static class Extensions
     }
   }
 
-  public static Dictionary<string, List<Diagnostic>> GetDiagnostics(this Dictionary<string, CompileErrors> errors)
+  public static Dictionary<string, List<Diagnostic>> GetDiagnostics(
+    this Dictionary<string, CompileErrors> errors,
+    Dictionary<string, CompileWarnings> warnings = null)
   {
     var result = new Dictionary<string, List<Diagnostic>>();
 
     foreach(var kv in errors)
     {
       List<Diagnostic> diagnostics = new();
-      foreach (var err in kv.Value)
+      foreach(var err in kv.Value)
       {
         var range = err.range.FromAntlr2LspRange();
 
         //NOTE: let's force the error to be 'one-line'
-        if (range.Start.Line != range.End.Line)
+        if(range.Start.Line != range.End.Line)
         {
           range.End.Line = range.Start.Line + 1;
           range.End.Character = 0;
@@ -97,12 +99,12 @@ public static class Extensions
           Message = err.text
         };
 
-        if (diagnostics.Count > 0)
+        if(diagnostics.Count > 0)
         {
           var prev = diagnostics[^1];
           //NOTE: let's skip diagnostics which starts on the same line
           //      just like the previous one
-          if (prev.Range.Start.Line == current.Range.Start.Line)
+          if(prev.Range.Start.Line == current.Range.Start.Line)
             continue;
         }
 
@@ -112,6 +114,30 @@ public static class Extensions
       if(diagnostics.Count > 0)
         result.Add(kv.Key, diagnostics);
     }
+
+    if(warnings != null)
+    {
+      foreach(var kv in warnings)
+      {
+        if(kv.Value.Count == 0)
+          continue;
+        if(!result.TryGetValue(kv.Key, out var diagnostics))
+        {
+          diagnostics = new List<Diagnostic>();
+          result[kv.Key] = diagnostics;
+        }
+        foreach(var warn in kv.Value)
+        {
+          diagnostics.Add(new Diagnostic()
+          {
+            Severity = DiagnosticSeverity.Warning,
+            Range = warn.range.FromAntlr2LspRange(),
+            Message = warn.text
+          });
+        }
+      }
+    }
+
     return result;
   }
 

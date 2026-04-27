@@ -232,10 +232,14 @@ public class Workspace
     lock(_syncRoot)
     {
       var uri2errs = new Dictionary<string, CompileErrors>();
+      var uri2warns = new Dictionary<string, CompileWarnings>();
       foreach(var kv in Path2Proc)
+      {
         uri2errs[kv.Key] = kv.Value.result.errors;
+        uri2warns[kv.Key] = kv.Value.result.warnings;
+      }
 
-      var result = uri2errs.GetDiagnostics();
+      var result = uri2errs.GetDiagnostics(uri2warns);
 
       //NOTE: send empty diagnostics for files that had errors before but now don't
       foreach(var file in _filesWithDiagnostics)
