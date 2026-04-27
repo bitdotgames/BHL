@@ -34,16 +34,26 @@ public class ProjectCompilationStateBundle
     this.types = types;
   }
 
+  public ProjectCompilationStateBundle(
+    Types types,
+    Dictionary<string, ANTLR_Processor> proc,
+    Dictionary<string, ModuleDeclared> cached = null)
+  {
+    this.types = types;
+    foreach(var kv in proc)
+      file2proc.Add(kv.Key, kv.Value);
+    if(cached != null)
+      foreach(var kv in cached)
+        file2cached.Add(kv.Key, kv.Value);
+  }
+
   public ModuleDeclared FindModule(string file_path)
   {
-    //let's check if it's a compiled module and
-    //try to fetch it from the cache first
     if(file2cached != null && file2cached.TryGetValue(file_path, out var cm))
       return cm;
-    else if(file2proc.TryGetValue(file_path, out var proc))
+    if(file2proc.TryGetValue(file_path, out var proc))
       return proc.module;
-    else
-      return null;
+    return null;
   }
 
   public ModuleDeclared GetModule(string file_path)

@@ -102,7 +102,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3),
+      GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3, end_column_offset: 1),
       await GoToDefinition(srv, uri1, "st1(42)")
     );
   }
@@ -113,7 +113,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "func test2() //test2", end_line_offset: 4),
+      GoToDefinitionRsp(uri1, "func test2() //test2", end_line_offset: 4, end_column_offset: 1),
       await GoToDefinition(srv, uri2, "est2() //call test2()")
     );
   }
@@ -124,7 +124,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2),
+      GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2, end_column_offset: 1),
       await GoToDefinition(srv, uri1, "oo foo = {")
     );
   }
@@ -135,7 +135,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2),
+      GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2, end_column_offset: 1),
       await GoToDefinition(srv, uri1, "Foo //create new Foo")
     );
   }
@@ -146,7 +146,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6),
+      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 7),
       await GoToDefinition(srv, uri1, "BAR : 0")
     );
   }
@@ -157,7 +157,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6),
+      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 7),
       await GoToDefinition(srv, uri2, "BAR = 1")
     );
   }
@@ -168,7 +168,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6),
+      GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 7),
       await GoToDefinition(srv, uri2, "AR = 1")
     );
   }
@@ -179,7 +179,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 2),
+      GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 3),
       await GoToDefinition(srv, uri2, "foo.BAR")
     );
   }
@@ -190,7 +190,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri2, "k, int j)"),
+      GoToDefinitionRsp(uri2, "k, int j)", end_column_offset: 1),
       await GoToDefinition(srv, uri2, "k = 10")
     );
   }
@@ -201,7 +201,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri2, "j)"),
+      GoToDefinitionRsp(uri2, "j)", end_column_offset: 1),
       await GoToDefinition(srv, uri2, "j = 100")
     );
   }
@@ -212,7 +212,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7),
+      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7, end_column_offset: 1),
       await GoToDefinition(srv, uri2, "est4() //call test4()")
     );
   }
@@ -223,7 +223,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7),
+      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7, end_column_offset: 1),
       await GoToDefinition(srv, uri2, "est4() //test4")
     );
   }
@@ -234,7 +234,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3),
+      GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3, end_column_offset: 1),
       await GoToDefinition(srv, uri2, "rrorCodes err")
     );
   }
@@ -245,7 +245,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 6),
+      GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 7),
       await GoToDefinition(srv, uri2, "Bad //error code")
     );
   }
@@ -270,7 +270,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     Assert.Equal(
-      GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4),
+      GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 5),
       await GoToDefinition(srv, uri2, "pval + 1")
     );
   }

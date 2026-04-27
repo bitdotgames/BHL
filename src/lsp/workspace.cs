@@ -23,11 +23,17 @@ public class Workspace
   public Dictionary<string, ANTLR_Processor> Path2Proc { get ; private set; } = new ();
   public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new ();
 
+  // Modules loaded from CLI-written .compile.cache files at startup.
+  // They skip full semantic processing; LSP features are unavailable for these
+  // files until they are opened or edited, at which point they move to Path2Proc.
+  Dictionary<string, ModuleDeclared> _path2cached = new ();
+
+
   readonly object _syncRoot = new object();
 
   public bool Indexed { get; private set; }
 
-  public int IndexedFileCount => Path2Proc.Count;
+  public int IndexedFileCount => Path2Proc.Count /*+ _path2cached.Count*/;
 
   HashSet<string> _filesWithDiagnostics = new HashSet<string>();
 
@@ -52,13 +58,13 @@ public class Workspace
     await IndexFilesAsync(ct);
   }
 
-  //NOTE: naive initial implementation
   public Task IndexFilesAsync(CancellationToken ct = default)
   {
     Indexed = true;
 
     Path2Proc.Clear();
     Path2Doc.Clear();
+    //_path2cached.Clear();
 
     for(int i = 0; i < ProjConf.src_dirs.Count; ++i)
     {
@@ -68,6 +74,18 @@ public class Workspace
       foreach(var file in files)
       {
         string norm_file = BuildUtils.NormalizeFilePath(file);
+
+        //var cache_file = GetCompiledCacheFile(norm_file);
+        //if(cache_file != null && !BuildUtils.NeedToRegen(cache_file, norm_file))
+        //{
+        //  try
+        //  {
+        //    var cached = ModuleDeclared.FromFile(cache_file, Types);
+        //    _path2cached[norm_file] = cached;
+        //    continue;
+        //  }
+        //  catch { /* corrupt cache — fall through to full parse */ }
+        //}
 
         using(var sfs = File.OpenRead(norm_file))
         {
@@ -79,11 +97,7 @@ public class Workspace
 
     ct.ThrowIfCancellationRequested();
 
-    var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = Path2Proc;
-    //TODO: use compiled cache if needed
-    proc_bundle.file2cached = null;
-    ANTLR_Processor.ProcessAll(proc_bundle);
+    ANTLR_Processor.ProcessAll(BuildBundle());
 
     ct.ThrowIfCancellationRequested();
 
@@ -93,8 +107,19 @@ public class Workspace
       document.Update(File.ReadAllText(kv.Key), kv.Value);
       Path2Doc.Add(kv.Key, document);
     }
+
     return Task.CompletedTask;
   }
+
+  string GetCompiledCacheFile(string file)
+  {
+    if(string.IsNullOrEmpty(ProjConf.tmp_dir))
+      return null;
+    return CompilationExecutor.GetCompiledCacheFile(ProjConf.tmp_dir, file);
+  }
+
+  ProjectCompilationStateBundle BuildBundle()
+    => new ProjectCompilationStateBundle(Types, Path2Proc/*, _path2cached*/);
 
   ANTLR_Processor ParseFile(string file, Stream stream)
   {
@@ -181,6 +206,9 @@ public class Workspace
     {
       var changed_path = document.Uri.PathNormalized();
 
+      // File may have been in the startup cache; move it to live processing.
+      //_path2cached.Remove(changed_path);
+
       foreach(var kv in Path2Proc)
       {
         if(kv.Key != changed_path)
@@ -191,11 +219,7 @@ public class Workspace
       var proc = ParseFile(changed_path, ms);
       Path2Proc[changed_path] = proc;
 
-      var proc_bundle = new ProjectCompilationStateBundle(Types);
-      proc_bundle.file2proc = Path2Proc;
-      //TODO: use compiled cache if needed
-      proc_bundle.file2cached = null;
-      ANTLR_Processor.ProcessAll(proc_bundle);
+      ANTLR_Processor.ProcessAll(BuildBundle());
 
       document.Update(text, proc);
       Path2Doc[changed_path] = document;
@@ -278,6 +302,17 @@ public class Workspace
             NewText = $"import \"{mod_name}\"\n",
           };
         }
+        //foreach(var kv in _path2cached)
+        //{
+        //  var mod_name = kv.Value.name;
+        //  if(mod_name == curr_module || already_imported.Contains(mod_name))
+        //    continue;
+        //  import_edits[mod_name] = new TextEdit
+        //  {
+        //    Range = new Range(insert_pos, insert_pos),
+        //    NewText = $"import \"{mod_name}\"\n",
+        //  };
+        //}
         foreach(var m in Types.GetModules())
         {
           var mod_name = m.name;
@@ -315,8 +350,8 @@ public class Workspace
       foreach(var kv in Path2Proc)
         AddModuleNsCompletions(kv.Value.module.ns, "", items, seen, seenLabels, import_edits);
 
-      foreach(var kv in _path2cached)
-        AddModuleNsCompletions(kv.Value.ns, "", items, seen, seenLabels, import_edits);
+      //foreach(var kv in _path2cached)
+      //  AddModuleNsCompletions(kv.Value.ns, "", items, seen, seenLabels, import_edits);
 
       // Native modules (std, std.io, etc.) are registered in Types but not linked
       // into any source module namespace — add their top-level symbols explicitly.

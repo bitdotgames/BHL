@@ -26,7 +26,8 @@ public static class Extensions
 
   public static Range FromAntlr2LspRange(this SourceRange range)
   {
-    return new Range(range.start.FromAntlr2LspPosition(), range.end.FromAntlr2LspPosition());
+    // LSP Range.end is exclusive; ANTLR end.column points to the last character (inclusive), so +1.
+    return new Range(range.start.FromAntlr2LspPosition(), new Position(range.end.line - 1, range.end.column + 1));
   }
 
   public static Position FromAntlr2LspPosition(this SourcePos pos)

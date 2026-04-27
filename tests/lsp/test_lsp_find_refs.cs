@@ -104,9 +104,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     var result = await FindReferences(srv, uri1, "st1(42)");
     var expected = MakeReferencesRsp(
-      new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
-      new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
-      new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
+      new UriNeedle(uri1, "test1(float k)", end_column_offset: 5),
+      new UriNeedle(uri1, "test1(42)", end_column_offset: 5),
+      new UriNeedle(uri2, "test1(24)", end_column_offset: 5)
     );
 
     Assert.Equal(expected, result);
@@ -119,9 +119,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     Assert.Equal(
       MakeReferencesRsp(
-        new UriNeedle(uri1, "upval = 1", end_column_offset: 4),
-        new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
-        new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
+        new UriNeedle(uri1, "upval = 1", end_column_offset: 5),
+        new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 5),
+        new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 5)
       ),
       await FindReferences(srv, uri1, "pval + 1")
     );
@@ -134,9 +134,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     Assert.Equal(
       MakeReferencesRsp(
-        new UriNeedle(uri1, "upval) //upval arg", end_column_offset: 4),
-        new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
-        new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
+        new UriNeedle(uri1, "upval) //upval arg", end_column_offset: 5),
+        new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 5),
+        new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 5)
       ),
       await FindReferences(srv, uri1, "upval) //upval arg")
     );
@@ -149,10 +149,10 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     Assert.Equal(
       MakeReferencesRsp(
-        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
-        new UriNeedle(uri1, "Foo {} //class Bar", end_column_offset: 2),
-        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
-        new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
+        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 3),
+        new UriNeedle(uri1, "Foo {} //class Bar", end_column_offset: 3),
+        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 3),
+        new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 3)
       ),
       await FindReferences(srv, uri2, "o test6() //test6")
     );
@@ -165,9 +165,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     Assert.Equal(
       MakeReferencesRsp(
-        new UriNeedle(uri1, "Item //enum Item", end_column_offset: 3),
-        new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
-        new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
+        new UriNeedle(uri1, "Item //enum Item", end_column_offset: 4),
+        new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 4),
+        new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 4)
       ),
       await FindReferences(srv, uri1, "tem //enum Item")
     );
@@ -180,9 +180,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
     Assert.Equal(
       MakeReferencesRsp(
-        new UriNeedle(uri1, "IFoo, Foo {} //class Bar", end_column_offset: 3),
-        new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 3),
-        new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 3)
+        new UriNeedle(uri1, "IFoo, Foo {} //class Bar", end_column_offset: 4),
+        new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 4),
+        new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 4)
       ),
       await FindReferences(srv, uri2, "o test8() //test8")
     );
