@@ -140,6 +140,7 @@ public partial class VM : INamedResolver
 
   void Init_Phase2(Module module)
   {
+    module.decl.Setup(name => FindModule(name).decl);
     module.Setup(name => FindModule(name));
     ExecInitByteCode(module);
   }

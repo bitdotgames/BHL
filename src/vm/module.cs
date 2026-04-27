@@ -25,7 +25,7 @@ public class Module : INamedResolver
   public string name => decl.name;
   public string file_path => decl.file_path;
 
-  public Namespace ns => decl.ns;
+  public Namespace ns;
 
   public ValStack gvars = new ValStack(16);
 
@@ -36,8 +36,12 @@ public class Module : INamedResolver
   public Module(ModuleDeclared decl)
   {
     this.decl = decl;
+    this.ns = new Namespace(decl, "");
+    this.ns.members.UnionWith(decl.ns.members);
     gvars.Reserve(decl.total_gvars_num);
   }
+
+  public static implicit operator Module(ModuleDeclared decl) => new Module(decl);
 
   public INamed ResolveNamedByPath(NamePath path)
   {
@@ -63,8 +67,8 @@ public class Module : INamedResolver
       _imported[i] = imported;
     }
 
-    if(!decl.is_fully_setup)
-      decl.Setup(name => import2module(name).decl);
+    foreach(var link in decl.ns.links)
+      ns.links.Add(link);
   }
 
   public void ImportGlobalVars()

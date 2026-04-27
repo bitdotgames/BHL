@@ -111,7 +111,11 @@ public partial class VM : INamedResolver
     this.loader = loader;
 
     foreach(var kv in types.modules)
-      RegisterModule(new Module(kv.Value));
+    {
+      Module m = kv.Value;
+      m.Setup(null);
+      RegisterModule(m);
+    }
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)

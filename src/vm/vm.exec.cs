@@ -110,7 +110,7 @@ public partial class VM
     if(module.decl.compiled.init_func_idx == -1)
       return;
 
-    var fs = (FuncSymbolScript)module.ns.members[module.decl.compiled.init_func_idx];
+    var fs = (FuncSymbolScript)module.decl.ns.members[module.decl.compiled.init_func_idx];
     Execute(fs);
   }
 
