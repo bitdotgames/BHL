@@ -315,6 +315,9 @@ public class Workspace
       foreach(var kv in Path2Proc)
         AddModuleNsCompletions(kv.Value.module.ns, "", items, seen, seenLabels, import_edits);
 
+      foreach(var kv in _path2cached)
+        AddModuleNsCompletions(kv.Value.ns, "", items, seen, seenLabels, import_edits);
+
       // Native modules (std, std.io, etc.) are registered in Types but not linked
       // into any source module namespace — add their top-level symbols explicitly.
       foreach(var m in Types.GetModules())
@@ -322,6 +325,9 @@ public class Workspace
 
       foreach(var sym in Types.ns)
         AddCompletionItem(items, seen, sym);
+
+      if(document != null)
+        AddLocalVarCompletions(document, position, items, seen);
 
       return items;
     }
@@ -784,6 +790,44 @@ public class Workspace
       }
       else if(found == null)
         found = sym;
+    }
+  }
+
+  static void AddLocalVarCompletions(
+    BHLDocument document, Position position, List<CompletionItem> items, HashSet<Symbol> seen)
+  {
+    int lsp_line = position.Line;
+    int lsp_col  = position.Character;
+
+    foreach(var kv in document.Processed.annotated_nodes)
+    {
+      var sym = kv.Value.lsp_symbol;
+
+      // Only local vars and func args; skip globals and class fields
+      if(sym is not VariableSymbol || sym is GlobalVariableSymbol)
+        continue;
+
+      // Class fields have a ClassSymbol scope → FindEnclosingFuncSymbol() returns null
+      var func = sym.scope?.FindEnclosingFuncSymbol();
+      if(func == null)
+        continue;
+
+      // Cursor must be inside the enclosing function's source range (ANTLR 1-based → LSP 0-based)
+      var func_range = func.origin.source_range;
+      int func_start = func_range.start.line - 1;
+      int func_end   = func_range.end.line   - 1;
+      if(func_start < 0 || lsp_line < func_start || lsp_line > func_end)
+        continue;
+
+      // Symbol must be declared at or before the cursor position
+      var decl_range = sym.origin.source_range;
+      int decl_line = decl_range.start.line - 1;
+      if(decl_line < 0)
+        continue;
+      if(decl_line > lsp_line || (decl_line == lsp_line && decl_range.start.column > lsp_col))
+        continue;
+
+      AddCompletionItem(items, seen, sym, sym.name);
     }
   }
 
