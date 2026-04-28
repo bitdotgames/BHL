@@ -1102,12 +1102,12 @@ public class BHL_TestBase
     CompilationExecutor exec, CompileConf conf, bool show_bytes = false
     )
   {
-    var errors = await exec.Exec(conf);
-    if(errors.Count > 0)
+    var result = await exec.Exec(conf);
+    if(result.errors.Count > 0)
     {
       if(conf.proj.verbosity > 0)
       {
-        foreach(var err in errors)
+        foreach(var err in result.errors)
         {
           await Console.Error.WriteLineAsync(err.ToString());
           if(!string.IsNullOrEmpty(err.stack_trace))
@@ -1116,7 +1116,7 @@ public class BHL_TestBase
         }
       }
 
-      throw new CompileErrorsException(errors);
+      throw new CompileErrorsException(result.errors);
     }
 
     var ms = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));

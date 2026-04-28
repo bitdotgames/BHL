@@ -216,12 +216,16 @@ public static partial class Tasks
     conf.postproc = postproc;
 
     var executor = new CompilationExecutor();
-    var errors = await executor.Exec(conf);
-    if(errors.Count > 0)
+    var result = await executor.Exec(conf);
+
+    foreach(var warn in result.warnings)
+      ErrorUtils.OutputWarning(warn.file, warn.range.start.line, warn.range.start.column, warn.text);
+
+    if(result.errors.Count > 0)
     {
       if(string.IsNullOrEmpty(proj.error_file))
       {
-        foreach(var err in errors)
+        foreach(var err in result.errors)
           ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
       }
 

@@ -21,6 +21,18 @@ public class CompileConf
   public int max_errors_num = 100;
 }
 
+public class CompilationResult
+{
+  public CompileErrors errors;
+  public CompileWarnings warnings;
+
+  public CompilationResult(CompileErrors errors, CompileWarnings warnings)
+  {
+    this.errors = errors;
+    this.warnings = warnings;
+  }
+}
+
 public class CompilationExecutor
 {
   const uint FILE_VERSION = 1;
@@ -63,11 +75,14 @@ public class CompilationExecutor
     conf.postproc = new EmptyPostProcessor();
 
     var cmp = new CompilationExecutor();
-    var errors = await cmp.Exec(conf);
+    var result = await cmp.Exec(conf);
 
-    if(errors.Count > 0)
+    foreach(var warn in result.warnings)
+      ErrorUtils.OutputWarning(warn.file, warn.range.start.line, warn.range.start.column, warn.text);
+
+    if(result.errors.Count > 0)
     {
-      foreach(var err in errors)
+      foreach(var err in result.errors)
         ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
       return null;
     }
@@ -80,7 +95,7 @@ public class CompilationExecutor
     return vm;
   }
 
-  public async Task<CompileErrors> Exec(CompileConf conf)
+  public async Task<CompilationResult> Exec(CompileConf conf)
   {
     var sw = Stopwatch.StartNew();
 
@@ -100,9 +115,6 @@ public class CompilationExecutor
 
     conf.logger.Log(1,
       $"BHL all done(hits/miss/errs/warns: {cache_hits}/{cache_miss}/{errors.Count}/{warnings.Count}) ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
-
-    foreach(var warn in warnings)
-      ErrorUtils.OutputWarning(warn.file, warn.range.start.line, warn.range.start.column, warn.text);
 
     if(errors.Count > 0)
     {
@@ -130,7 +142,7 @@ public class CompilationExecutor
       }
     }
 
-    return errors;
+    return new CompilationResult(errors, warnings);
   }
 
   async Task _Exec(CompileConf conf, CompileErrors errors, CompileWarnings warnings)

@@ -90,15 +90,15 @@ public static class ErrorUtils
     if(File.Exists(file))
     {
       Console.Error.WriteLine(ShowErrorPlace(File.ReadAllText(file), new SourceRange(line, char_pos)));
-      Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": " + text);
+      Console.Error.WriteLine("BHL: " + file + ":" + line + ":" + char_pos + ": " + text);
     }
-    else //it can be a generic error non related to any source .bhl file
+    else //it can be a generic error not related to any source .bhl file
       Console.Error.WriteLine(text);
   }
 
   public static void OutputWarning(string file, int line, int char_pos, string text)
   {
-    Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": warning: " + text);
+    Console.Error.WriteLine("BHL: " + file + ":" + line + ":" + char_pos + ": warning: " + text);
   }
 }
 
