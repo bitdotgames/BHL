@@ -83,8 +83,8 @@ coro func Unit() {
         yield StateChanged(ref state)
         yield Selector(
             [
-              coro func bool() { return yield AttackTarget(ref target_id) }, 
-              coro func bool() { return yield FindTarget(ref target_id) }, 
+              coro func bool() { return yield AttackTarget(ref target_id) },
+              coro func bool() { return yield FindTarget(ref target_id) },
               coro func bool() { return yield Idle() }
             ]
           )

@@ -143,6 +143,24 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [Fact]
+  public void TestExplicitIntToStringTypeCastRhs()
+  {
+    string bhl = @"
+    func string test()
+    {
+      int tmp = 7
+      return ""test: "" + (string)tmp + "" done""
+    }
+    ";
+
+
+    var vm = MakeVM(bhl);
+    var str = Execute(vm, "test").Stack.Pop().str;
+    AssertEqual(str, "test: 7 done");
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestCastFloatToStr()
   {
     string bhl = @"

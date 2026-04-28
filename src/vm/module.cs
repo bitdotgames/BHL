@@ -39,7 +39,8 @@ public class Module : INamedResolver
   {
     this.decl = decl;
     this.ns = new Namespace(decl, "");
-    this.ns.members.UnionWith(decl.ns.members);
+    ns.members = decl.ns.members;
+    ns.links = decl.ns.links;
     gvars.Reserve(decl.total_gvars_num);
   }
 
@@ -69,8 +70,6 @@ public class Module : INamedResolver
       _imported[i] = imported;
     }
 
-    foreach(var link in decl.ns.links)
-      ns.links.Add(link);
   }
 
   public void ImportGlobalVars()
