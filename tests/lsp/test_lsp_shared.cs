@@ -125,7 +125,7 @@ public class TestLSPShared : BHL_TestBase
 
     public async Task SendAsync(string json, CancellationToken ct = default)
     {
-      Console.WriteLine("SEND: " + json);
+      //Console.WriteLine("SEND: " + json);
 
       var bytes = Encoding.UTF8.GetBytes(json);
       var header = Encoding.ASCII.GetBytes($"Content-Length: {bytes.Length}\r\n\r\n");
@@ -173,7 +173,7 @@ public class TestLSPShared : BHL_TestBase
         }
 
         var json = new string(buffer, 0, read);
-        Console.WriteLine("RECV: " + json);
+        //Console.WriteLine("RECV: " + json);
         yield return LspResponse.Parse(json);
       }
     }

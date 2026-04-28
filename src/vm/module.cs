@@ -27,9 +27,9 @@ public class Module : INamedResolver
   public string file_path => decl.file_path;
   public List<string> imports => decl.imports;
 
-  public Namespace ns;
+  public Namespace ns => decl.ns;
 
-  public ValStack gvars = new ValStack(16);
+  public ValStack gvars;
 
   //filled during runtime module setup procedure since
   //until this moment we don't know about other modules
@@ -38,10 +38,7 @@ public class Module : INamedResolver
   public Module(ModuleDeclared decl)
   {
     this.decl = decl;
-    this.ns = new Namespace(decl, "");
-    ns.members = decl.ns.members;
-    ns.links = decl.ns.links;
-    gvars.Reserve(decl.total_gvars_num);
+    gvars = new ValStack(decl.total_gvars_num > 0 ?  decl.total_gvars_num : 1);
   }
 
   public static implicit operator Module(ModuleDeclared decl) => new Module(decl);
