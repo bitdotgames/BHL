@@ -1,17 +1,20 @@
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using bhl;
+using bhl.lsp;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
 public class TestLSPUnusedImports : TestLSPShared, System.IDisposable
 {
   TestLSPHost srv;
+  Workspace ws;
 
   public TestLSPUnusedImports()
   {
     CleanTestFiles();
-    srv = NewTestServer();
+    ws = new Workspace();
+    srv = NewTestServer(workspace: ws);
   }
 
   public void Dispose()
@@ -19,29 +22,27 @@ public class TestLSPUnusedImports : TestLSPShared, System.IDisposable
     srv.Dispose();
   }
 
-  static int DeprecatedModifier => (int)ANTLR_Processor.SemanticModifier.Deprecated;
-
-  static List<(int line, int col, int len, int type, int mods)> DecodeTokens(SemanticTokens result)
+  async Task TriggerWorkspaceSetup(DocumentUri uri)
   {
-    var tokens = new List<(int, int, int, int, int)>();
-    var data = result.Data;
-    int line = 0, col = 0;
-    for(int i = 0; i + 4 < data.Length; i += 5)
-    {
-      int dl = (int)data[i];
-      int dc = (int)data[i + 1];
-      int len = (int)data[i + 2];
-      int type = (int)data[i + 3];
-      int mods = (int)data[i + 4];
-      line += dl;
-      col = dl != 0 ? dc : col + dc;
-      tokens.Add((line, col, len, type, mods));
-    }
-    return tokens;
+    await SendInit(srv);
+    await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
+      "textDocument/semanticTokens/full",
+      new() { TextDocument = uri }
+    );
+  }
+
+  bool HasUnusedImportWarning(DocumentUri uri, string importName = null)
+  {
+    string filePath = uri.PathNormalized();
+    if(!ws.Path2Proc.TryGetValue(filePath, out var proc))
+      return false;
+    return proc.result.warnings.Any(w =>
+      w.text.Contains("Unused import") &&
+      (importName == null || w.text.Contains(importName)));
   }
 
   [Fact]
-  public async Task TestUnusedImportMarkedDeprecated()
+  public async Task TestUnusedImportWarning()
   {
     string bhl1 = @"
 func void foo() {}
@@ -54,24 +55,13 @@ func void bar() {}
     MakeTestDocument("bhl1.bhl", bhl1);
     var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
 
-    await SendInit(srv);
+    await TriggerWorkspaceSetup(uri2);
 
-    var result = await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
-      "textDocument/semanticTokens/full",
-      new() { TextDocument = uri2 }
-    );
-
-    var tokens = DecodeTokens(result);
-    // Line 1: import(kw,deprecated) "bhl1"(str,deprecated)
-    Assert.NotEmpty(tokens);
-    var import_kw = tokens.Find(t => t.line == 1 && t.col == 0);
-    var import_str = tokens.Find(t => t.line == 1 && t.col == 7);
-    Assert.True((import_kw.mods & DeprecatedModifier) != 0, "import keyword should be deprecated");
-    Assert.True((import_str.mods & DeprecatedModifier) != 0, "import string should be deprecated");
+    Assert.True(HasUnusedImportWarning(uri2, "bhl1"), "unused import should produce a warning");
   }
 
   [Fact]
-  public async Task TestUsedImportNotDeprecated()
+  public async Task TestUsedImportNoWarning()
   {
     string bhl1 = @"
 func void foo() {}
@@ -84,16 +74,9 @@ func void bar() { foo() }
     MakeTestDocument("bhl1.bhl", bhl1);
     var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
 
-    await SendInit(srv);
+    await TriggerWorkspaceSetup(uri2);
 
-    var result = await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
-      "textDocument/semanticTokens/full",
-      new() { TextDocument = uri2 }
-    );
-
-    var tokens = DecodeTokens(result);
-    var import_kw = tokens.Find(t => t.line == 1 && t.col == 0);
-    Assert.True((import_kw.mods & DeprecatedModifier) == 0, "import keyword should not be deprecated");
+    Assert.False(HasUnusedImportWarning(uri2), "used import should not produce a warning");
   }
 
   [Fact]
@@ -115,24 +98,14 @@ func void test() { foo() }
     MakeTestDocument("bhl2.bhl", bhl2);
     var uri3 = MakeTestDocument("bhl3.bhl", bhl3);
 
-    await SendInit(srv);
+    await TriggerWorkspaceSetup(uri3);
 
-    var result = await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
-      "textDocument/semanticTokens/full",
-      new() { TextDocument = uri3 }
-    );
-
-    var tokens = DecodeTokens(result);
-    // Line 1: import "bhl1" — used, not deprecated
-    var kw1 = tokens.Find(t => t.line == 1 && t.col == 0);
-    Assert.True((kw1.mods & DeprecatedModifier) == 0, "bhl1 import should not be deprecated");
-    // Line 2: import "bhl2" — unused, deprecated
-    var kw2 = tokens.Find(t => t.line == 2 && t.col == 0);
-    Assert.True((kw2.mods & DeprecatedModifier) != 0, "bhl2 import should be deprecated");
+    Assert.False(HasUnusedImportWarning(uri3, "bhl1"), "used bhl1 import should not produce a warning");
+    Assert.True(HasUnusedImportWarning(uri3, "bhl2"), "unused bhl2 import should produce a warning");
   }
 
   [Fact]
-  public async Task TestUsedViaType()
+  public async Task TestUsedViaFuncParamType()
   {
     string bhl1 = @"
 class Vec3 { float x float y float z }
@@ -145,15 +118,88 @@ func void move(Vec3 pos) {}
     MakeTestDocument("bhl1.bhl", bhl1);
     var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
 
-    await SendInit(srv);
+    await TriggerWorkspaceSetup(uri2);
 
-    var result = await srv.SendRequestAsync<SemanticTokensParams, SemanticTokens>(
-      "textDocument/semanticTokens/full",
-      new() { TextDocument = uri2 }
-    );
+    Assert.False(HasUnusedImportWarning(uri2), "import used via func param type should not produce a warning");
+  }
 
-    var tokens = DecodeTokens(result);
-    var import_kw = tokens.Find(t => t.line == 1 && t.col == 0);
-    Assert.True((import_kw.mods & DeprecatedModifier) == 0, "import should not be deprecated when type is used");
+  [Fact]
+  public async Task TestUsedViaClassFieldType()
+  {
+    string bhl1 = @"
+class Foo {}
+";
+    string bhl2 = @"
+import ""bhl1""
+class Bar {
+  Foo foo
+}
+";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    Assert.False(HasUnusedImportWarning(uri2), "import used via class field type should not produce a warning");
+  }
+
+  [Fact]
+  public async Task TestUsedViaClassFieldArrayType()
+  {
+    string bhl1 = @"
+class Foo {}
+";
+    string bhl2 = @"
+import ""bhl1""
+class Bar {
+  []Foo foos
+}
+";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    Assert.False(HasUnusedImportWarning(uri2), "import used via class field array type should not produce a warning");
+  }
+
+  [Fact]
+  public async Task TestUsedViaGlobalVarArrayType()
+  {
+    string bhl1 = @"
+class Foo {}
+";
+    string bhl2 = @"
+import ""bhl1""
+[]Foo items
+";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    Assert.False(HasUnusedImportWarning(uri2), "import used via global var array type should not produce a warning");
+  }
+
+  [Fact]
+  public async Task TestUsedViaFuncParamArrayType()
+  {
+    string bhl1 = @"
+class Foo {}
+";
+    string bhl2 = @"
+import ""bhl1""
+func void process([]Foo items) {}
+";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    Assert.False(HasUnusedImportWarning(uri2), "import used via func param array type should not produce a warning");
   }
 }

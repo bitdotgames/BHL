@@ -367,14 +367,6 @@ public partial class ANTLR_Processor
       if(!import_to_ctx.TryGetValue(imported_module, out var ctx))
         continue;
 
-      int import_idx = ctx.IMPORT().Symbol.StartIndex;
-      int string_idx = ctx.NORMALSTRING().Symbol.StartIndex;
-      foreach(var tok in semantic_tokens)
-      {
-        if(tok.idx == import_idx || tok.idx == string_idx)
-          tok.mods |= SemanticModifier.Deprecated;
-      }
-
       warnings.Add(new ParseWarning(module, ctx.NORMALSTRING(), tokens,
         $"Unused import '{imported_module.name}'"));
     }
@@ -1002,9 +994,6 @@ public partial class ANTLR_Processor
 
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.origin.parsed.eval_type = pass.gvar_symb.type.Get();
-
-    if(vd.type().nsName() != null)
-      LSP_SetSymbol(vd.type().nsName().dotName().NAME(), pass.gvar_symb.type.Get() as Symbol);
 
     PushAST((AST_Tree)pass.ast);
 

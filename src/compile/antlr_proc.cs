@@ -1682,6 +1682,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     else if(ctx.funcType() != null)
       tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
 
+    //NOTE: save base type before potential array/map wrapping so we can
+    //      annotate the nsName token with the actual element type symbol,
+    //      not the ephemeral array/map wrapper (which has no scope/module)
+    var base_tp = tp;
+
     if(ctx.arrType() != null)
     {
       if(tp.Get() == null)
@@ -1719,7 +1724,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     //NOTE: this is required for LSP, we might want to have
     //      a special LSP mode for that?
-    if(ctx.nsName() != null && resolved is Symbol symb)
+    if(ctx.nsName() != null && base_tp.Get() is Symbol symb)
       LSP_SetSymbol(ctx.nsName().dotName().NAME(), symb);
 
     return tp;
@@ -3624,9 +3629,6 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var var_ann = Annotate(name);
     var_ann.eval_type = tp.Get();
-
-    if(tp_ctx?.nsName() != null)
-      LSP_SetSymbol(tp_ctx.nsName().dotName().NAME(), var_ann.eval_type as Symbol);
 
     if(is_ref && !func_arg)
     {
