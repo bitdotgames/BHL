@@ -194,11 +194,14 @@ public partial class VM : INamedResolver
     {
       if(!IsStopped())
       {
+#if BHL_STACKTRACE
         try
+#endif
         {
           _AfterStop();
           exec.stack.ClearAndRelease();
         }
+#if BHL_STACKTRACE
         catch(Exception e)
         {
           var trace = new List<VM.TraceItem>();
@@ -212,6 +215,7 @@ public partial class VM : INamedResolver
 
           throw new Error(trace, e);
         }
+#endif
       }
 
       if(with_children)

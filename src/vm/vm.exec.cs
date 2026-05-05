@@ -543,58 +543,12 @@ public partial class VM
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Execute(int region_stop_idx = 0)
+    public void Execute(int region_stop_idx = 0)
     {
       status = BHS.SUCCESS;
 
-#if BHL_USE_OPCODE_SWITCH
       while(regions_count > region_stop_idx && status == BHS.SUCCESS)
         ExecuteOnce();
-#else
-      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
-      {
-        ref var region = ref regions[regions_count - 1];
-        ref var frame = ref frames[region.frame_idx];
-
-        //1. active coroutine has priority
-        if(coroutine != null)
-        {
-          ExecuteCoroutine(ref region, this);
-          continue;
-        }
-
-        //2. out of current region?
-        if(ip < region.min_ip || ip > region.max_ip)
-        {
-          if(region.defers != null && region.defers.count > 0)
-            region.defers.ExitScope(this);
-          --regions_count;
-          continue;
-        }
-
-        //3. frame exit requested
-        if(ip == EXIT_FRAME_IP)
-        {
-          int return_ip = frame.return_ip;
-          ExitFrame(this, ref frame);
-          ip = return_ip + 1;
-          continue;
-        }
-
-        //4. inner tight dispatch loop: no array re-loads, no redundant checks per opcode
-        var bytes = frame.bytecode;
-        int saved_regions = regions_count;
-        do
-        {
-          op_handlers[bytes[ip]](vm, this, ref region, ref frame, bytes);
-          ++ip;
-        }
-        while(regions_count == saved_regions &&
-              coroutine == null &&
-              status == BHS.SUCCESS &&
-              ip <= region.max_ip);
-      }
-#endif
     }
 
     static unsafe void InitOpcodeHandlers()
@@ -1237,13 +1191,7 @@ public partial class VM
         unsafe static void OpcodeReturn(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
 #endif
         {
-          int return_ip = frame.return_ip;
-          ExitFrame(exec, ref frame);
-          //NOTE: tight dispatch loop does ++ip after this handler returns;
-          //      for inner frames (regions_count > 0) return_ip + 1 resumes the caller;
-          //      for the outermost frame (regions_count == 0) EXIT_FRAME_IP is used as a
-          //      completion signal that propagates up through paral Tick() layers
-          exec.ip = exec.regions_count == 0 ? EXIT_FRAME_IP - 1 : return_ip;
+          exec.ip = EXIT_FRAME_IP - 1;
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -2914,7 +2862,7 @@ public partial class VM
 
         ++ip;
       }
-    } // ExecuteOnce()
+    }
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

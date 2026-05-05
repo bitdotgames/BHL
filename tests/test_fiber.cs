@@ -141,6 +141,42 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
+  public void TestFiberStopDefer()
+  {
+    string bhl = @"
+
+    class Foo {
+      int x
+    }
+
+    coro func doer(Foo foo) {
+      defer {
+        foo.x = 1
+      }
+      while(true) {
+        yield()
+      }
+    }
+
+    coro func test() {
+      var foo = new Foo{}
+      yield doer(foo)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+
+    Assert.True(vm.Tick());
+
+    fb.Stop(true);
+
+    vm.Tick();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestDirectExecuteNativeFunc()
   {
     string bhl = @"
@@ -1460,6 +1496,74 @@ public class TestFiber : BHL_TestBase
     Assert.Equal("2;", log.ToString());
 
     Assert.True(!ScriptMgr.instance.Busy);
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestStopDeferInScriptMgr()
+  {
+    string bhl = @"
+
+    class Foo {
+      int x
+    }
+
+    coro func doer(Foo foo) {
+      defer {
+        foo.x = 1
+        trace((string)foo.x)
+      }
+      while(true) {
+        yield()
+      }
+    }
+
+    coro func test()
+    {
+      var foo = new Foo{}
+      StartScriptInMgr(
+        script: coro func() {
+          yield doer(foo)
+        },
+        spawns : 1
+      )
+      yield suspend()
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+
+    {
+      Assert.True(vm.Tick());
+      ScriptMgr.instance.Tick();
+
+      var cs = ScriptMgr.instance.active;
+      Assert.Single(cs);
+    }
+
+    {
+      Assert.True(vm.Tick());
+      ScriptMgr.instance.Tick();
+
+      var cs = ScriptMgr.instance.active;
+      Assert.Single(cs);
+    }
+
+    Assert.Equal("", log.ToString());
+    ScriptMgr.instance.Stop();
+    Assert.Equal("1", log.ToString());
+    Assert.True(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
 
     CommonChecks(vm);
   }
