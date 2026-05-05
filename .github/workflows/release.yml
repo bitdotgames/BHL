@@ -6,6 +6,23 @@ on:
       - 'v*'
 
 jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run benchmarks
+        run: make bench
+
+      - name: Write benchmark summary
+        run: |
+          echo "## Benchmark results for ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          cat bench/BenchmarkDotNet.Artifacts/results/*-report-github.md >> $GITHUB_STEP_SUMMARY
+
   release:
     runs-on: ubuntu-latest
     permissions:
