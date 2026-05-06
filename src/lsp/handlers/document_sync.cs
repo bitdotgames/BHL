@@ -49,13 +49,20 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
     foreach(var change in notification.ContentChanges)
     {
-      if(!_workspace.UpdateDocument(
-           notification.TextDocument.Uri,
-           change.Text
-         ))
-      {
-        //TODO: send some diagnostics about missing document?
-      }
+      var sw = System.Diagnostics.Stopwatch.StartNew();
+      bool updated = _workspace.UpdateDocument(
+        notification.TextDocument.Uri,
+        change.Text
+      );
+      sw.Stop();
+
+      if(updated)
+        _server.SendNotification("window/logMessage", new ShowMessageParams
+        {
+          Type = MessageType.Log,
+          Message = $"BHL: recompiled in {sw.ElapsedMilliseconds}ms",
+        });
+      //TODO: send some diagnostics about missing document?
     }
 
     _server.PublishDiagnostics(_workspace.GetDiagnosticsToPublish());

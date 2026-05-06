@@ -97,12 +97,14 @@ public static class ServerFactory
             Message = "BHL: Indexing...",
           });
 
+          var sw = System.Diagnostics.Stopwatch.StartNew();
           await workspace.IndexFilesAsync(token);
+          sw.Stop();
 
           server.SendNotification("window/showMessage", new ShowMessageParams
           {
             Type = MessageType.Log,
-            Message = $"BHL: {workspace.IndexedFileCount} file(s) indexed",
+            Message = $"BHL: {workspace.IndexedFileCount} file(s) indexed in {sw.ElapsedMilliseconds}ms",
           });
 
           var diagnostics = workspace.GetDiagnosticsToPublish();
