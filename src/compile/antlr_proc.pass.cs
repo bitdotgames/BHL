@@ -175,7 +175,10 @@ public partial class ANTLR_Processor
       return;
 
     foreach(var kv in proc_bundle.file2cached)
-      kv.Value.Setup(name => name2module[name], flags);
+    {
+      if(!kv.Value.is_ready)
+        kv.Value.Setup(name => name2module[name], flags);
+    }
   }
 
 
@@ -375,6 +378,9 @@ public partial class ANTLR_Processor
   internal void Phase_SetResult()
   {
     result = new Result(module, _types, root_ast, errors, warnings);
+    // Mark the module so SetupCachedModules skips it in future incremental cycles
+    // when this module appears in file2cached instead of file2proc.
+    module.is_ready = true;
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)

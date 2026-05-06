@@ -26,7 +26,9 @@ public class ProjectCompilationStateBundle
   public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
 
   //NOTE: can be null, contains already cached compile modules.
-  //      An entry present in file2compiled *doesn't exist* in file2proc
+  //      An entry present in file2cached *doesn't exist* in file2proc.
+  //      Also used during incremental LSP updates to hold modules from files
+  //      that are not being re-processed in this cycle.
   public Dictionary<string, ModuleDeclared> file2cached = new Dictionary<string, ModuleDeclared>();
 
   public ProjectCompilationStateBundle(Types types)

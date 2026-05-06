@@ -35,7 +35,7 @@ public class ModuleDeclared : INamedResolver
   public CompiledModule compiled = CompiledModule.Empty;
   public bool is_native => compiled == CompiledModule.Empty;
 
-  bool is_fully_setup;
+  internal bool is_ready;
 
   public ModuleDeclared(string name = "", string file_path = "")
   {
@@ -88,10 +88,10 @@ public class ModuleDeclared : INamedResolver
   {
     lock(this)
     {
-      if(is_fully_setup)
+      if(is_ready)
         return;
       Setup(import2module, SetupFlags.All);
-      is_fully_setup = true;
+      is_ready = true;
     }
   }
 

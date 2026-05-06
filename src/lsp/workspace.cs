@@ -16,24 +16,16 @@ public class Workspace
 
   public ProjectConf ProjConf { get; private set; }
 
-  //TODO: do we need this one?
-  //public event System.Action<Dictionary<string, CompileErrors>> OnCompileErrors;
-
   //NOTE: keeping both collections for convenience of re-indexing
   public Dictionary<string, ANTLR_Processor> Path2Proc { get ; private set; } = new ();
   public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new ();
-
-  // Modules loaded from CLI-written .compile.cache files at startup.
-  // They skip full semantic processing; LSP features are unavailable for these
-  // files until they are opened or edited, at which point they move to Path2Proc.
-  Dictionary<string, ModuleDeclared> _path2cached = new ();
 
 
   readonly object _syncRoot = new object();
 
   public bool Indexed { get; private set; }
 
-  public int IndexedFileCount => Path2Proc.Count /*+ _path2cached.Count*/;
+  public int IndexedFileCount => Path2Proc.Count;
 
   HashSet<string> _filesWithDiagnostics = new HashSet<string>();
 
@@ -64,7 +56,6 @@ public class Workspace
 
     Path2Proc.Clear();
     Path2Doc.Clear();
-    //_path2cached.Clear();
 
     for(int i = 0; i < ProjConf.src_dirs.Count; ++i)
     {
@@ -74,18 +65,6 @@ public class Workspace
       foreach(var file in files)
       {
         string norm_file = BuildUtils.NormalizeFilePath(file);
-
-        //var cache_file = GetCompiledCacheFile(norm_file);
-        //if(cache_file != null && !BuildUtils.NeedToRegen(cache_file, norm_file))
-        //{
-        //  try
-        //  {
-        //    var cached = ModuleDeclared.FromFile(cache_file, Types);
-        //    _path2cached[norm_file] = cached;
-        //    continue;
-        //  }
-        //  catch { /* corrupt cache — fall through to full parse */ }
-        //}
 
         using(var sfs = File.OpenRead(norm_file))
         {
@@ -119,7 +98,7 @@ public class Workspace
   }
 
   ProjectCompilationStateBundle BuildBundle()
-    => new ProjectCompilationStateBundle(Types, Path2Proc/*, _path2cached*/);
+    => new (Types, Path2Proc);
 
   ANTLR_Processor ParseFile(string file, Stream stream)
   {
@@ -206,25 +185,59 @@ public class Workspace
     {
       var changed_path = document.Uri.PathNormalized();
 
-      // File may have been in the startup cache; move it to live processing.
-      //_path2cached.Remove(changed_path);
+      // Parse the changed file first to get its updated module name and parse tree.
+      var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
+      var proc = ParseFile(changed_path, ms);
 
+      // Identify direct importers of the changed module BEFORE any Reset(),
+      // because Reset() clears each processor's imports list.
+      var affected = FindAffectedFiles(changed_path, proc.module.name);
+
+      // Register the new processor and reset only the affected importers.
+      // Unaffected processors are left intact — their previous results remain valid.
+      Path2Proc[changed_path] = proc;
       foreach(var kv in Path2Proc)
       {
-        if(kv.Key != changed_path)
+        if(kv.Key != changed_path && affected.Contains(kv.Key))
           kv.Value.Reset();
       }
 
-      var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-      var proc = ParseFile(changed_path, ms);
-      Path2Proc[changed_path] = proc;
+      // Build a partial bundle: affected files go into file2proc (will run all phases);
+      // unaffected files go into file2cached (modules available for import resolution only).
+      var bundle = new ProjectCompilationStateBundle(Types);
+      foreach(var kv in Path2Proc)
+      {
+        if(affected.Contains(kv.Key))
+          bundle.file2proc.Add(kv.Key, kv.Value);
+        else
+          bundle.file2cached.Add(kv.Key, kv.Value.module);
+      }
 
-      ANTLR_Processor.ProcessAll(BuildBundle());
+      ANTLR_Processor.ProcessAll(bundle);
 
       document.Update(text, proc);
       Path2Doc[changed_path] = document;
       return proc;
     }
+  }
+
+  HashSet<string> FindAffectedFiles(string changed_path, string changed_module_name)
+  {
+    var affected = new HashSet<string> { changed_path };
+    foreach(var kv in Path2Proc)
+    {
+      if(kv.Key == changed_path)
+        continue;
+      foreach(var imported in kv.Value.imports)
+      {
+        if(imported.name == changed_module_name)
+        {
+          affected.Add(kv.Key);
+          break;
+        }
+      }
+    }
+    return affected;
   }
 
   public Dictionary<string, List<Diagnostic>> GetDiagnosticsToPublish()
