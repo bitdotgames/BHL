@@ -273,6 +273,31 @@ public class Workspace
     }
   }
 
+  public List<TextEdit> GetUnusedImportEdits(DocumentUri uri)
+  {
+    lock(_syncRoot)
+    {
+      var path = uri.PathNormalized();
+      if(!Path2Proc.TryGetValue(path, out var proc))
+        return null;
+
+      var edits = new List<TextEdit>();
+      foreach(var warn in proc.result.warnings)
+      {
+        if(!warn.text.StartsWith("Unused import"))
+          continue;
+        // warn.range.start.line is 1-based (ANTLR); convert to 0-based LSP
+        int lsp_line = warn.range.start.line - 1;
+        edits.Add(new TextEdit
+        {
+          Range = new Range(new Position(lsp_line, 0), new Position(lsp_line + 1, 0)),
+          NewText = "",
+        });
+      }
+      return edits.Count > 0 ? edits : null;
+    }
+  }
+
   public List<CompletionItem> GetCompletions(DocumentUri uri, Position position, string trigger_character)
   {
     lock(_syncRoot)

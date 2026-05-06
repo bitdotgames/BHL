@@ -202,4 +202,87 @@ func void process([]Foo items) {}
 
     Assert.False(HasUnusedImportWarning(uri2), "import used via func param array type should not produce a warning");
   }
+
+  [Fact]
+  public async Task RemoveUnusedImportOnSave_SingleUnused()
+  {
+    string bhl1 = @"func void foo() {}";
+    string bhl2 = "import \"bhl1\"\nfunc void bar() {}";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    var edits = ws.GetUnusedImportEdits(uri2);
+
+    Assert.NotNull(edits);
+    Assert.Single(edits);
+    // the import is on line 0 (0-based); edit should delete that entire line
+    Assert.Equal(0, edits[0].Range.Start.Line);
+    Assert.Equal(0, edits[0].Range.Start.Character);
+    Assert.Equal(1, edits[0].Range.End.Line);
+    Assert.Equal(0, edits[0].Range.End.Character);
+    Assert.Equal("", edits[0].NewText);
+  }
+
+  [Fact]
+  public async Task RemoveUnusedImportOnSave_NoUnused()
+  {
+    string bhl1 = @"func void foo() {}";
+    string bhl2 = "import \"bhl1\"\nfunc void bar() { foo() }";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    var edits = ws.GetUnusedImportEdits(uri2);
+
+    Assert.Null(edits);
+  }
+
+  [Fact]
+  public async Task RemoveUnusedImportOnSave_MultipleUnused()
+  {
+    string bhl1 = @"func void foo() {}";
+    string bhl2 = @"func void bar() {}";
+    string bhl3 = "import \"bhl1\"\nimport \"bhl2\"\nfunc void test() {}";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    MakeTestDocument("bhl2.bhl", bhl2);
+    var uri3 = MakeTestDocument("bhl3.bhl", bhl3);
+
+    await TriggerWorkspaceSetup(uri3);
+
+    var edits = ws.GetUnusedImportEdits(uri3);
+
+    Assert.NotNull(edits);
+    Assert.Equal(2, edits.Count);
+    // both import lines should be deleted
+    var lines = edits.Select(e => e.Range.Start.Line).OrderBy(l => l).ToList();
+    Assert.Equal(0, lines[0]);
+    Assert.Equal(1, lines[1]);
+  }
+
+  [Fact]
+  public async Task RemoveUnusedImportOnSave_PartiallyUnused()
+  {
+    string bhl1 = @"func void foo() {}";
+    string bhl2 = @"func void bar() {}";
+    string bhl3 = "import \"bhl1\"\nimport \"bhl2\"\nfunc void test() { foo() }";
+
+    MakeTestDocument("bhl1.bhl", bhl1);
+    MakeTestDocument("bhl2.bhl", bhl2);
+    var uri3 = MakeTestDocument("bhl3.bhl", bhl3);
+
+    await TriggerWorkspaceSetup(uri3);
+
+    var edits = ws.GetUnusedImportEdits(uri3);
+
+    Assert.NotNull(edits);
+    Assert.Single(edits);
+    // only bhl2 (line 1) should be removed
+    Assert.Equal(1, edits[0].Range.Start.Line);
+  }
 }

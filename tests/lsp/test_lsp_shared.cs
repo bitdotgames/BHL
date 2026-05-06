@@ -606,6 +606,14 @@ public class TestLSPShared : BHL_TestBase
     return pos;
   }
 
+  public static async Task SendDidSave(TestLSPHost srv, DocumentUri uri)
+  {
+    await srv.SendNotificationAsync(
+      "textDocument/didSave",
+      new DidSaveTextDocumentParams { TextDocument = uri }
+    );
+  }
+
   public static async Task SendInit(TestLSPHost srv)
   {
     var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
