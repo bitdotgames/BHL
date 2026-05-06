@@ -285,7 +285,11 @@ public class Workspace
       var seen = new HashSet<Symbol>();
 
       if(Path2Doc.TryGetValue(path, out var document) && IsInsideString(document, position))
+      {
+        if(IsInsideImportString(document, position))
+          return GetImportStringCompletions(document);
         return items;
+      }
 
       // Build auto-import edits for source modules not yet imported in the current document.
       // Computed before the dot-trigger branch so both paths can attach them.
@@ -516,6 +520,53 @@ public class Workspace
         return true;
     }
     return false;
+  }
+
+  static bool IsInsideImportString(BHLDocument document, Position position)
+  {
+    int byte_idx = document.Index.CalcByteIndex(position.Line, position.Character);
+    var nodes = document.TermNodes;
+    for(int i = 0; i < nodes.Count; i++)
+    {
+      var tok = nodes[i];
+      if(tok.Symbol.Type != bhlLexer.NORMALSTRING)
+        continue;
+      if(tok.Symbol.StartIndex > byte_idx || tok.Symbol.StopIndex < byte_idx)
+        continue;
+      // cursor is inside this string — check if an IMPORT token precedes it on the same line
+      int str_line = tok.Symbol.Line;
+      for(int j = i - 1; j >= 0; j--)
+      {
+        var prev = nodes[j];
+        if(prev.Symbol.Line != str_line)
+          break;
+        if(prev.Symbol.Type == bhlLexer.IMPORT)
+          return true;
+      }
+    }
+    return false;
+  }
+
+  List<CompletionItem> GetImportStringCompletions(BHLDocument document)
+  {
+    var (already_imported, _) = GetImportContext(document, ProjConf.inc_path);
+    var curr_module = document.Processed?.module?.name ?? "";
+    var items = new List<CompletionItem>();
+
+    foreach(var kv in Path2Proc)
+    {
+      var mod_name = kv.Value.module.name;
+      if(mod_name == curr_module || already_imported.Contains(mod_name))
+        continue;
+      items.Add(new CompletionItem
+      {
+        Label = mod_name,
+        Kind = CompletionItemKind.Module,
+        InsertText = mod_name,
+      });
+    }
+
+    return items;
   }
 
   // Returns (scope, static_only): static_only=true when the identifier before the dot is a

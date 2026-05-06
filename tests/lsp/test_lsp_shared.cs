@@ -446,6 +446,24 @@ public class TestLSPShared : BHL_TestBase
     );
   }
 
+  // Requests completions with cursor placed inside the import string after `needle`.
+  // `needle` should be the text of the opening quote, e.g. `import "`.
+  public static async Task<CompletionList> GetImportCompletions(TestLSPHost srv, DocumentUri uri, string needle)
+  {
+    var text = File.ReadAllText(uri.PathNormalized());
+    var pos = FindPos(text, needle);
+    var inside_string = new Position(pos.ToPosition().Line, pos.ToPosition().Character + needle.Length);
+
+    return await srv.SendRequestAsync<CompletionParams, CompletionList>(
+      "textDocument/completion",
+      new CompletionParams()
+      {
+        TextDocument = uri,
+        Position = inside_string,
+      }
+    );
+  }
+
   // Requests member completions at the end of `needle` which must end with '.'.
   // The dot must actually be present in the document (e.g. incomplete expression "foo.").
   public static async Task<CompletionList> GetMemberCompletionsInDoc(TestLSPHost srv, DocumentUri uri, string needle)

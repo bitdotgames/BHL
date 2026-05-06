@@ -158,6 +158,12 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
   ";
 
+  // no existing imports — used to test import string completions
+  string bhl8 = "import \"placeholder\"";
+
+  // has one existing import — used to test that already-imported modules are excluded
+  string bhl9 = "import \"bhl1\"\nimport \"placeholder\"";
+
   TestLSPHost srv;
   DocumentUri uri1;
   DocumentUri uri2;
@@ -166,6 +172,8 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   DocumentUri uri5;
   DocumentUri uri6;
   DocumentUri uri7;
+  DocumentUri uri8;
+  DocumentUri uri9;
 
   public TestLSPCompletion()
   {
@@ -178,6 +186,8 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     uri5 = MakeTestDocument("bhl5.bhl", bhl5);
     uri6 = MakeTestDocument("bhl6.bhl", bhl6);
     uri7 = MakeTestDocument("bhl7.bhl", bhl7);
+    uri8 = MakeTestDocument("bhl8.bhl", bhl8);
+    uri9 = MakeTestDocument("bhl9.bhl", bhl9);
   }
 
   public void Dispose()
@@ -626,5 +636,54 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
     Assert.Equal("import \"bhl4\"\n", edit.NewText);
     // Insertion must be AFTER the existing `import "bhl1"` line, not at the very top
     Assert.True(edit.Range.Start.Line > 0);
+  }
+
+  [Fact]
+  public async Task import_string_offers_module_names()
+  {
+    await SendInit(srv);
+
+    // bhl8 has no existing imports — cursor inside the import string should offer all other modules
+    var result = await GetImportCompletions(srv, uri8, "import \"");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.Contains("bhl1", labels);
+    Assert.Contains("bhl2", labels);
+    Assert.Contains("bhl4", labels);
+  }
+
+  [Fact]
+  public async Task import_string_excludes_self()
+  {
+    await SendInit(srv);
+
+    var result = await GetImportCompletions(srv, uri8, "import \"");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.DoesNotContain("bhl8", labels);
+  }
+
+  [Fact]
+  public async Task import_string_excludes_already_imported()
+  {
+    await SendInit(srv);
+
+    // bhl9 already imports bhl1 — bhl1 should not appear in completions for the second import
+    var result = await GetImportCompletions(srv, uri9, "import \"bhl1\"\nimport \"");
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    Assert.DoesNotContain("bhl1", labels);
+    Assert.Contains("bhl2", labels);
+  }
+
+  [Fact]
+  public async Task import_string_items_are_module_kind()
+  {
+    await SendInit(srv);
+
+    var result = await GetImportCompletions(srv, uri8, "import \"");
+
+    Assert.All(result.Items, item =>
+      Assert.Equal(CompletionItemKind.Module, item.Kind));
   }
 }
