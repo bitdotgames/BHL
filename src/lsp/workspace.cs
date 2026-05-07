@@ -31,22 +31,50 @@ public class Workspace
 
   ILogger _logger;
 
+  public event System.Action BindingsDllChanged;
+
+  System.IO.FileSystemWatcher _bindingsWatcher;
+
   public void Init(Types ts, ProjectConf conf, ILogger logger = null)
   {
     Types = ts;
     ProjConf = conf;
     _logger = logger;
+    WatchBindingsDll(conf.bindings_dll);
+  }
+
+  void WatchBindingsDll(string path)
+  {
+    _bindingsWatcher?.Dispose();
+    _bindingsWatcher = null;
+
+    if(string.IsNullOrEmpty(path) || !File.Exists(path))
+      return;
+
+    _bindingsWatcher = new System.IO.FileSystemWatcher(
+      Path.GetDirectoryName(path),
+      Path.GetFileName(path))
+    {
+      NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size,
+      EnableRaisingEvents = true,
+    };
+    _bindingsWatcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
   }
 
   public void Shutdown()
   {
+    _bindingsWatcher?.Dispose();
+    _bindingsWatcher = null;
   }
 
-  public async Task ReloadAsync(CancellationToken ct = default)
+  public Task ReloadAsync(CancellationToken ct = default)
+    => ReloadAsync(ProjConf, ct);
+
+  public async Task ReloadAsync(ProjectConf proj, CancellationToken ct = default)
   {
     var new_types = new Types();
-    ProjConf.LoadBindings().Register(new_types);
-    Init(new_types, ProjConf, _logger);
+    proj.LoadBindings().Register(new_types);
+    Init(new_types, proj, _logger);
     await IndexFilesAsync(ct);
   }
 

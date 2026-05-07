@@ -43,6 +43,7 @@ public static class ServerFactory
         .WithHandler<handlers.TextDocumentSignatureHelpHandler>()
         .WithHandler<handlers.TextDocumentRenameHandler>()
         .WithHandler<handlers.ExecuteCommandHandler>()
+        .WithHandler<handlers.DidChangeWatchedFilesHandler>()
         .OnInitialize(async (server, request, token) =>
         {
           logger.Debug("OnInitialize");
@@ -109,6 +110,31 @@ public static class ServerFactory
 
           var diagnostics = workspace.GetDiagnosticsToPublish();
           _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
+
+          workspace.BindingsDllChanged += () =>
+          {
+            logger.Debug("bindings DLL changed, reloading workspace");
+            _ = Task.Run(async () =>
+            {
+              server.SendNotification("window/showMessage", new ShowMessageParams
+              {
+                Type = MessageType.Log,
+                Message = "BHL: bindings changed, reloading...",
+              });
+
+              var sw = System.Diagnostics.Stopwatch.StartNew();
+              await workspace.ReloadAsync();
+              sw.Stop();
+
+              server.SendNotification("window/showMessage", new ShowMessageParams
+              {
+                Type = MessageType.Log,
+                Message = $"BHL: {workspace.IndexedFileCount} file(s) reloaded in {sw.ElapsedMilliseconds}ms",
+              });
+
+              server.PublishDiagnostics(workspace.GetDiagnosticsToPublish());
+            });
+          };
         })
         .OnStarted((server, token) =>
         {
