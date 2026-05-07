@@ -1,0 +1,33 @@
+name: Release LSP
+
+on:
+  push:
+    tags:
+      - 'lsp-v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        run: dotnet publish src/lsp/bhl_lsp.csproj -c Release
+
+      - name: Zip
+        run: |
+          cd build/bhl_lsp/Release/net8.0/publish
+          zip -r ${{ github.workspace }}/bhl-lsp-${{ github.ref_name }}.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bhl-lsp-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
