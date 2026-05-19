@@ -39,17 +39,40 @@ public partial class VM : INamedResolver
     SymbolNotFound
   }
 
-  public bool LoadModule(string module_name)
+  enum AddToLoadingListResult
+  {
+    Added,          // module was queued; proceed with Init phases
+    AlreadyLoaded,  // module is fully loaded and ready
+    AlreadyLoading, // circular import — module is mid-load in the current batch
+    NoLoader,       // no IModuleLoader registered
+  }
+
+  public bool LoadModule(string module_name) => LoadModule(module_name, out _);
+
+  public bool LoadModule(string module_name, out Module module)
   {
     if(loading_modules.Count > 0)
       throw new Exception("Already loading modules");
 
-    //let's check if it's already loaded
-    if(!TryAddToLoadingList(module_name))
+    var add_result = TryAddToLoadingList(module_name, out module);
+    if(add_result == AddToLoadingListResult.AlreadyLoaded)
       return true;
+    if(add_result != AddToLoadingListResult.Added)
+    {
+      module = null;
+      return false;
+    }
 
     if(loading_modules.Count == 0)
+    {
+      // loader returned null — module does not exist
+      module = null;
       return false;
+    }
+
+    //NOTE: loading_modules[0] is always the requested module — it was added first
+    //      by TryAddToLoadingList before recursing into imports
+    module = loading_modules[0].loaded;
 
     //NOTE: initing modules in reverse order
     for(int i = loading_modules.Count; i-- > 0;)
@@ -93,20 +116,20 @@ public partial class VM : INamedResolver
     modules_by_id[id] = module;
   }
 
-  //NOTE: returns false if module is already loaded
-  bool TryAddToLoadingList(string module_name)
+  AddToLoadingListResult TryAddToLoadingList(string module_name, out Module module)
   {
     //let's check if it's already available
-    if(FindModule(module_name) != null)
-      return false;
+    module = FindModule(module_name);
+    if(module != null)
+      return AddToLoadingListResult.AlreadyLoaded;
 
     //let's check if it's already loading
     foreach(var tmp in loading_modules)
       if(tmp.name == module_name)
-        return false;
+        return AddToLoadingListResult.AlreadyLoading;
 
     if(loader == null)
-      return false;
+      return AddToLoadingListResult.NoLoader;
 
     var lm = new LoadingModule();
     lm.name = module_name;
@@ -121,16 +144,16 @@ public partial class VM : INamedResolver
     }
     else
     {
-      var module = new Module(declared);
+      module = new Module(declared);
       //let's add all imported modules as well
       foreach(var imported in declared.imports)
-        TryAddToLoadingList(imported);
+        TryAddToLoadingList(imported, out _);
       lm.loaded = module;
 
       Init_Phase1(module);
     }
 
-    return true;
+    return AddToLoadingListResult.Added;
   }
 
   void Init_Phase1(Module module)
@@ -189,16 +212,12 @@ public partial class VM : INamedResolver
     if(use_cache && symbol_spec2module_cache.TryGetValue(spec, out ms))
       return LoadModuleSymbolError.Ok;
 
-    if(!LoadModule(spec.module))
+    if(!LoadModule(spec.module, out var module))
       return LoadModuleSymbolError.ModuleNotFound;
 
-    var symb = ResolveNamedByPath(spec.path) as Symbol;
+    var symb = module.decl.ResolveNamedByPath(spec.path) as Symbol;
     if(symb == null)
       return LoadModuleSymbolError.SymbolNotFound;
-
-    //TODO: should we actually check if loaded module matches
-    //      the module where the found symbol actually resides?
-    var module = modules[((Namespace)symb.scope).module];
 
     ms.module = module;
     ms.symbol = symb;
