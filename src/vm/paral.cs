@@ -8,6 +8,9 @@ public class ParalBranchBlock : Coroutine
   int min_ip;
   int max_ip;
 
+  //NOTE: each branch has its own ExecState — its own evaluation stack, ip, and
+  //      regions/frames arrays — so branches tick independently without clobbering
+  //      each other's expression evaluation.
   internal VM.ExecState exec = new VM.ExecState();
 
   public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
@@ -23,9 +26,16 @@ public class ParalBranchBlock : Coroutine
     //TODO: this is ugly, can we reference current frame from ext_exec instead?
     //Creating a frame copy just because a region must reference a frame
     ref var frame_copy = ref exec.PushFrame();
-    //let's copy ext_exec's frame data
+    //NOTE: shallow struct copy of the parent frame — value fields (ip, offsets, etc.)
+    //      become independent, but reference fields (locals, bytecode, module) are
+    //      intentionally shared: a paral branch runs in the same function scope, so
+    //      all branches read and write the same local variables. This shared-mutable
+    //      access is a language feature, not a bug.
     frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
+    //NOTE: must be reset — the branch tracks its own region stack from scratch,
+    //      independently of the parent's regions.
     frame_copy.region_offset_idx = 0;
+    //NOTE: bound the branch's execution to its bytecode slice.
     exec.PushRegion(0, min_ip: min_ip, max_ip: max_ip);
   }
 
@@ -69,13 +79,18 @@ public class ParalBranchBlock : Coroutine
       }
       exec.regions_count = frame.region_offset_idx;
       --exec.frames_count;
-      //we don't own the copied frame locals
+      //NOTE: frames[0] is the borrowed copy of the parent's frame — its locals
+      //      belong to the parent and must not be released here.
+      //      frames[1+] are genuine sub-frames pushed by function calls inside
+      //      the branch; those are owned by the branch and must be released.
       if(i > 0)
         frame.ReleaseLocals();
     }
 
-    //NOTE: We need to push on to the external exec all the returned vars
-    //      from the copied frame if it has any
+    //NOTE: if the branch exited via a return (EXIT_FRAME_IP), transfer any return
+    //      values from the branch's eval stack onto the parent's eval stack.
+    //      return_vars_num is available because it was captured from the parent
+    //      frame via the struct copy in Init.
     ref var frame_copy = ref exec.frames[0];
     if(exec.ip == VM.EXIT_FRAME_IP && frame_copy.return_vars_num > 0)
     {

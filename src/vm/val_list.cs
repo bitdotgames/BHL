@@ -53,6 +53,8 @@ public class ValList : IList<Val>, IList, IRefcounted
     get { throw new NotImplementedException(); }
   }
 
+  //NOTE: ownership transfer convention — caller gives up its ref, no Retain() here.
+  //      The matching Release() happens in RemoveAt/Clear when the item leaves the list.
   public void Add(Val v)
   {
     lst.Add(v);
