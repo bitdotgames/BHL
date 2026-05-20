@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>bhl_dap</AssemblyName>
+    <OutputType>Library</OutputType>
+    <RootNamespace>bhl.dap</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\compile\bhl_front.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    <PackageReference Include="Serilog" Version="4.2.0"/>
+  </ItemGroup>
+</Project>

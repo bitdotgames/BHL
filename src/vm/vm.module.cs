@@ -103,6 +103,15 @@ public partial class VM : INamedResolver
     return null;
   }
 
+  public Module FindModuleByPath(string file_path)
+  {
+    foreach(var kv in modules)
+      if(kv.Key.file_path == file_path)
+        return kv.Value;
+
+    return null;
+  }
+
   void RegisterModule(Module module)
   {
     int id = module.decl.id;
