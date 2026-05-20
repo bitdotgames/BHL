@@ -9,6 +9,8 @@ public partial class VM : INamedResolver
 {
   Types types;
 
+  public VMDebugger debugger;
+
   public struct FuncAddr
   {
     public Module module;

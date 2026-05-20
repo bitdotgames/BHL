@@ -830,6 +830,9 @@ public partial class VM
       {
         var bytes = frame.bytecode;
         var opcode = bytes[ip];
+#if BHL_DEBUGGER
+        vm.debugger?.TryFire(this, ip);
+#endif
 #if !BHL_USE_OPCODE_SWITCH
         op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
         ++ip;

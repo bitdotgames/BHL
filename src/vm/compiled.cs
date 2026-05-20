@@ -48,6 +48,18 @@ public class Ip2SrcLine
     ips.Capacity = capacity;
     lines.Capacity = capacity;
   }
+
+  // ip2src_line stores the LAST byte of each instruction (to support TryMap's range search).
+  // Breakpoints however must be set at the FIRST byte (the opcode), which is what exec.ip
+  // holds when the dispatch hook fires. The first byte of instruction i is ips[i-1]+1 for i>0,
+  // or 0 for i=0.
+  public int FindIpForLine(int line)
+  {
+    for(int i = 0; i < lines.Count; i++)
+      if(lines[i] == line)
+        return i == 0 ? 0 : ips[i - 1] + 1;
+    return -1;
+  }
 }
 
 public class CompiledModule
