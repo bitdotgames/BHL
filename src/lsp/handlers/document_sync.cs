@@ -96,7 +96,32 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     return Unit.Task;
   }
 
-  public override Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token) => Unit.Task;
+  public override Task<Unit> Handle(DidSaveTextDocumentParams notification, CancellationToken token)
+  {
+    TryApplyEdits(notification.TextDocument.Uri, "Add missing imports",
+      _workspace.GetMissingImportEdits(notification.TextDocument.Uri), token);
+    return Unit.Task;
+  }
+
+  void TryApplyEdits(DocumentUri uri, string label, List<TextEdit> edits, CancellationToken token)
+  {
+    if(edits == null)
+      return;
+    _ = _server.SendRequest("workspace/applyEdit", new ApplyWorkspaceEditParams
+    {
+      Label = label,
+      Edit = new WorkspaceEdit
+      {
+        DocumentChanges = new Container<WorkspaceEditDocumentChange>(
+          new WorkspaceEditDocumentChange(new TextDocumentEdit
+          {
+            TextDocument = new OptionalVersionedTextDocumentIdentifier { Uri = uri },
+            Edits = new TextEditContainer(edits),
+          })
+        ),
+      },
+    }).Returning<ApplyWorkspaceEditResponse>(token);
+  }
 
   protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(
     TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) =>

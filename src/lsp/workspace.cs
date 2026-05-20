@@ -314,6 +314,58 @@ public class Workspace
     }
   }
 
+  static readonly System.Text.RegularExpressions.Regex _not_resolved_re =
+    new System.Text.RegularExpressions.Regex(@"symbol '(.+?)' not resolved");
+
+  public List<TextEdit> GetMissingImportEdits(DocumentUri uri)
+  {
+    lock(_syncRoot)
+    {
+      var path = uri.PathNormalized();
+      if(!Path2Proc.TryGetValue(path, out var proc) || proc.result == null)
+        return null;
+
+      // Collect unique symbol names from "symbol 'X' not resolved" errors
+      var missing = new HashSet<string>();
+      foreach(var err in proc.result.errors)
+      {
+        var m = _not_resolved_re.Match(err.text);
+        if(m.Success)
+          missing.Add(m.Groups[1].Value);
+      }
+
+      if(missing.Count == 0)
+        return null;
+
+      if(!Path2Doc.TryGetValue(path, out var document))
+        return null;
+
+      var import_map = BuildImportEditsMap(document);
+
+      var edits = new List<TextEdit>();
+      var added = new HashSet<string>();
+
+      foreach(var sym_name in missing)
+      {
+        foreach(var kv in Path2Proc)
+        {
+          var mod_name = kv.Value.module.name;
+          if(!import_map.TryGetValue(mod_name, out var edit) || added.Contains(mod_name))
+            continue;
+
+          if(kv.Value.module.ns.members.Find(sym_name) != null)
+          {
+            edits.Add(edit);
+            added.Add(mod_name);
+            break;
+          }
+        }
+      }
+
+      return edits.Count > 0 ? edits : null;
+    }
+  }
+
   public List<TextEdit> GetUnusedImportEdits(DocumentUri uri)
   {
     lock(_syncRoot)
@@ -359,46 +411,9 @@ public class Workspace
 
       // Build auto-import edits for source modules not yet imported in the current document.
       // Computed before the dot-trigger branch so both paths can attach them.
-      Dictionary<string, TextEdit> import_edits = null;
-      if(document != null)
-      {
-        var (already_imported, insert_pos) = GetImportContext(document, ProjConf.inc_path);
-        var curr_module = document.Processed.module.name;
-        import_edits = new Dictionary<string, TextEdit>();
-        foreach(var kv in Path2Proc)
-        {
-          var mod_name = kv.Value.module.name;
-          if(mod_name == curr_module || already_imported.Contains(mod_name))
-            continue;
-          import_edits[mod_name] = new TextEdit
-          {
-            Range = new Range(insert_pos, insert_pos),
-            NewText = $"import \"{mod_name}\"\n",
-          };
-        }
-        //foreach(var kv in _path2cached)
-        //{
-        //  var mod_name = kv.Value.name;
-        //  if(mod_name == curr_module || already_imported.Contains(mod_name))
-        //    continue;
-        //  import_edits[mod_name] = new TextEdit
-        //  {
-        //    Range = new Range(insert_pos, insert_pos),
-        //    NewText = $"import \"{mod_name}\"\n",
-        //  };
-        //}
-        foreach(var m in Types.GetModules())
-        {
-          var mod_name = m.name;
-          if(string.IsNullOrEmpty(mod_name) || already_imported.Contains(mod_name))
-            continue;
-          import_edits[mod_name] = new TextEdit
-          {
-            Range = new Range(insert_pos, insert_pos),
-            NewText = $"import \"{mod_name}\"\n",
-          };
-        }
-      }
+      Dictionary<string, TextEdit> import_edits = document != null
+        ? BuildImportEditsMap(document)
+        : null;
 
       // Sublime Text (and some other clients) omit the context field entirely,
       // so trigger_character is null even when the user just typed '.'.
@@ -832,6 +847,41 @@ public class Workspace
 
   // Collects own symbols from a module namespace into the completion list, recursing into
   // sub-namespaces and emitting fully-qualified labels (e.g. "ns.NsFunc", "std.io.Write").
+  Dictionary<string, TextEdit> BuildImportEditsMap(BHLDocument document)
+  {
+    var (already_imported, insert_pos) = GetImportContext(document, ProjConf.inc_path);
+    var curr_module = document.Processed.module.name;
+    var map = new Dictionary<string, TextEdit>();
+
+    //script modules from the workspace
+    foreach(var kv in Path2Proc)
+    {
+      var mod_name = kv.Value.module.name;
+      if(mod_name == curr_module || already_imported.Contains(mod_name))
+        continue;
+      map[mod_name] = new TextEdit
+      {
+        Range = new Range(insert_pos, insert_pos),
+        NewText = $"import \"{mod_name}\"\n",
+      };
+    }
+
+    //native modules (std, std.io, etc.) registered in Types but not in Path2Proc
+    foreach(var m in Types.GetModules())
+    {
+      var mod_name = m.name;
+      if(string.IsNullOrEmpty(mod_name) || already_imported.Contains(mod_name))
+        continue;
+      map.TryAdd(mod_name, new TextEdit
+      {
+        Range = new Range(insert_pos, insert_pos),
+        NewText = $"import \"{mod_name}\"\n",
+      });
+    }
+
+    return map;
+  }
+
   // Scans the document for existing `import "..."` statements.
   // Returns the set of already-imported module names and the position where a new
   // import line should be inserted (right after the last existing import, or line 0).
