@@ -46,18 +46,19 @@ To create your own standard library module:
 
 ```csharp
 // Create a new module
-var m = new Module(ts, "std/mymodule");
+var m = new ModuleDeclared("std/mymodule");
 
 // Create nested namespaces
 var mymodule = m.ns.Nest("std").Nest("mymodule");
 
 // Add functions to the module
 var fn = new FuncSymbolNative(new Origin(), "MyFunction", Types.Void,
-    delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-        var s = stack.PopRelease().str;
-        // Implementation here
+    delegate(VM.ExecState exec, FuncArgsInfo args_info)
+    {
+        var s = exec.stack.PopFast().str;
+        // implementation here
         return null;
-    }, 
+    },
     new FuncArgSymbol("s", Types.String)
 );
 mymodule.Define(fn);

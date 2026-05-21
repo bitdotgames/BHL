@@ -30,13 +30,13 @@ This documentation provides a comprehensive guide to the language features and u
     - Control Flow
     - Nested Execution
 
-6. [Object-Oriented Programming](oop.md)
+5. [Object-Oriented Programming](oop.md)
    - Classes
    - Inheritance
    - Interfaces
    - Members and Methods
 
-7. [Type Casting](type-casting.md)
+6. [Type Casting](type-casting.md)
    - Basic Type Casting
    - String Conversions
    - Class Type Casting
@@ -44,61 +44,72 @@ This documentation provides a comprehensive guide to the language features and u
    - Collection Casting
    - The 'any' Type
 
-8. [Collections](collections.md)
+7. [Collections](collections.md)
    - Arrays
    - Collection Operations
    - Memory Management
 
-9. [Maps](maps.md)
+8. [Maps](maps.md)
    - Map Declaration
    - Map Operations
    - Iterating Maps
    - Memory Management
 
-10. [Namespaces](namespaces.md)
+9. [Namespaces](namespaces.md)
     - Namespace Declaration
     - Nested Namespaces
     - Importing Namespaces
     - Namespace Resolution
     - Type Safety
 
-11. [Defer Statement](defer.md)
+10. [Defer Statement](defer.md)
     - Basic Usage
     - Key Features
     - Best Practices
 
-13. [Imports](imports.md)
+11. [Imports](imports.md)
     - Module System
     - Import Rules
     - Best Practices
 
-14. [Operator Overloading](operator-overloading.md)
+12. [Operator Overloading](operator-overloading.md)
     - Supported Operators
     - Implementation Rules
     - Common Patterns
 
-15. [Yield](yield.md)
+13. [Yield](yield.md)
     - Coroutine Basics
     - Yield Variants
     - Common Patterns
 
-16. [Fibers](fibers.md)
+14. [Fibers](fibers.md)
     - Basic Concepts
     - Fiber Hierarchy
     - Function Pointers
     - Advanced Features
     - Best Practices
 
-17. [Standard Library](standard-library.md)
+15. [Standard Library](standard-library.md)
     - Core Module (std)
     - IO Module (std/io)
     - Custom Modules
 
-18. [C# Bindings](csharp-bindings.md)
+16. [C# Bindings](csharp-bindings.md)
     - Native Class Bindings
     - Fields and Methods
     - Error Handling
     - Best Practices
+
+17. [LSP — IDE Integration](lsp.md)
+    - VS Code setup
+    - Sublime Text setup
+    - Neovim setup
+    - Language features
+
+18. [DAP — Debugger](dap.md)
+    - Architecture
+    - Unity integration
+    - VS Code client
 
 ## Contributing
 

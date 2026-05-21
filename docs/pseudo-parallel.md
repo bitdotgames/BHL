@@ -95,19 +95,19 @@ coro func ProcessData() {
 
 ### wait()
 
-The `wait()` function pauses execution for a specified duration (in seconds). Perfect for timed sequences and delays:
+The `wait()` function pauses execution for a specified duration in **milliseconds**. Perfect for timed sequences and delays:
 
 ```bhl
 coro func TimedSequence() {
     paral {
         {
-            // Wait for 2 seconds
-            yield wait(2.0)
+            // Wait for 2000 milliseconds (2 seconds)
+            yield wait(2000)
             ShowMessage("2 seconds passed!")
         }
         {
-            // Wait for half a second
-            yield wait(0.5)
+            // Wait for 500 milliseconds
+            yield wait(500)
             PlaySound()
         }
     }
@@ -123,7 +123,7 @@ coro func ComplexControl() {
     paral {
         {
             while(true) {
-                yield wait(1.0)  // Wait one second
+                yield wait(1000)  // Wait one second
                 if(shouldSuspend) {
                     yield suspend()  // Suspend if needed
                 }
@@ -149,11 +149,11 @@ Parallel blocks have specific completion behavior:
 coro func test() {
     paral {
         {
-            yield wait(1.0)
+            yield wait(1000)
             trace("Branch 1 done")  // This will print
         }
         {
-            yield wait(2.0)  // This branch won't complete
+            yield wait(2000)  // This branch won't complete
             trace("Branch 2 done")  // This will never print
         }
     }
@@ -169,11 +169,11 @@ coro func test() {
 coro func test() {
     paral_all {
         {
-            yield wait(1.0)
+            yield wait(1000)
             trace("Branch 1 done")  // Prints after 1 second
         }
         {
-            yield wait(2.0)
+            yield wait(2000)
             trace("Branch 2 done")  // Prints after 2 seconds
         }
     }

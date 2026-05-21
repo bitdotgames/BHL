@@ -187,7 +187,7 @@ for(int j = 0; j < 5; j++) {
 
 ### Parallel Execution
 
-BHL supports parallel execution blocks for concurrent operations. For detailed information, see [Parallel Execution](parallel.md).
+BHL supports parallel execution blocks for concurrent operations. For detailed information, see [Pseudo Parallel Execution](pseudo-parallel.md).
 
 ```bhl
 // Basic parallel block

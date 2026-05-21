@@ -1,14 +1,9 @@
 # Operator Overloading in BHL
 
-BHL supports operator overloading for classes, but this feature is currently only available through C# bindings. This means you can define custom operator behavior for your classes when implementing them in C#, but not directly in BHL code.
-
-## Implementation
-
-Operator overloading is implemented by defining static functions in your C# class bindings using `FuncSymbolNative`. These functions must follow specific rules for operator overloading.
+Operator overloading lets you define the behaviour of built-in operators for your own classes. Operators are defined as `static` functions whose name is the operator symbol.
 
 ## Supported Operators
 
-The following operators can be overloaded:
 - Arithmetic: `+`, `-`, `*`, `/`
 - Comparison: `==`, `!=`, `>`, `>=`, `<`, `<=`
 - Logical: `&&`, `||`, `!`
@@ -16,152 +11,84 @@ The following operators can be overloaded:
 
 ## Basic Rules
 
-1. Operator overloads must be:
-   - Defined as static functions using `FuncSymbolNative`
-   - Have exactly two arguments
-   - Return a non-void type
+Operator overloads must:
+- Be declared `static`
+- Take exactly two arguments (one for unary `!`)
+- Return a non-void type
+
+## Defining operators in BHL
+
+```bhl
+class Vector2 {
+  float x
+  float y
+
+  static func Vector2 +(Vector2 a, Vector2 b) {
+    Vector2 r
+    r.x = a.x + b.x
+    r.y = a.y + b.y
+    return r
+  }
+
+  static func bool ==(Vector2 a, Vector2 b) {
+    return a.x == b.x && a.y == b.y
+  }
+}
+
+func test() {
+  Vector2 v1 = {x: 1, y: 2}
+  Vector2 v2 = {x: 3, y: 4}
+  Vector2 v3 = v1 + v2   // calls the overloaded +
+  bool eq    = v1 == v2   // calls the overloaded ==
+}
+```
+
+## Defining operators via C# bindings
+
+When the class is defined in C#, add the operator as a static `FuncSymbolNative` and define it on the class before calling `Setup()`:
 
 ```csharp
-// C# binding code
-var cl = BindVector(ts, call_setup: false);
-
-// Overload + operator
-var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Vector"), 0,
-  delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var b = (Vector)stack.PopRelease().obj;
-    var a = (Vector)stack.PopRelease().obj;
-
-    var result = new Vector();
-    result.x = a.x + b.x;
-    result.y = a.y + b.y;
-
-    stack.Push(Val.NewObj(frm.vm, result, ts.T("Vector").Get()));
-    return null;
-  },
-  new FuncArgSymbol("a", ts.T("Vector")),
-  new FuncArgSymbol("b", ts.T("Vector"))
+var cl = new ClassSymbolNative(new Origin(), "Vector2", null,
+    delegate(VM.ExecState exec, ref Val v, IType type)
+    {
+        v.SetObj(new Vector2(), type);
+    }
 );
-cl.Define(op);
+
+// + operator
+cl.Define(new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, types.T("Vector2"), 0,
+    delegate(VM.ExecState exec, FuncArgsInfo args_info)
+    {
+        var b = (Vector2)exec.stack.PopFast().obj;
+        var a = (Vector2)exec.stack.PopFast().obj;
+        exec.stack.Push(Val.NewObj(exec.vm, new Vector2(a.x + b.x, a.y + b.y), cl));
+        return null;
+    },
+    new FuncArgSymbol("a", types.T("Vector2")),
+    new FuncArgSymbol("b", types.T("Vector2"))
+));
+
+// == operator
+cl.Define(new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, Types.Bool, 0,
+    delegate(VM.ExecState exec, FuncArgsInfo args_info)
+    {
+        var b = (Vector2)exec.stack.PopFast().obj;
+        var a = (Vector2)exec.stack.PopFast().obj;
+        exec.stack.Push(a.x == b.x && a.y == b.y);
+        return null;
+    },
+    new FuncArgSymbol("a", types.T("Vector2")),
+    new FuncArgSymbol("b", types.T("Vector2"))
+));
+
+types.ns.Define(cl);
 cl.Setup();
 ```
 
-## Equality Operators
+## Operator precedence
 
-Special handling for equality operators (`==`, `!=`):
-- Must return `bool`
-- Should handle null comparisons
-- Often implemented in pairs
+Overloaded operators follow normal precedence rules:
 
 ```bhl
-class Color {
-    float r
-    float g
-
-    static func bool ==(Color a, Color b) {
-        // Handle null cases
-        if (a == null || b == null) {
-            return a == b  // true if both null
-        }
-        return a.r == b.r && a.g == b.g
-    }
-}
-```
-
-## Operator Precedence
-
-Operators maintain their normal precedence rules:
-
-```bhl
-func test() {
-    var c1 = new Color { r = 1, g = 2 }
-    var c2 = new Color { r = 10, g = 20 }
-    
-    // Multiplication has higher precedence than addition
-    var c3 = c1 + c2 * 2  // equivalent to: c1 + (c2 * 2)
-}
-```
-
-## Common Patterns
-
-### 1. Mathematical Operations
-
-In your C# bindings:
-
-```csharp
-// Vector addition
-var add_op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Vector"), 0,
-  delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var b = (Vector)stack.PopRelease().obj;
-    var a = (Vector)stack.PopRelease().obj;
-
-    var result = new Vector();
-    result.x = a.x + b.x;
-    result.y = a.y + b.y;
-
-    stack.Push(Val.NewObj(frm.vm, result, ts.T("Vector").Get()));
-    return null;
-  },
-  new FuncArgSymbol("a", ts.T("Vector")),
-  new FuncArgSymbol("b", ts.T("Vector"))
-);
-
-// Then in BHL code:
-var v1 = new Vector { x = 1, y = 2 }
-var v2 = new Vector { x = 3, y = 4 }
-var v3 = v1 + v2  // Uses the overloaded operator
-```
-
-### 2. Comparison Operations
-
-```bhl
-class Point {
-    int x
-    int y
-
-    // Compare points by their x coordinate
-    static func bool <(Point a, Point b) {
-        return a.x < b.x
-    }
-
-    static func bool >(Point a, Point b) {
-        return a.x > b.x
-    }
-}
-```
-
-## Common Issues
-
-### 1. Invalid Operator Overloads
-
-```bhl
-class MyClass {
-    // Error: operator overload must be static
-    func int +(MyClass other) {
-        return 0
-    }
-
-    // Error: must have exactly 2 arguments
-    static func int *(MyClass a) {
-        return 0
-    }
-
-    // Error: return type cannot be void
-    static func void +(MyClass a, MyClass b) {
-    }
-}
-```
-
-### 2. Type Mismatches
-
-```bhl
-class Number {
-    int value
-
-    // Error: incompatible types in operation
-    static func Number +(Number a, string b) {
-        return new Number
-    }
-}
+Vector2 v3 = v1 + v2 * 2  // equivalent to v1 + (v2 * 2)
 ```

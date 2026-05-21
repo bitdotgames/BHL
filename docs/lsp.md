@@ -1,44 +1,48 @@
 # Visual Studio Code
 
-## Prerequisites
+See **[https://github.com/pachanga/BHL-VSCode](https://github.com/pachanga/BHL-VSCode)** for installation and setup.
 
-- [Node.js](https://nodejs.org/) and npm
-- `vsce` packaging tool: `npm install -g @vscode/vsce`
-- The `bhl` executable on your PATH (or configure its path in settings)
+## Language features
 
-## Build and install the extension
+### Completions
 
-```sh
-cd src/lsp/vsclient
-npm install
-npm run package       # produces bhl-0.0.1.vsix
-code --install-extension bhl-0.0.1.vsix
+- Symbols from the current file and all imported modules are suggested.
+- Symbols from modules not yet imported are also offered; selecting them automatically inserts the required `import` line at the top of the file.
+- Typing inside an `import "..."` string triggers module-name completions, listing all known modules that are not already imported.
+
+### Fix missing imports on save
+
+When you save a file, the server scans for unresolved symbol errors and automatically inserts the missing `import` statements. If a symbol is found in exactly one known module, the import is added without prompting.
+
+### Remove unused imports on save
+
+*(available as a workspace command)* The server detects `import` statements whose symbols are never used and can remove them.
+
+### Auto-reload on project changes
+
+The server watches `bhl.proj` for changes. If you edit the project file (add source directories, change defines, update the bindings path) the server reloads the entire workspace automatically — no manual restart needed.
+
+The server also watches the `bindings_dll` path declared in `bhl.proj`. If the bindings DLL is rebuilt on disk the server reloads automatically so the new C# types and functions are immediately visible.
+
+### Diagnostics and compilation timing
+
+Every keystroke triggers an incremental recompile. Only the changed file and its direct importers are reprocessed; unrelated files keep their previous results. The recompile time is logged to the LSP output channel (`window/logMessage`) so you can track performance:
+
+```
+BHL: recompiled in 12ms
 ```
 
-Reload VS Code. The extension activates automatically when you open a `.bhl` file.
+On startup or after a manual reload (`bhl.reload` command):
 
-## Settings
-
-Open **Code > Settings > Extensions ** and search for **BHL**, or add to `settings.json`:
-
-```json
-{
-  "bhl.executablePath": "/path/to/bhl",
-  "bhl.logFile": "/tmp/bhlsp.log",
-  "bhl.forceRebuild": false
-}
+```
+BHL: 47 file(s) indexed in 340ms
 ```
 
-| Setting | Default | Description |
-|---|---|---|
-| `bhl.executablePath` | `""` (uses `bhl` on PATH) | Path to the `bhl` executable |
-| `bhl.logFile` | `""` (disabled) | Path for the LSP log file |
-| `bhl.forceRebuild` | `false` | Set `BHL_REBUILD=1` to force full rebuild on startup (recommended if you want to apply LSP server fixes on each client restart) |
+### Available commands
 
-## Project setup
-
-Open the folder that contains your `bhl.proj` file as the workspace root (**File > Open Folder**).
-The LSP server detects this file and initializes properly.
+| Command | Description |
+|---|---|
+| `bhl.reload` | Reload bindings and recompile the whole workspace |
 
 ---
 
