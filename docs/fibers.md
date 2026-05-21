@@ -6,44 +6,21 @@ Fibers in BHL provide a lightweight concurrency mechanism for managing coroutine
 
 ### Starting Fibers
 
-Fibers can be started in several ways:
+`start()` launches a coroutine as an independent fiber and returns a `FiberRef`:
 
 ```bhl
-// 1. Starting a coroutine directly
-coro func foo() {
-    yield()
-}
-start(foo)
+coro func foo() { yield() }
 
-// 2. Starting an anonymous coroutine
-start(coro func() {
-    yield()
-})
+FiberRef fb = start(foo)
 
-// 3. Starting with arguments
-coro func bar(int value) {
-    yield()
-}
+// anonymous coroutine
+start(coro func() { yield() })
+
+// with arguments
+coro func bar(int value) { yield() }
 start(bar, 42)
 ```
 
-### Fiber Lifecycle
-
-A fiber goes through several states:
-
-1. **Running**: The fiber is actively executing
-2. **Suspended**: The fiber is paused via `yield suspend()`
-3. **Stopped**: The fiber has completed or been explicitly stopped
-
-```bhl
-coro func example() {
-    // Running state
-    DoWork()
-    
-    // Suspended state
-    yield suspend()
-}
-```
 
 ## Fiber Hierarchy
 
@@ -68,23 +45,17 @@ coro func child2() {
 }
 ```
 
-### Child Management
+### Stopping Fibers
 
-Parent fibers can control their children:
+Use `stop(FiberRef)` to stop a running fiber. `FiberRef.IsRunning` tells you whether the fiber is still active:
 
 ```bhl
 coro func manager() {
-    // Start child fibers
-    start(worker1)
-    start(worker2)
-    
-    // Parent can check if children are running
-    if(fiber_is_running(worker1)) {
-        // Do something
-    }
-    
-    // Parent can stop children
-    stop(worker1)
+    FiberRef w1 = start(worker1)
+    FiberRef w2 = start(worker2)
+
+    yield wait(1000)
+    if(w1.IsRunning) { stop(w1) }
 }
 ```
 
@@ -143,20 +114,4 @@ coro func example() {
 }
 ```
 
-### Fiber Results
-
-Fibers can return values that can be accessed after completion:
-
-```bhl
-coro func calculate() {
-    yield()
-    return 42
-}
-
-func example() {
-    var fiber = start(calculate)
-    // ... later ...
-    int result = fiber.result
-}
-```
 
