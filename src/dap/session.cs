@@ -20,6 +20,11 @@ public class DebugSession
   readonly SemaphoreSlim _resume = new SemaphoreSlim(0, 1);
   CancellationToken _ct;
 
+  // Optional hooks for platform-specific pause/resume (e.g. EditorApplication.isPaused).
+  // Set before the first breakpoint fires.
+  public System.Action OnPause;
+  public System.Action OnResume;
+
   public DebugSession(VM vm, Transport transport)
   {
     this.vm = vm;
@@ -32,6 +37,8 @@ public class DebugSession
     debugger.OnBreakpoint = hit =>
     {
       stopped_hit = hit;
+      OnPause?.Invoke();
+
       _transport.SendEventAsync("stopped", new JObject
       {
         ["reason"]            = "breakpoint",
@@ -40,6 +47,7 @@ public class DebugSession
       }).GetAwaiter().GetResult();
 
       _resume.Wait(_ct);
+      OnResume?.Invoke();
       stopped_hit = null;
     };
   }

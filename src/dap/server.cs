@@ -22,6 +22,10 @@ public class BHLDebugServer
   CancellationTokenSource _cts;
   DebugSession _session;
 
+  // Optional platform hooks wired by the host (e.g. EditorApplication.isPaused in Unity).
+  public System.Action OnPause;
+  public System.Action OnResume;
+
   public BHLDebugServer(VM vm)
   {
     _vm = vm;
@@ -53,7 +57,9 @@ public class BHLDebugServer
 
       var stream    = client.GetStream();
       var transport = new Transport(stream, stream);
-      _session      = new DebugSession(_vm, transport);
+      _session          = new DebugSession(_vm, transport);
+      _session.OnPause  = OnPause;
+      _session.OnResume = OnResume;
       _session.SetCancellationToken(ct);
 
       try { await RunSessionAsync(transport, ct); }

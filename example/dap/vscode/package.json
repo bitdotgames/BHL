@@ -1,0 +1,57 @@
+{
+  "name": "bhl-debug",
+  "displayName": "BHL Debug",
+  "description": "Debugger for BHL scripts running in Unity",
+  "version": "0.1.0",
+  "publisher": "bhl",
+  "engines": { "vscode": "^1.80.0" },
+  "activationEvents": [ "onDebug" ],
+  "main": "./extension.js",
+  "contributes": {
+    "debuggers": [
+      {
+        "type": "bhl",
+        "label": "BHL Debug",
+        "configurationAttributes": {
+          "attach": {
+            "required": [ "port" ],
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Host where the BHL debug server is running.",
+                "default": "localhost"
+              },
+              "port": {
+                "type": "number",
+                "description": "Port the BHL debug server listens on.",
+                "default": 7777
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "bhl",
+            "request": "attach",
+            "name": "Attach to BHL (Unity)",
+            "host": "localhost",
+            "port": 7777
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "BHL Debug: Attach",
+            "description": "Attach to a running BHL debug server (e.g. inside Unity Editor).",
+            "body": {
+              "type": "bhl",
+              "request": "attach",
+              "name": "Attach to BHL (Unity)",
+              "host": "localhost",
+              "port": 7777
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
