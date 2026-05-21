@@ -126,10 +126,7 @@ class Employee : Person {
 }
 ```
 
-### Important Inheritance Rules:
-- Self-inheritance is not allowed
-- A class can only inherit from one base class
-- The `base` keyword can be used to access parent class members
+Single inheritance only; no self-inheritance. Use `base` to access parent members.
 
 ### Base Class Access
 

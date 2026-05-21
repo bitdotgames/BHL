@@ -148,72 +148,7 @@ class Processor : IProcessor {
 }
 ```
 
-## Common Patterns
-
-### 1. Time-based Waiting
-
-```bhl
-coro func waitExample() {
-    trace("Starting")
-    yield wait(5)  // Wait for 5 milliseconds
-    trace("Done")
-}
-```
-
-### 2. Parallel Execution
-
-```bhl
-coro func parallelExample() {
-    paral {
-        {
-            yield task1()
-        }
-        {
-            yield task2()
-        }
-    }
-}
-```
-
 ## Restrictions
 
-### 1. Defer Blocks
-
-Yield is not allowed in defer blocks:
-
-```bhl
-coro func wrong() {
-    defer {
-        yield()  // Error: yield is not allowed in defer block
-    }
-}
-```
-
-### 2. Function Pointers
-
-Only coroutine function pointers can be yielded:
-
-```bhl
-coro func example() {
-    func () regular = func() {}
-    yield regular()  // Error: not a coro function
-
-    coro func () valid = coro func() {
-        yield()
-    }
-    yield valid()  // Valid
-}
-```
-
-### 3. Type Compatibility
-
-Coroutine function pointers are not compatible with regular function pointers:
-
-```bhl
-func test() {
-    func int() p = coro func int() {  // Error: incompatible types
-        yield()
-        return 42
-    }
-}
-```
+- `yield` is not allowed inside `defer` blocks.
+- Only coroutine function pointers can be yielded — `coro func` and `func` pointer types are not interchangeable.

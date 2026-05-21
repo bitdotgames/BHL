@@ -25,30 +25,15 @@ func main() {
 }
 ```
 
-### Basic Program Structure
-
-A typical BHL program consists of:
-
-1. Import statements (if needed)
-2. Function definitions
-3. Class definitions
-4. Global declarations
-
-Example:
 ```bhl
-// Imports
 import "math"
 
-// Class definition
 class Calculator {
-    func int Add(int a, int b) {
-        return a + b
-    }
+    func int Add(int a, int b) { return a + b }
 }
 
-// Main function
 func main() {
-    var calc = new Calculator
+    var calc   = new Calculator
     var result = calc.Add(5, 3)
 }
 ```

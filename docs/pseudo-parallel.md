@@ -259,31 +259,8 @@ coro func test() {
 }
 ```
 
-## Important Considerations
+## Notes
 
-1. Empty parallel blocks are not allowed:
-```bhl
-func test() {
-    paral {
-        // Error: empty paral blocks are not allowed
-    }
-}
-```
-
-2. Parallel blocks can affect variable scope and lifetime:
-```bhl
-func test() {
-    int value = 0
-    paral {
-        {
-            value = 1  // Shared variable access
-        }
-        {
-            DoSomething(value)
-        }
-    }
-}
-```
-
-3. Order of execution within parallel blocks is not guaranteed
-4. Use `paral_all` when you need to ensure all tasks complete
+- Empty `paral`/`paral_all` blocks are a compile error.
+- Branches share the enclosing function's local variables — writes in one branch are visible in another.
+- Branches within a `paral` block execute in order each tick; completion order is therefore deterministic.

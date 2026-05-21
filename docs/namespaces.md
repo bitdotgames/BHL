@@ -116,16 +116,9 @@ func test() {
 2. Imported symbols are available throughout the file
 3. In case of naming conflicts, fully qualified names must be used
 
-## Important Considerations
+## Naming conflicts
 
-### Namespace Resolution
-
-1. Local scope is checked first
-2. Then enclosing namespaces
-3. Finally imported namespaces
-4. Use fully qualified names to resolve ambiguity
-
-### Naming Conflicts
+When the same name exists in multiple namespaces, use the fully qualified name to disambiguate:
 
 ```bhl
 namespace Game {
@@ -133,37 +126,11 @@ namespace Game {
 }
 
 namespace Game.Sub {
-    class Entity {}  // Different class from Game.Entity
-    
+    class Entity {}  // different from Game.Entity
+
     func void test() {
-        Entity e = new Entity     // Uses Game.Sub.Entity
-        Game.Entity ge = new Game.Entity  // Uses Game.Entity
+        Entity e        = new Entity      // Game.Sub.Entity
+        Game.Entity ge  = new Game.Entity // Game.Entity
     }
 }
 ```
-
-### Type Safety
-
-BHL maintains type safety across namespaces:
-
-```bhl
-namespace Game {
-    class Entity {}
-    
-    namespace Sub {
-        class Entity {}
-        func Entity GetEntity() { return null }
-    }
-    
-    func void test() {
-        Entity e = Sub.GetEntity()  // Error: incompatible types
-    }
-}
-```
-
-### Visibility and Scope
-
-1. Symbols in a namespace are visible to all code within that namespace
-2. Nested namespaces can access symbols from parent namespaces
-3. Namespace members can be accessed from outside using qualified names
-4. Lambda functions maintain their namespace context

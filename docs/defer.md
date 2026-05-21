@@ -1,139 +1,58 @@
 # Defer Statement
 
-The `defer` statement in BHL allows you to schedule code execution for when the current scope exits. This is useful for cleanup operations, resource management, and ensuring certain actions are performed regardless of how a function exits.
-
-## Basic Usage
+`defer` schedules a block to run when the current scope exits, regardless of how it exits.
 
 ```bhl
-func test() {
-    defer {
-        // This code runs when the function exits
-        cleanup()
-    }
-    
-    // Main function code
-    doWork()
+func processFile() {
+    var file = openFile("data.txt")
+    defer { file.close() }
+    processContents(file)
 }
 ```
 
-## Key Features
+## Execution order
 
-### 1. Scope-based Execution
-
-Deferred code executes when its enclosing scope ends:
+Deferred blocks run in LIFO order (last `defer` executes first):
 
 ```bhl
 func test() {
-    defer {
-        trace("outer")  // Executes last
-    }
-    
-    {
-        defer {
-            trace("inner")  // Executes first
-        }
-        trace("block")
-    }  // inner defer executes here
-    
-    trace("function")
-}  // outer defer executes here
+    defer { trace("1") }  // executes third
+    defer { trace("2") }  // executes second
+    defer { trace("3") }  // executes first
+}
+// Output: 3, 2, 1
+```
 
+Scoped `defer` runs when its enclosing block exits:
+
+```bhl
+func test() {
+    defer { trace("outer") }
+    {
+        defer { trace("inner") }
+        trace("block")
+    }  // "inner" runs here
+    trace("function")
+}  // "outer" runs here
 // Output: block, inner, function, outer
 ```
 
-### 2. Variable Access
+## Variable access
 
-Deferred blocks can access and modify variables from their enclosing scope:
+Deferred blocks capture variables by reference — they see the value at the time they execute:
 
 ```bhl
 func test() {
     float value = 1
     defer {
-        // Can access and modify variables
-        if (value == 2) {
+        if(value == 2)
             processValue(value)
-        }
     }
-    
     value = 2
-}
+}  // processValue(2) is called
 ```
 
-### 3. Multiple Defers
+## Restrictions
 
-You can have multiple defer statements in the same scope. They execute in last-in-first-out (LIFO) order:
-
-```bhl
-func test() {
-    defer { trace("1") }  // Executes third
-    defer { trace("2") }  // Executes second
-    defer { trace("3") }  // Executes first
-}
-
-// Output: 3, 2, 1
-```
-
-### 4. Parallel Execution
-
-Defer works with parallel execution blocks:
-
-```bhl
-coro func test() {
-    defer {
-        trace("cleanup")
-    }
-    
-    paral {
-        {
-            defer {
-                trace("paral cleanup")
-            }
-            yield()
-        }
-    }
-}
-```
-
-## Important Rules
-
-1. **No Returns**
-   - Return statements are not allowed in defer blocks
-   - However, they are allowed in lambdas within defer blocks
-
-2. **Loop Control**
-   - `break` and `continue` can only be used within loops inside defer blocks
-   - They cannot break/continue loops outside the defer block
-
-3. **Nesting**
-   - Defer blocks cannot be nested directly
-   - But they can be used in different scopes and functions
-
-## Best Practices
-
-1. Use defer for:
-   - Resource cleanup
-   - State restoration
-
-2. Keep defer blocks simple:
-   - Focus on cleanup operations
-   - Avoid complex logic
-   - Use clear, descriptive names
-
-3. Order matters:
-   - Place defers near the resources they manage
-   - Consider LIFO order when using multiple defers
-
-## Example: Resource Management
-
-```bhl
-func processFile() {
-    var file = openFile("data.txt")
-    defer {
-        // Ensures file is closed even if processing fails
-        file.close()
-    }
-    
-    // Process file contents
-    processContents(file)
-}
-```
+- `return` is not allowed inside `defer` blocks (it is allowed inside lambdas within them)
+- `break` and `continue` only affect loops that are inside the `defer` block itself

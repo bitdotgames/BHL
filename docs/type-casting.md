@@ -238,16 +238,4 @@ Sort(numbers, func bool(int a, int b) {
 })
 ```
 
-## Important Considerations
-
-1. Type Safety
-   - Always check types before casting when working with unknown types
-   - Use `as` operator for safe casting when possible
-   - Handle null cases when using safe casting
-   - Explicit casting required for collections and complex types
-
-2. Performance
-   - Primitive type casts are optimized
-   - Complex object casts may have runtime overhead
-   - String concatenation with implicit casts creates temporary objects
    - Any type operations may have additional overhead
