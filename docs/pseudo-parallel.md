@@ -6,21 +6,21 @@ BHL provides powerful parallel execution capabilities through the `paral` and `p
 
 ### The `paral` Block
 
-The `paral` block executes its child blocks in parallel:
+The `paral` block executes its child blocks in parallel. As soon as **any one branch finishes**, the entire block completes and all remaining branches are stopped:
 
 ```bhl
 coro func test() {
     paral {
         {
-            // Block 1
-            yield suspend()
+            yield wait(1000)
+            trace("1 second")   // finishes first — block ends here
         }
         {
-            // Block 2
-            yield()
-            DoSomething()
+            yield wait(5000)
+            trace("5 seconds")  // never reached
         }
     }
+    trace("done")  // prints after 1 second
 }
 ```
 
