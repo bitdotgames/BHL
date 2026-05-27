@@ -22,9 +22,7 @@ public class BHLDebugExample : MonoBehaviour
 
   VM _vm;
 
-#if BHL_DEBUGGER
   BHLDebugServer _debug_server;
-#endif
 
   void Awake()
   {
@@ -74,10 +72,9 @@ public class BHLDebugExample : MonoBehaviour
 
   void OnDestroy()
   {
-#if BHL_DEBUGGER
     _debug_server?.Stop();
     _debug_server = null;
-#endif
+
     _vm = null;
   }
 

@@ -52,7 +52,7 @@ public class BHLDebugServer
     while(!ct.IsCancellationRequested)
     {
       TcpClient client;
-      try { client = await _listener.AcceptTcpClientAsync(ct); }
+      try { client = await _listener.AcceptTcpClientAsync(); }
       catch { break; }
 
       var stream    = client.GetStream();

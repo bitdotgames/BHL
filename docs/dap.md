@@ -1,6 +1,6 @@
 # DAP — Debugger
 
-BHL ships an embedded TCP debug adapter (`src/dap/`) that implements the
+BHL ships an embedded TCP debug adapter (`src/vm/dap/`) that implements the
 [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/).
 VS Code (and any other DAP-capable editor) can connect to it and debug BHL
 scripts running inside Unity or any other host.
@@ -73,10 +73,13 @@ a breakpoint is hit.
 A minimal VS Code extension lives in `example/dap/vscode/`. It has no npm
 dependencies — VS Code's built-in `DebugAdapterServer` handles the DAP protocol.
 
-**Install (development):**
+**Install:**
 
-1. Open `example/dap/vscode/` in VS Code.
-2. Press **F5** — an Extension Development Host window opens with the extension loaded.
+```sh
+cd example/dap/vscode && make
+```
+
+Then reload VS Code (Cmd+Shift+P → **Reload Window**).
 
 **Configure your project:**
 
