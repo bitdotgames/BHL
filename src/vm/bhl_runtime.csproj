@@ -5,4 +5,9 @@
     <RootNamespace>bhl</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- DAP requires Newtonsoft.Json which is not a runtime dependency -->
+    <Compile Remove="dap\**\*.cs" />
+  </ItemGroup>
 </Project>
