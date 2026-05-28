@@ -24,11 +24,10 @@ public class Transport
 
   public async Task<JObject> ReadAsync(CancellationToken ct)
   {
-    // parse Content-Length header
     int content_length = -1;
     while(true)
     {
-      var header = await ReadLineAsync(ct);
+      var header = await ReadLineAsync(ct).ConfigureAwait(false);
       if(header == null)
         return null;
       if(header.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
@@ -44,7 +43,7 @@ public class Transport
     int read = 0;
     while(read < content_length)
     {
-      int n = await _in.ReadAsync(buf, read, content_length - read, ct);
+      int n = await _in.ReadAsync(buf, read, content_length - read, ct).ConfigureAwait(false);
       if(n == 0) return null;
       read += n;
     }
@@ -65,7 +64,7 @@ public class Transport
     };
     if(body != null)
       msg["body"] = body;
-    await WriteAsync(msg);
+    await WriteAsync(msg).ConfigureAwait(false);
   }
 
   public async Task SendEventAsync(string event_name, JObject body = null)
@@ -78,7 +77,7 @@ public class Transport
     };
     if(body != null)
       msg["body"] = body;
-    await WriteAsync(msg);
+    await WriteAsync(msg).ConfigureAwait(false);
   }
 
   async Task WriteAsync(JObject msg)
@@ -87,12 +86,12 @@ public class Transport
     var bytes = Encoding.UTF8.GetBytes(json);
     var header = Encoding.UTF8.GetBytes($"Content-Length: {bytes.Length}\r\n\r\n");
 
-    await _write_lock.WaitAsync();
+    await _write_lock.WaitAsync().ConfigureAwait(false);
     try
     {
-      await _out.WriteAsync(header, 0, header.Length);
-      await _out.WriteAsync(bytes, 0, bytes.Length);
-      await _out.FlushAsync();
+      await _out.WriteAsync(header, 0, header.Length).ConfigureAwait(false);
+      await _out.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
+      await _out.FlushAsync().ConfigureAwait(false);
     }
     finally
     {
@@ -106,7 +105,7 @@ public class Transport
     while(true)
     {
       var buf = new byte[1];
-      int n = await _in.ReadAsync(buf, 0, 1, ct);
+      int n = await _in.ReadAsync(buf, 0, 1, ct).ConfigureAwait(false);
       if(n == 0) return null;
       char c = (char)buf[0];
       if(c == '\n') return sb.ToString().TrimEnd('\r');

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -21,10 +22,23 @@ public class BHLDebugServer
   TcpListener _listener;
   CancellationTokenSource _cts;
   DebugSession _session;
+  Transport _transport;
 
   // Optional platform hooks wired by the host (e.g. EditorApplication.isPaused in Unity).
   public System.Action OnPause;
   public System.Action OnResume;
+
+  struct PendingBreakpoint
+  {
+    public int id;
+    public int line;
+  }
+
+  // Breakpoints received before the module was loaded: file_path → list of (id, line).
+  readonly Dictionary<string, List<PendingBreakpoint>> _pending_bps =
+    new Dictionary<string, List<PendingBreakpoint>>();
+  readonly object _pending_lock = new object();
+  int _next_bp_id = 1;
 
   public BHLDebugServer(VM vm)
   {
@@ -34,6 +48,7 @@ public class BHLDebugServer
   // Starts the TCP listener on a background thread; returns immediately.
   public void StartListening(int port = 7777)
   {
+    _vm.OnModuleLoaded += OnModuleLoaded;
     _cts = new CancellationTokenSource();
     _listener = new TcpListener(IPAddress.Loopback, port);
     _listener.Start();
@@ -42,6 +57,7 @@ public class BHLDebugServer
 
   public void Stop()
   {
+    _vm.OnModuleLoaded -= OnModuleLoaded;
     _cts?.Cancel();
     _session?.Detach();
     _listener?.Stop();
@@ -56,17 +72,18 @@ public class BHLDebugServer
       catch { break; }
 
       var stream    = client.GetStream();
-      var transport = new Transport(stream, stream);
-      _session          = new DebugSession(_vm, transport);
+      _transport        = new Transport(stream, stream);
+      _session          = new DebugSession(_vm, _transport);
       _session.OnPause  = OnPause;
       _session.OnResume = OnResume;
       _session.SetCancellationToken(ct);
 
-      try { await RunSessionAsync(transport, ct); }
+      try { await RunSessionAsync(_transport, ct); }
       finally
       {
         _session.Detach();
-        _session = null;
+        _session   = null;
+        _transport = null;
         client.Close();
       }
     }
@@ -104,6 +121,42 @@ public class BHLDebugServer
     }
   }
 
+  // Called on the VM/main thread when a module is registered.
+  void OnModuleLoaded(Module module)
+  {
+    List<PendingBreakpoint> pending;
+    lock(_pending_lock)
+    {
+      if(!_pending_bps.TryGetValue(module.file_path, out pending))
+        return;
+      _pending_bps.Remove(module.file_path);
+    }
+
+    var session   = _session;
+    var transport = _transport;
+    if(session == null || transport == null)
+      return;
+
+    var lines        = new List<int>(pending.Count);
+    foreach(var p in pending) lines.Add(p.line);
+    var resolved_ips = session.debugger.SetBreakpointsForSource(module, lines);
+
+    for(int i = 0; i < pending.Count; ++i)
+    {
+      bool verified = resolved_ips[i] >= 0;
+      _ = transport.SendEventAsync("breakpoint", new JObject
+      {
+        ["reason"] = "changed",
+        ["breakpoint"] = new JObject
+        {
+          ["id"]       = pending[i].id,
+          ["verified"] = verified,
+          ["line"]     = pending[i].line,
+        }
+      });
+    }
+  }
+
   // -----------------------------------------------------------------------
 
   async Task OnInitialize(Transport t, JObject req)
@@ -118,7 +171,8 @@ public class BHLDebugServer
 
   async Task OnAttach(Transport t, JObject req)
   {
-    // VM is already running externally; nothing to launch.
+    // Fresh session: VS Code will re-send all breakpoints; clear stale pending state.
+    lock(_pending_lock) { _pending_bps.Clear(); }
     await t.SendResponseAsync(req, true);
   }
 
@@ -133,7 +187,7 @@ public class BHLDebugServer
     var module = source_path != null ? _vm.FindModuleByPath(source_path) : null;
     if(module != null)
     {
-      var lines = new System.Collections.Generic.List<int>();
+      var lines = new List<int>();
       foreach(var bp in bp_arr)
         lines.Add(bp["line"]?.Value<int>() ?? 0);
 
@@ -144,6 +198,7 @@ public class BHLDebugServer
         bool verified = resolved_ips[i] >= 0;
         result_bps.Add(new JObject
         {
+          ["id"]       = _next_bp_id++,
           ["verified"] = verified,
           ["line"]     = lines[i],
         });
@@ -151,9 +206,17 @@ public class BHLDebugServer
     }
     else
     {
-      // source not loaded yet — report all as unverified
+      // Module not loaded yet — store as pending and report unverified.
+      var pending = new List<PendingBreakpoint>(bp_arr.Count);
       foreach(var bp in bp_arr)
-        result_bps.Add(new JObject { ["verified"] = false, ["line"] = bp["line"] });
+      {
+        int line  = bp["line"]?.Value<int>() ?? 0;
+        int bp_id = _next_bp_id++;
+        pending.Add(new PendingBreakpoint { id = bp_id, line = line });
+        result_bps.Add(new JObject { ["id"] = bp_id, ["verified"] = false, ["line"] = line });
+      }
+      if(source_path != null)
+        lock(_pending_lock) { _pending_bps[source_path] = pending; }
     }
 
     await t.SendResponseAsync(req, true, new JObject { ["breakpoints"] = result_bps });

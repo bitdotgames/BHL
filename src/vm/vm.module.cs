@@ -112,6 +112,8 @@ public partial class VM : INamedResolver
     return null;
   }
 
+  public Action<Module> OnModuleLoaded;
+
   void RegisterModule(Module module)
   {
     int id = module.decl.id;
@@ -123,6 +125,8 @@ public partial class VM : INamedResolver
     if(modules_by_id.Length <= id)
       Array.Resize(ref modules_by_id, ToNextNearestPow2(id + 1));
     modules_by_id[id] = module;
+
+    OnModuleLoaded?.Invoke(module);
   }
 
   AddToLoadingListResult TryAddToLoadingList(string module_name, out Module module)

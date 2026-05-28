@@ -39,12 +39,12 @@ public class DebugSession
       stopped_hit = hit;
       OnPause?.Invoke();
 
-      _transport.SendEventAsync("stopped", new JObject
+      _ = _transport.SendEventAsync("stopped", new JObject
       {
         ["reason"]            = "breakpoint",
         ["threadId"]          = 1,
         ["allThreadsStopped"] = true,
-      }).GetAwaiter().GetResult();
+      });
 
       _resume.Wait(_ct);
       OnResume?.Invoke();
