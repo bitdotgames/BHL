@@ -6,5 +6,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <NoWarn>VSTHRD200</NoWarn>
   </PropertyGroup>
 </Project>
