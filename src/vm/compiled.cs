@@ -5,6 +5,54 @@ using System.Runtime.InteropServices;
 namespace bhl
 {
 
+public class LocalVarTable
+{
+  Dictionary<int, Dictionary<int, string>> _data = new Dictionary<int, Dictionary<int, string>>();
+
+  public void Add(int func_ip, int slot_idx, string name)
+  {
+    if(!_data.TryGetValue(func_ip, out var slots))
+      _data[func_ip] = slots = new Dictionary<int, string>();
+    slots[slot_idx] = name;
+  }
+
+  public string TryGet(int func_ip, int slot_idx)
+  {
+    if(_data.TryGetValue(func_ip, out var slots) && slots.TryGetValue(slot_idx, out var name))
+      return name;
+    return null;
+  }
+
+  public void Write(System.IO.BinaryWriter w)
+  {
+    w.Write(_data.Count);
+    foreach(var kv in _data)
+    {
+      w.Write(kv.Key);
+      w.Write(kv.Value.Count);
+      foreach(var slot in kv.Value)
+      {
+        w.Write(slot.Key);
+        w.Write(slot.Value);
+      }
+    }
+  }
+
+  public static LocalVarTable Read(System.IO.BinaryReader r)
+  {
+    var t = new LocalVarTable();
+    int func_count = r.ReadInt32();
+    for(int i = 0; i < func_count; ++i)
+    {
+      int func_ip = r.ReadInt32();
+      int slot_count = r.ReadInt32();
+      for(int j = 0; j < slot_count; ++j)
+        t.Add(func_ip, r.ReadInt32(), r.ReadString());
+    }
+    return t;
+  }
+}
+
 public class Ip2SrcLine
 {
   public List<int> ips = new List<int>();
@@ -82,6 +130,7 @@ public class CompiledModule
   public IType[] type_refs_resolved;
 
   public Ip2SrcLine ip2src_line;
+  public LocalVarTable local_var_table;
   public int init_func_idx = -1;
 
   public unsafe CompiledModule(

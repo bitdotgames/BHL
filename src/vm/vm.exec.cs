@@ -1,4 +1,5 @@
 #define BHL_STACKTRACE
+#define BHL_DEBUGGER
 //#define ENABLE_IL2CPP
 //#define BHL_USE_OPCODE_SWITCH
 using System;

@@ -22,9 +22,14 @@ public static partial class Tasks
   public static async ThreadTask run(Taskman tm, string[] args)
   {
     var files = new List<string>();
+    bool add_debug_info = true;
 
     var p = new OptionSet()
     {
+      {
+        "debug-info", "emit local variable names for the debugger",
+        v => add_debug_info = v != null
+      }
     };
 
     var extra = new List<string>();
@@ -48,7 +53,7 @@ public static partial class Tasks
     if(files.Count == 0)
       run_usage("No files to run");
 
-    var vm = await CompilationExecutor.CompileAndLoadVM(files);
+    var vm = await CompilationExecutor.CompileAndLoadVM(files, add_debug_info: add_debug_info);
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);
 

@@ -1168,7 +1168,8 @@ public class BHL_TestBase
     bool show_ast = false,
     bool show_bytes = false,
     bool show_parse_tree = false,
-    HashSet<string> defines = null
+    HashSet<string> defines = null,
+    bool add_debug_info = false
   )
   {
     return Compile(
@@ -1178,7 +1179,8 @@ public class BHL_TestBase
       show_ast,
       show_bytes,
       show_parse_tree,
-      defines);
+      defines,
+      add_debug_info);
   }
 
   public bhl.ModuleDeclared Compile(
@@ -1188,7 +1190,8 @@ public class BHL_TestBase
     bool show_ast = false,
     bool show_bytes = false,
     bool show_parse_tree = false,
-    HashSet<string> defines = null
+    HashSet<string> defines = null,
+    bool add_debug_info = false
   )
   {
     ts = new Types();
@@ -1204,6 +1207,7 @@ public class BHL_TestBase
     );
 
     var c = new ModuleCompiler(proc.result);
+    c.add_debug_info = add_debug_info;
     var result = c.Compile();
     if(show_bytes || Environment.GetEnvironmentVariable("BHL_SHOW_BYTES") == "1")
       Dump(c);

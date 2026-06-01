@@ -32,6 +32,9 @@ public class VMDebugger
     if(ip < 0)
       return false;
     _breakpoints.Add(ip);
+    if(!_by_source.TryGetValue(module.file_path, out var ips))
+      _by_source[module.file_path] = ips = new HashSet<int>();
+    ips.Add(ip);
     return true;
   }
 
@@ -78,6 +81,13 @@ public class VMDebugger
       return;
 
     ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    if(frame.module == null)
+      return;
+
+    // IPs are local to each module's bytecode, so verify the hit belongs to this module.
+    if(!_by_source.TryGetValue(frame.module.file_path, out var src_ips) || !src_ips.Contains(ip))
+      return;
+
     OnBreakpoint?.Invoke(new BreakpointHit
     {
       exec   = exec,

@@ -103,21 +103,31 @@ public class BHLDebugServer
   async Task DispatchAsync(Transport transport, JObject msg, CancellationToken ct)
   {
     var command = msg["command"]?.ToString();
-    switch(command)
+    try
     {
-      case "initialize":       await OnInitialize(transport, msg); break;
-      case "attach":           await OnAttach(transport, msg); break;
-      case "setBreakpoints":   await OnSetBreakpoints(transport, msg); break;
-      case "configurationDone":await OnConfigurationDone(transport, msg); break;
-      case "threads":          await OnThreads(transport, msg); break;
-      case "stackTrace":       await OnStackTrace(transport, msg); break;
-      case "scopes":           await OnScopes(transport, msg); break;
-      case "variables":        await OnVariables(transport, msg); break;
-      case "continue":         await OnContinue(transport, msg); break;
-      case "disconnect":       await OnDisconnect(transport, msg, ct); break;
-      default:
-        await transport.SendResponseAsync(msg, true); // ack unknown requests
-        break;
+      switch(command)
+      {
+        case "initialize":       await OnInitialize(transport, msg); break;
+        case "attach":           await OnAttach(transport, msg); break;
+        case "setBreakpoints":   await OnSetBreakpoints(transport, msg); break;
+        case "configurationDone":await OnConfigurationDone(transport, msg); break;
+        case "threads":          await OnThreads(transport, msg); break;
+        case "stackTrace":       await OnStackTrace(transport, msg); break;
+        case "scopes":           await OnScopes(transport, msg); break;
+        case "variables":        await OnVariables(transport, msg); break;
+        case "continue":         await OnContinue(transport, msg); break;
+        case "disconnect":       await OnDisconnect(transport, msg, ct); break;
+        default:
+          await transport.SendResponseAsync(msg, true); // ack unknown requests
+          break;
+      }
+    }
+    catch(Exception e)
+    {
+      await transport.SendResponseAsync(msg, false, new JObject
+      {
+        ["error"] = new JObject { ["id"] = 1, ["format"] = $"{command}: {e.Message}" }
+      });
     }
   }
 
@@ -269,9 +279,22 @@ public class BHLDebugServer
 
   async Task OnVariables(Transport t, JObject req)
   {
-    int var_ref  = req["arguments"]?["variablesReference"]?.Value<int>() ?? 0;
-    int frame_id = (var_ref - 1) / 1000;
-    var vars     = _session.BuildLocals(frame_id);
+    int var_ref = req["arguments"]?["variablesReference"]?.Value<int>() ?? 0;
+    JArray vars;
+    if(var_ref >= 10000)
+    {
+      vars = _session.BuildVarChildren(var_ref);
+    }
+    else
+    {
+      int frame_id = (var_ref - 1) / 1000;
+      vars = _session.BuildLocals(frame_id);
+      await t.SendEventAsync("output", new JObject
+      {
+        ["category"] = "console",
+        ["output"]   = _session.BuildLocalsDebugInfo(frame_id) + "\n",
+      });
+    }
     await t.SendResponseAsync(req, true, new JObject { ["variables"] = vars });
   }
 

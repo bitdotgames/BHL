@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using bhl;
 using Xunit;
 
@@ -149,6 +150,46 @@ func int foo() {
   }
 
   [Fact]
+  public async System.Threading.Tasks.Task TestBreakpointDoesNotFireInOtherModule()
+  {
+    // Both modules have code that compiles to identical local IP offsets.
+    // The breakpoint is set only in bhl1; running bhl2's function must not trigger it.
+    string bhl1 = @"
+import ""bhl2""
+
+func int foo() {
+  int result = bar()
+  return result
+}
+";
+    string bhl2 = @"
+func int bar() {
+  int result = 42
+  return result
+}
+";
+    var vm = await MakeVM(new System.Collections.Generic.Dictionary<string, string>()
+    {
+      {"bhl1.bhl", bhl1},
+      {"bhl2.bhl", bhl2},
+    });
+    vm.LoadModule("bhl1");
+
+    var d = MakeDebugger(vm);
+    var hit_modules = new System.Collections.Generic.List<string>();
+    d.OnBreakpoint = b => hit_modules.Add(b.module.name);
+
+    // Set breakpoint on 'int result = bar()' in bhl1 — same bytecode shape as
+    // 'int result = 42' in bhl2, so their local IP offsets coincide.
+    d.AddBreakpoint(vm.FindModule("bhl1"), line: 5);
+
+    Execute(vm, "foo");
+
+    Assert.Single(hit_modules);
+    Assert.Equal("bhl1", hit_modules[0]);
+  }
+
+  [Fact]
   public void TestBreakpointReportsModule()
   {
     string bhl = @"
@@ -184,6 +225,125 @@ func void foo() {
     bool added = d.AddBreakpoint(vm.FindModule(TestModuleName), line: 999);
 
     Assert.False(added);
+  }
+
+  [Fact]
+  public void TestLocalVarTableNullWithoutFlag()
+  {
+    string bhl = @"
+func void foo(int a) {
+  int x = 1
+}
+";
+    var m = Compile(bhl);
+    Assert.Null(m.compiled.local_var_table);
+  }
+
+  [Fact]
+  public void TestLocalVarTableFuncArgs()
+  {
+    string bhl = @"
+func void foo(int a, int b) {
+}
+";
+    var m = Compile(bhl, add_debug_info: true);
+    var fs = m.ns.Resolve("foo") as FuncSymbolScript;
+    var t = m.compiled.local_var_table;
+
+    Assert.NotNull(t);
+    Assert.Equal("a", t.TryGet(fs.ip_addr, 0));
+    Assert.Equal("b", t.TryGet(fs.ip_addr, 1));
+  }
+
+  [Fact]
+  public void TestLocalVarTableBodyLocals()
+  {
+    string bhl = @"
+func void foo(int a) {
+  int x = 1
+  float y = 2.0
+}
+";
+    var m = Compile(bhl, add_debug_info: true);
+    var fs = m.ns.Resolve("foo") as FuncSymbolScript;
+    var t = m.compiled.local_var_table;
+
+    Assert.Equal("a", t.TryGet(fs.ip_addr, 0));
+    Assert.Equal("x", t.TryGet(fs.ip_addr, 1));
+    Assert.Equal("y", t.TryGet(fs.ip_addr, 2));
+  }
+
+  [Fact]
+  public void TestLocalVarTableMultipleFunctions()
+  {
+    string bhl = @"
+func void foo(int a) {
+  int x = 1
+}
+
+func void bar(float b) {
+  float y = 2.0
+}
+";
+    var m = Compile(bhl, add_debug_info: true);
+    var foo = m.ns.Resolve("foo") as FuncSymbolScript;
+    var bar = m.ns.Resolve("bar") as FuncSymbolScript;
+    var t = m.compiled.local_var_table;
+
+    Assert.Equal("a", t.TryGet(foo.ip_addr, 0));
+    Assert.Equal("x", t.TryGet(foo.ip_addr, 1));
+    Assert.Equal("b", t.TryGet(bar.ip_addr, 0));
+    Assert.Equal("y", t.TryGet(bar.ip_addr, 1));
+    // no cross-contamination
+    Assert.Null(t.TryGet(foo.ip_addr, 2));
+    Assert.Null(t.TryGet(bar.ip_addr, 2));
+  }
+
+  [Fact]
+  public void TestLocalVarTableRoundTrip()
+  {
+    string bhl = @"
+func int foo(int a, int b) {
+  int result = a + b
+  return result
+}
+";
+    var m = Compile(bhl, add_debug_info: true);
+    var fs = m.ns.Resolve("foo") as FuncSymbolScript;
+    int func_ip = fs.ip_addr;
+
+    var ms = new MemoryStream();
+    m.ToStream(ms, leave_open: true);
+    ms.Position = 0;
+
+    var ts = new Types();
+    var reloaded = ModuleDeclared.FromStream(ts, ms);
+    var t = reloaded.compiled.local_var_table;
+
+    Assert.NotNull(t);
+    Assert.Equal("a",      t.TryGet(func_ip, 0));
+    Assert.Equal("b",      t.TryGet(func_ip, 1));
+    Assert.Equal("result", t.TryGet(func_ip, 2));
+  }
+
+  [Fact]
+  public void TestLocalVarTableRoundTripWithoutDebugInfo()
+  {
+    string bhl = @"
+func int foo(int a) {
+  return a
+}
+";
+    var m = Compile(bhl, add_debug_info: false);
+
+    var ms = new MemoryStream();
+    m.ToStream(ms, leave_open: true);
+    ms.Position = 0;
+
+    var ts = new Types();
+    var reloaded = ModuleDeclared.FromStream(ts, ms);
+
+    Assert.Null(reloaded.compiled.local_var_table);
   }
 
   [Fact]

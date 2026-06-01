@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--no-debug-info]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -82,6 +82,7 @@ public static partial class Tasks
     var files = new List<string>();
 
     var proj = new ProjectConf();
+    bool add_debug_info = true;
 
     var p = new OptionSet()
     {
@@ -136,6 +137,10 @@ public static partial class Tasks
       {
         "module-fmt=", "binary module format",
         v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v)
+      },
+      {
+        "debug-info", "emit local variable names for the debugger",
+        v => add_debug_info = v != null
       }
     };
 
@@ -203,17 +208,18 @@ public static partial class Tasks
       }
     }
 
-    logger.Log(1, $"BHL({Version.Name}) files: {files.Count}, cache: {proj.use_cache}");
+    logger.Log(1, $"BHL({Version.Name}) files: {files.Count}, cache: {proj.use_cache}, debug info: {add_debug_info}");
     var conf = new CompileConf();
     conf.proj = proj;
     conf.logger = logger;
-    conf.args_signature = string.Join(";", args);
+    conf.args_signature = string.Join(";", args) + ";sv=" + ModuleDeclared.STREAM_VERSION;
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
     if(File.Exists(proj.bindings_dll))
       conf.global_file_deps.Add(proj.bindings_dll);
     conf.bindings = bindings;
     conf.postproc = postproc;
+    conf.add_debug_info = add_debug_info;
 
     var executor = new CompilationExecutor();
     var result = await executor.Exec(conf);
