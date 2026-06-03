@@ -62,7 +62,7 @@ public class BHLDebugServer
   // configurationDone (i.e. all initial breakpoints are registered).
   // Call this before starting BHL execution to avoid the attach race.
   // Returns true if a client attached in time, false on timeout.
-  public bool WaitForClient(int timeout_ms = 10000)
+  public bool WaitForClient(int timeout_ms = Timeout.Infinite)
   {
     return _configuration_done.Wait(timeout_ms);
   }
