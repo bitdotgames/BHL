@@ -24,6 +24,9 @@ public class BHLDebugServer
   DebugSession _session;
   Transport _transport;
 
+  // Signaled when configurationDone is received; used by WaitForClient().
+  readonly SemaphoreSlim _configuration_done = new SemaphoreSlim(0, 1);
+
   // Optional platform hooks wired by the host (e.g. EditorApplication.isPaused in Unity).
   public System.Action OnPause;
   public System.Action OnResume;
@@ -53,6 +56,15 @@ public class BHLDebugServer
     _listener = new TcpListener(IPAddress.Loopback, port);
     _listener.Start();
     Task.Run(() => AcceptLoopAsync(_cts.Token));
+  }
+
+  // Blocks the calling thread until a DAP client connects and sends
+  // configurationDone (i.e. all initial breakpoints are registered).
+  // Call this before starting BHL execution to avoid the attach race.
+  // Returns true if a client attached in time, false on timeout.
+  public bool WaitForClient(int timeout_ms = 10000)
+  {
+    return _configuration_done.Wait(timeout_ms);
   }
 
   public void Stop()
@@ -235,6 +247,7 @@ public class BHLDebugServer
   async Task OnConfigurationDone(Transport t, JObject req)
   {
     await t.SendResponseAsync(req, true);
+    try { _configuration_done.Release(); } catch(SemaphoreFullException) { }
   }
 
   async Task OnThreads(Transport t, JObject req)

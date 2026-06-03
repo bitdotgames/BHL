@@ -318,40 +318,81 @@ public class DebugSession
     foreach(var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
     {
       if(!prop.CanRead || prop.GetIndexParameters().Length > 0) continue;
-      try
-      {
-        var val = prop.GetValue(native);
-        result.Add(NativeLeaf(prop.Name, prop.PropertyType.Name, val));
-      }
-      catch(Exception e) { result.Add(NativeLeaf(prop.Name, prop.PropertyType.Name, $"<{e.Message}>")); }
+      try   { result.Add(ObjToVar(prop.Name, prop.GetValue(native))); }
+      catch(Exception e) { result.Add(ErrLeaf(prop.Name, prop.PropertyType.Name, Unwrap(e))); }
     }
 
     foreach(var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
     {
-      try
-      {
-        var val = field.GetValue(native);
-        result.Add(NativeLeaf(field.Name, field.FieldType.Name, val));
-      }
-      catch(Exception e) { result.Add(NativeLeaf(field.Name, field.FieldType.Name, $"<{e.Message}>")); }
+      try   { result.Add(ObjToVar(field.Name, field.GetValue(native))); }
+      catch(Exception e) { result.Add(ErrLeaf(field.Name, field.FieldType.Name, Unwrap(e))); }
     }
 
     return result;
   }
 
-  static JObject NativeLeaf(string name, string type_name, object val)
+  // Converts any reflected C# value to a DAP variable entry, expanding
+  // non-primitive objects into tree nodes.
+  JObject ObjToVar(string name, object val)
   {
-    string display;
-    try   { display = val?.ToString() ?? "null"; }
-    catch { display = $"<{val?.GetType().Name ?? type_name}>"; }
-    return new JObject
+    if(val == null)
+      return new JObject { ["name"] = name, ["value"] = "null", ["type"] = "", ["variablesReference"] = 0 };
+
+    var type      = val.GetType();
+    var type_name = type.Name;
+
+    // Primitives, enums and strings are leaves.
+    if(type.IsPrimitive || type.IsEnum || val is string)
     {
-      ["name"]               = name,
-      ["value"]              = display,
-      ["type"]               = type_name,
-      ["variablesReference"] = 0,
-    };
+      string display;
+      try   { display = val.ToString(); }
+      catch { display = $"<{type_name}>"; }
+      return new JObject { ["name"] = name, ["value"] = display, ["type"] = type_name, ["variablesReference"] = 0 };
+    }
+
+    // IList — indexed children.
+    if(val is System.Collections.IList list)
+    {
+      var cap     = list;
+      int var_ref = AllocVarRef(() => BuildNativeListChildren(cap));
+      return new JObject { ["name"] = name, ["value"] = $"[{list.Count}]", ["type"] = type_name, ["variablesReference"] = var_ref };
+    }
+
+    // IDictionary — key/value children.
+    if(val is System.Collections.IDictionary dict)
+    {
+      var cap     = dict;
+      int var_ref = AllocVarRef(() => BuildNativeDictChildren(cap));
+      return new JObject { ["name"] = name, ["value"] = $"{{{dict.Count}}}", ["type"] = type_name, ["variablesReference"] = var_ref };
+    }
+
+    // Any other object — defer all inspection to when the user expands it.
+    var obj_cap = val;
+    int obj_ref = AllocVarRef(() => BuildNativeChildren(obj_cap));
+    return new JObject { ["name"] = name, ["value"] = $"<{type_name}>", ["type"] = type_name, ["variablesReference"] = obj_ref };
   }
+
+  JArray BuildNativeListChildren(System.Collections.IList list)
+  {
+    var result = new JArray();
+    for(int i = 0; i < list.Count; ++i)
+      result.Add(ObjToVar($"[{i}]", list[i]));
+    return result;
+  }
+
+  JArray BuildNativeDictChildren(System.Collections.IDictionary dict)
+  {
+    var result = new JArray();
+    foreach(System.Collections.DictionaryEntry kv in dict)
+      result.Add(ObjToVar(kv.Key?.ToString() ?? "null", kv.Value));
+    return result;
+  }
+
+  static string Unwrap(Exception e) =>
+    e is TargetInvocationException { InnerException: { } inner } ? inner.Message : e.Message;
+
+  static JObject ErrLeaf(string name, string type_name, string msg) =>
+    new JObject { ["name"] = name, ["value"] = $"<{msg}>", ["type"] = type_name, ["variablesReference"] = 0 };
 
   static string ValDisplay(Val v)
   {
