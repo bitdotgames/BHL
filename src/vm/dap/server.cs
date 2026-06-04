@@ -128,6 +128,9 @@ public class BHLDebugServer
         case "scopes":           await OnScopes(transport, msg); break;
         case "variables":        await OnVariables(transport, msg); break;
         case "continue":         await OnContinue(transport, msg); break;
+        case "next":             await OnNext(transport, msg); break;
+        case "stepIn":           await OnStepIn(transport, msg); break;
+        case "stepOut":          await OnStepOut(transport, msg); break;
         case "disconnect":       await OnDisconnect(transport, msg, ct); break;
         default:
           await transport.SendResponseAsync(msg, true); // ack unknown requests
@@ -187,6 +190,7 @@ public class BHLDebugServer
     {
       ["supportsConfigurationDoneRequest"] = true,
       ["supportsTerminateRequest"]         = true,
+      ["supportsStepBack"]                 = false,
     });
     await t.SendEventAsync("initialized");
   }
@@ -316,6 +320,27 @@ public class BHLDebugServer
     await t.SendResponseAsync(req, true, new JObject { ["allThreadsContinued"] = true });
     await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
     _session.Continue();
+  }
+
+  async Task OnNext(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepOver();
+  }
+
+  async Task OnStepIn(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepInto();
+  }
+
+  async Task OnStepOut(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepOut();
   }
 
   async Task OnDisconnect(Transport t, JObject req, CancellationToken ct)

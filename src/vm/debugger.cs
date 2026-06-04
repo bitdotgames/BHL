@@ -6,17 +6,25 @@ namespace bhl
 
 public class VMDebugger
 {
+  public enum StepMode { None, Into, Over, Out }
+
   public struct BreakpointHit
   {
     public VM.ExecState exec;
     public Module module;
     public int ip;
+    public string reason; // "breakpoint" or "step"
     public int line => module?.decl.compiled.ip2src_line.TryMap(ip) ?? 0;
   }
 
   HashSet<int> _breakpoints = new HashSet<int>();
   // per source file: file_path → set of active IPs
   Dictionary<string, HashSet<int>> _by_source = new Dictionary<string, HashSet<int>>();
+
+  StepMode _step_mode = StepMode.None;
+  VM.ExecState _step_exec;
+  int _step_start_line;
+  int _step_start_frames;
 
   public Action<BreakpointHit> OnBreakpoint;
 
@@ -75,7 +83,30 @@ public class VMDebugger
     _by_source.Clear();
   }
 
+  public void StartStep(StepMode mode, VM.ExecState exec, int ip)
+  {
+    _step_mode         = mode;
+    _step_exec         = exec;
+    _step_start_frames = exec.frames_count;
+
+    ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    _step_start_line = frame.module?.decl.compiled.ip2src_line.TryMap(ip) ?? 0;
+  }
+
+  public void ClearStep()
+  {
+    _step_mode = StepMode.None;
+    _step_exec = null;
+  }
+
   internal void TryFire(VM.ExecState exec, int ip)
+  {
+    TryFireBreakpoint(exec, ip);
+    if(_step_mode != StepMode.None)
+      TryFireStep(exec, ip);
+  }
+
+  void TryFireBreakpoint(VM.ExecState exec, int ip)
   {
     if(!_breakpoints.Contains(ip))
       return;
@@ -88,11 +119,46 @@ public class VMDebugger
     if(!_by_source.TryGetValue(frame.module.file_path, out var src_ips) || !src_ips.Contains(ip))
       return;
 
+    _step_mode = StepMode.None;
     OnBreakpoint?.Invoke(new BreakpointHit
     {
       exec   = exec,
       module = frame.module,
       ip     = ip,
+      reason = "breakpoint",
+    });
+  }
+
+  void TryFireStep(VM.ExecState exec, int ip)
+  {
+    if(exec != _step_exec)
+      return;
+
+    ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    if(frame.module == null)
+      return;
+
+    int current_line   = frame.module.decl.compiled.ip2src_line.TryMap(ip);
+    int current_frames = exec.frames_count;
+
+    bool should_stop = _step_mode switch
+    {
+      StepMode.Into => current_line > 0 && current_line != _step_start_line,
+      StepMode.Over => current_line > 0 && current_line != _step_start_line && current_frames <= _step_start_frames,
+      StepMode.Out  => current_frames < _step_start_frames,
+      _             => false,
+    };
+
+    if(!should_stop)
+      return;
+
+    _step_mode = StepMode.None;
+    OnBreakpoint?.Invoke(new BreakpointHit
+    {
+      exec   = exec,
+      module = frame.module,
+      ip     = ip,
+      reason = "step",
     });
   }
 }

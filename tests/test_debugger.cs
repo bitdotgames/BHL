@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using bhl;
 using Xunit;
 
@@ -225,6 +226,185 @@ func void foo() {
     bool added = d.AddBreakpoint(vm.FindModule(TestModuleName), line: 999);
 
     Assert.False(added);
+  }
+
+  [Fact]
+  public void TestStepOver()
+  {
+    string bhl = @"
+func void foo() {
+  int x = 1
+  int y = 2
+  int z = 3
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 3);
+
+    Execute(vm, "foo");
+
+    Assert.Equal(new[] { 3, 4, 5, 6 }, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepOverSkipsCallees()
+  {
+    string bhl = @"
+func int bar(int n) {
+  int r = n * 2
+  return r
+}
+
+func int foo() {
+  int a = bar(1)
+  int b = bar(2)
+  return a + b
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 8);
+
+    var fb = Execute(vm, "foo");
+    Assert.Equal(6, (int)fb.Stack.Pop().num);
+    // step over: stays in foo, doesn't enter bar
+    Assert.Equal(new[] { 8, 9, 10 }, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepInto()
+  {
+    string bhl = @"
+func int bar(int n) {
+  return n * 2
+}
+
+func int foo() {
+  int a = bar(3)
+  return a
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Into, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 7);
+
+    var fb = Execute(vm, "foo");
+    Assert.Equal(6, (int)fb.Stack.Pop().num);
+    // step into: enters bar on line 3
+    Assert.Contains(3, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepOut()
+  {
+    string bhl = @"
+func int bar(int n) {
+  int r = n * 2
+  return r
+}
+
+func int foo() {
+  int a = bar(5)
+  return a
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      if(b.reason == "breakpoint")
+        d.StartStep(VMDebugger.StepMode.Out, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 3);
+
+    var fb = Execute(vm, "foo");
+    Assert.Equal(10, (int)fb.Stack.Pop().num);
+    // stepped out of bar back into foo
+    Assert.Equal(3, hit_lines[0]);
+    Assert.True(hit_lines.Count > 1);
+    Assert.True(hit_lines[1] > 5); // back in foo
+  }
+
+  [Fact]
+  public void TestStepReasonIsStep()
+  {
+    string bhl = @"
+func void foo() {
+  int x = 1
+  int y = 2
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    var reasons = new List<string>();
+    d.OnBreakpoint = b => {
+      reasons.Add(b.reason);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 3);
+
+    Execute(vm, "foo");
+
+    Assert.Equal("breakpoint", reasons[0]);
+    Assert.All(reasons.Skip(1), r => Assert.Equal("step", r));
+  }
+
+  [Fact]
+  public void TestBreakpointDuringStepClearsStep()
+  {
+    string bhl = @"
+func void foo() {
+  int x = 1
+  int y = 2
+  int z = 3
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hits = new List<(int line, string reason)>();
+    d.OnBreakpoint = b => {
+      hits.Add((b.line, b.reason));
+      if(b.reason == "breakpoint" && b.line == 3)
+        d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+      // don't continue stepping after the second breakpoint
+    };
+    d.AddBreakpoint(module, line: 3);
+    d.AddBreakpoint(module, line: 4); // planted mid-step
+
+    Execute(vm, "foo");
+
+    // step stops early because line 4 is a breakpoint → reason = "breakpoint", step cleared
+    Assert.Equal(2, hits.Count);
+    Assert.Equal((3, "breakpoint"), hits[0]);
+    Assert.Equal((4, "breakpoint"), hits[1]);
   }
 
   [Fact]

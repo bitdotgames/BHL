@@ -96,7 +96,7 @@ public class DebugSession
 
       _ = _transport.SendEventAsync("stopped", new JObject
       {
-        ["reason"]            = "breakpoint",
+        ["reason"]            = hit.reason,
         ["threadId"]          = 1,
         ["allThreadsStopped"] = true,
       });
@@ -125,6 +125,20 @@ public class DebugSession
   public void Continue()
   {
     ClearVarRegistry();
+    debugger.ClearStep();
+    _resume_requested = true;
+    _trigger.Release();
+  }
+
+  public void StepOver()  => Step(VMDebugger.StepMode.Over);
+  public void StepInto()  => Step(VMDebugger.StepMode.Into);
+  public void StepOut()   => Step(VMDebugger.StepMode.Out);
+
+  void Step(VMDebugger.StepMode mode)
+  {
+    ClearVarRegistry();
+    if(stopped_hit is { } hit)
+      debugger.StartStep(mode, hit.exec, hit.ip);
     _resume_requested = true;
     _trigger.Release();
   }
