@@ -142,9 +142,11 @@ public class VMDebugger
 
   void TryFireStep(VM.ExecState exec, int ip)
   {
-    // StepOver/Out must stay within the original fiber.
     // StepInto follows execution into child coroutines (yield someCoroutine()).
-    if(_step_mode != StepMode.Into && exec != _step_exec)
+    // StepOver/Out stay within the same fiber — this covers both the original
+    // exec and paral branch execs, which share the fiber but have their own ExecState.
+    // Completely unrelated fibers have a different fiber object and are always blocked.
+    if(_step_mode != StepMode.Into && exec != _step_exec && exec.fiber != _step_exec?.fiber)
       return;
 
     ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];

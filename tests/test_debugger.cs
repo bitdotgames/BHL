@@ -605,6 +605,90 @@ func void foo() {
   }
 
   [Fact]
+  public void TestStepOverVisitsParalBranches()
+  {
+    // paral branches have their own ExecState but share the parent fiber.
+    // StepOver must be able to see inside them.
+    string bhl = @"
+coro func test() {
+  paral {
+    {
+      int x = 1
+      yield()
+    }
+    {
+      int y = 2
+      yield()
+    }
+  }
+  int z = 3
+  yield()
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 5); // int x = 1
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // Must have visited at least one line inside the paral branches
+    Assert.Contains(5, hit_lines);
+    // Must also eventually reach the line after paral
+    Assert.Contains(13, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepOverParalDoesNotFireForUnrelatedFiber()
+  {
+    // An unrelated root fiber must not trigger the step even though it shares
+    // the same module and line numbers.
+    string bhl = @"
+coro func other() {
+  int p = 1
+  yield()
+}
+
+coro func test() {
+  paral {
+    {
+      int x = 1
+      yield()
+    }
+  }
+  int z = 3
+  yield()
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    VM.ExecState step_exec = null;
+    var hit_execs = new System.Collections.Generic.HashSet<VM.ExecState>();
+    d.OnBreakpoint = b => {
+      if(b.reason == "breakpoint") step_exec = b.exec;
+      hit_execs.Add(b.exec);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 10); // int x = 1
+
+    vm.Start("other");
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // Every step must be on the same fiber as the breakpoint exec
+    Assert.NotNull(step_exec);
+    foreach(var e in hit_execs)
+      Assert.Equal(step_exec.fiber, e.fiber);
+  }
+
+  [Fact]
   public void TestStepIntoFollowsYieldedCoroutine()
   {
     // yield atf() starts atf as a child fiber with its own ExecState.
