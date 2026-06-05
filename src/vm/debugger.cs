@@ -129,13 +129,29 @@ public class VMDebugger
     });
   }
 
+  // Opcodes that are compiler-generated lambda setup machinery and should
+  // never be step targets — the user has no source line to step to here.
+  static bool IsLambdaSetupOpcode(Module module, int ip)
+  {
+    var bytecode = module?.decl.compiled.bytecode;
+    if(bytecode == null || ip < 0 || ip >= bytecode.Length)
+      return false;
+    var op = (Opcodes)bytecode[ip];
+    return op == Opcodes.GetFuncIpPtr || op == Opcodes.SetUpval;
+  }
+
   void TryFireStep(VM.ExecState exec, int ip)
   {
-    if(exec != _step_exec)
+    // StepOver/Out must stay within the original fiber.
+    // StepInto follows execution into child coroutines (yield someCoroutine()).
+    if(_step_mode != StepMode.Into && exec != _step_exec)
       return;
 
     ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
     if(frame.module == null)
+      return;
+
+    if(IsLambdaSetupOpcode(frame.module, ip))
       return;
 
     int current_line   = frame.module.decl.compiled.ip2src_line.TryMap(ip);

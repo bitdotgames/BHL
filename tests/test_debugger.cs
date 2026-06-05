@@ -408,6 +408,58 @@ func void foo() {
   }
 
   [Fact]
+  public void TestStepDoesNotFireForOtherFiber()
+  {
+    // callee() yields mid-execution so that fiber b runs at frames_count=1
+    // before fiber a's StepOut fires. Without the exec guard on _step_exec,
+    // b's execution would satisfy the StepOut condition and fire a false hit.
+    string bhl = @"
+coro func callee() {
+  int x = 1
+  yield()
+}
+
+coro func a() {
+  yield callee()
+  int y = 2
+}
+
+coro func b() {
+  yield()
+  int z = 3
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    VM.ExecState exec_a      = null;
+    var          step_execs  = new List<VM.ExecState>();
+
+    d.OnBreakpoint = hit =>
+    {
+      if(hit.reason == "breakpoint")
+      {
+        exec_a = hit.exec;
+        d.StartStep(VMDebugger.StepMode.Out, hit.exec, hit.ip);
+      }
+      else
+        step_execs.Add(hit.exec);
+    };
+
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 3); // int x = 1 in callee
+
+    // b starts first — it will run before a in every tick
+    vm.Start("b");
+    vm.Start("a");
+    while(vm.Tick()) {}
+
+    Assert.NotNull(exec_a);
+    // step fired exactly once, for the correct fiber
+    Assert.Single(step_execs);
+    Assert.Equal(exec_a, step_execs[0]);
+  }
+
+  [Fact]
   public void TestLocalVarTableNullWithoutFlag()
   {
     string bhl = @"
@@ -550,5 +602,145 @@ func void foo() {
     Execute(vm, "foo");
 
     Assert.False(hit);
+  }
+
+  [Fact]
+  public void TestStepIntoFollowsYieldedCoroutine()
+  {
+    // yield atf() starts atf as a child fiber with its own ExecState.
+    // StepInto must follow into it; StepOver must not.
+    string bhl = @"
+coro func atf() {
+  int r = 1
+  yield()
+}
+
+coro func test() {
+  yield atf()
+  int z = 2
+  yield()
+}
+";
+    var vm   = MakeVM(bhl);
+    var d    = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Into, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 8); // yield atf()
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // StepInto should enter atf() — line 3 must appear
+    Assert.Contains(3, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepOverDoesNotFollowYieldedCoroutine()
+  {
+    string bhl = @"
+coro func atf() {
+  int r = 1
+  yield()
+}
+
+coro func test() {
+  yield atf()
+  int z = 2
+  yield()
+}
+";
+    var vm   = MakeVM(bhl);
+    var d    = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 8); // yield atf()
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // StepOver must not enter atf() — line 3 must NOT appear
+    Assert.DoesNotContain(3, hit_lines);
+  }
+
+  [Fact]
+  public void TestStepOverStartLambdaWithUpvalNoBackwardJump()
+  {
+    // SetUpval was emitted with src.origin.source_line (outer var definition line),
+    // causing a backward jump when stepping over start(coro func(){yield outer()}).
+    string bhl = @"
+coro func handle() {
+  yield()
+}
+
+coro func test() {
+  var fn = handle
+  start(coro func() {
+    yield fn()
+  })
+  int z = 3
+  yield()
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 7); // var fn = handle
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    for(int i = 1; i < hit_lines.Count; ++i)
+      Assert.True(hit_lines[i] >= hit_lines[i - 1],
+        $"Cursor jumped backward: {string.Join(", ", hit_lines)}");
+  }
+
+  [Fact]
+  public void TestStepOverStartLambdaNoBackwardJump()
+  {
+    // GetFuncIpPtr was emitted with ast.last_line_num (closing brace line),
+    // causing the step cursor to jump backward to }) before landing on the
+    // start() line. It should now map to the lambda's opening line.
+    string bhl = @"
+coro func test() {
+  int x = 1
+  start(coro func() {
+    yield()
+  })
+  int z = 3
+  yield()
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 3);
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // Lines must be monotonically non-decreasing — no backward jumps
+    for(int i = 1; i < hit_lines.Count; ++i)
+      Assert.True(hit_lines[i] >= hit_lines[i - 1],
+        $"Cursor jumped backward: {string.Join(", ", hit_lines)}");
   }
 }
