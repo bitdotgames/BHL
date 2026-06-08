@@ -605,6 +605,48 @@ func void foo() {
   }
 
   [Fact]
+  public void TestStepOverFunctionWithParalDoesNotEnterIt()
+  {
+    // Paral branch execs have frames_count == 1 regardless of call depth.
+    // Without EffectiveFramesCount the StepOver condition was satisfied inside
+    // the callee's paral, making the debugger enter the function instead of
+    // skipping it.
+    string bhl = @"
+coro func inner() {
+  paral {
+    {
+      int x = 1
+      yield()
+    }
+  }
+}
+
+coro func test() {
+  yield inner()
+  int z = 2
+  yield()
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 12); // yield inner()
+
+    vm.Start("test");
+    while(vm.Tick()) {}
+
+    // StepOver must not enter inner() — lines inside inner (3-9) must not appear
+    Assert.DoesNotContain(5, hit_lines); // int x = 1 inside inner
+    // Must reach the line after the call
+    Assert.Contains(13, hit_lines);
+  }
+
+  [Fact]
   public void TestStepOverVisitsParalBranches()
   {
     // paral branches have their own ExecState but share the parent fiber.

@@ -87,7 +87,7 @@ public class VMDebugger
   {
     _step_mode         = mode;
     _step_exec         = exec;
-    _step_start_frames = exec.frames_count;
+    _step_start_frames = EffectiveFramesCount(exec);
 
     ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
     _step_start_line = frame.module?.decl.compiled.ip2src_line.TryMap(ip) ?? 0;
@@ -129,6 +129,16 @@ public class VMDebugger
     });
   }
 
+  // paral branches have an isolated frame stack starting at 1, which doesn't
+  // reflect the true call depth. Walk exec.parent to get the real depth.
+  static int EffectiveFramesCount(VM.ExecState exec)
+  {
+    int count = exec.frames_count;
+    if(exec.parent != null)
+      count += exec.parent.frames_count - 1;
+    return count;
+  }
+
   // Opcodes that are compiler-generated lambda setup machinery and should
   // never be step targets — the user has no source line to step to here.
   static bool IsLambdaSetupOpcode(Module module, int ip)
@@ -157,7 +167,7 @@ public class VMDebugger
       return;
 
     int current_line   = frame.module.decl.compiled.ip2src_line.TryMap(ip);
-    int current_frames = exec.frames_count;
+    int current_frames = EffectiveFramesCount(exec);
 
     bool should_stop = _step_mode switch
     {
