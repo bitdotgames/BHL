@@ -58,12 +58,41 @@ function activate(context) {
 }
 
 class BHLDebugAdapterDescriptorFactory {
-  createDebugAdapterDescriptor(session) {
+  async createDebugAdapterDescriptor(session) {
     const host = session.configuration.host || HOST;
     const port = session.configuration.port || PORT;
-    log(`Connecting to ${host}:${port}`);
+    await waitForServer(host, port);
+    log(`Server ready — starting DAP session on ${host}:${port}`);
     return new vscode.DebugAdapterInlineImplementation(new DAPProxy(host, port));
   }
+}
+
+const RETRY_MS = 1000;
+
+// Probes host:port every RETRY_MS until a TCP connection succeeds,
+// then resolves. VS Code waits on the Thenable returned by
+// createDebugAdapterDescriptor, so the DAP session only starts once
+// the server is actually ready — no message buffering needed.
+function waitForServer(host, port) {
+  return new Promise(resolve => {
+    let logged = false;
+
+    function attempt() {
+      const socket = net.createConnection(port, host);
+      socket.setTimeout(RETRY_MS);
+
+      socket.once('connect', () => { socket.destroy(); resolve(); });
+      socket.once('error',   () => { socket.destroy(); retry(); });
+      socket.once('timeout', () => { socket.destroy(); retry(); });
+    }
+
+    function retry() {
+      if(!logged) { logged = true; log(`Waiting for BHL server on ${host}:${port}...`); }
+      setTimeout(attempt, RETRY_MS);
+    }
+
+    attempt();
+  });
 }
 
 class DAPProxy {

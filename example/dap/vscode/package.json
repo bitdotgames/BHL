@@ -38,7 +38,8 @@
             "request": "attach",
             "name": "Attach to BHL (Unity)",
             "host": "localhost",
-            "port": 7777
+            "port": 7777,
+            "timeout": 30000
           }
         ],
         "configurationSnippets": [
@@ -50,7 +51,8 @@
               "request": "attach",
               "name": "Attach to BHL (Unity)",
               "host": "localhost",
-              "port": 7777
+              "port": 7777,
+              "timeout": 30000
             }
           }
         ]
