@@ -35,6 +35,9 @@ public class ModuleCompiler : AST_Visitor
   IScope curr_scope;
 
   Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
+  LocalVarTable _local_var_table = new LocalVarTable();
+
+  public bool add_debug_info;
   HashSet<AST_Block> ctrl_block_has_defers = new HashSet<AST_Block>();
 
   Stack<List<AST_Block>> func_ctrl_blocks = new Stack<List<AST_Block>>();
@@ -292,6 +295,8 @@ public class ModuleCompiler : AST_Visitor
       code_bytes,
       ip2src_line
     );
+    if(add_debug_info)
+      compiled.local_var_table = _local_var_table;
     interim.InitWithCompiled(compiled);
     return interim;
   }
@@ -1470,6 +1475,9 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VARW:
       case EnumCall.VARWDCL:
       {
+        if(add_debug_info && ast.type == EnumCall.VARWDCL &&
+           func_decls.Count > 0 && func_decls.Peek() is FuncSymbolScript fss_varwdcl && fss_varwdcl._ip_addr >= 0)
+          _local_var_table.Add(fss_varwdcl._ip_addr, ast.symb_idx, ast.symbol.name);
         if(ast.type == EnumCall.VARWDCL && is_ref_origin)
           Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
 
@@ -1902,6 +1910,8 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl ast)
   {
+    if(add_debug_info && func_decls.Count > 0 && func_decls.Peek() is FuncSymbolScript fss_dbg && fss_dbg._ip_addr >= 0)
+      _local_var_table.Add(fss_dbg._ip_addr, ast.symb_idx, ast.symb.name);
     bool is_func_arg = ast.symb is FuncArgSymbol;
 
     //checking if there are default args

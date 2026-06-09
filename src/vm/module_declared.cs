@@ -169,7 +169,7 @@ public class ModuleDeclared : INamedResolver
     return ns.ResolveSymbolByPath(path);
   }
 
-  const uint STREAM_VERSION = 2;
+  public const uint STREAM_VERSION = 2;
 
   public void ToStream(Stream dst, bool leave_open = false)
   {
@@ -222,6 +222,11 @@ public class ModuleDeclared : INamedResolver
         w.Write(compiled.ip2src_line.ips[i]);
         w.Write(compiled.ip2src_line.lines[i]);
       }
+
+      bool has_local_var_table = compiled.local_var_table != null;
+      w.Write(has_local_var_table);
+      if(has_local_var_table)
+        compiled.local_var_table.Write(w);
     }
   }
 
@@ -255,12 +260,14 @@ public class ModuleDeclared : INamedResolver
     byte[] initcode = null;
     byte[] bytecode = null;
     var ip2src_line = new Ip2SrcLine();
+    LocalVarTable local_var_table = null;
 
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true /*leave open*/))
     {
       uint version = r.ReadUInt32();
       if(version != STREAM_VERSION)
         throw new Exception("Unsupported version: " + version);
+
 
       name = r.ReadString();
       file_path = r.ReadString();
@@ -307,6 +314,14 @@ public class ModuleDeclared : INamedResolver
       ip2src_line.EnsureCapacity(ip2src_line_len);
       for(int i = 0; i < ip2src_line_len; ++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
+
+      // Read optional trailing debug section if present.
+      if(r.BaseStream.Position < r.BaseStream.Length)
+      {
+        bool has_local_var_table = r.ReadBoolean();
+        if(has_local_var_table)
+          local_var_table = LocalVarTable.Read(r);
+      }
     }
 
     var reader = new MsgPackDataReader(new MemoryStream(symb_bytes));
@@ -347,6 +362,7 @@ public class ModuleDeclared : INamedResolver
       bytecode,
       ip2src_line
     );
+    compiled.local_var_table = local_var_table;
 
     module.InitWithCompiled(compiled);
     module.AssignId();

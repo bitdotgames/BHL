@@ -19,6 +19,7 @@ public class CompileConf
   public IUserBindings bindings = new EmptyUserBindings();
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public int max_errors_num = 100;
+  public bool add_debug_info = true;
 }
 
 public class CompilationResult
@@ -47,7 +48,8 @@ public class CompilationExecutor
   public static async Task<VM> CompileAndLoadVM(
     List<string> files,
     bool use_cache = false,
-    string bytecode_result_file = null
+    string bytecode_result_file = null,
+    bool add_debug_info = false
   )
   {
     var proj = new ProjectConf();
@@ -73,6 +75,7 @@ public class CompilationExecutor
     conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
+    conf.add_debug_info = add_debug_info;
 
     var cmp = new CompilationExecutor();
     var result = await cmp.Exec(conf);
@@ -113,8 +116,9 @@ public class CompilationExecutor
 
     sw.Stop();
 
+    long result_size = File.Exists(conf.proj.result_file) ? new FileInfo(conf.proj.result_file).Length : 0;
     conf.logger.Log(1,
-      $"BHL all done(hits/miss/errs/warns: {cache_hits}/{cache_miss}/{errors.Count}/{warnings.Count}) ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+      $"BHL all done(hits/miss/errs/warns: {cache_hits}/{cache_miss}/{errors.Count}/{warnings.Count}) size: {result_size} bytes ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
 
     if(errors.Count > 0)
     {
@@ -862,6 +866,7 @@ public class CompilationExecutor
           errors.AddRange(proc_result.errors);
 
           var c = new ModuleCompiler(proc_result);
+          c.add_debug_info = conf.add_debug_info;
           file2compiler.Add(current_file, c);
           c.Compile_VisitAST();
         }

@@ -24,6 +24,9 @@ public class BHLDebugServer
   DebugSession _session;
   Transport _transport;
 
+  // Signaled when configurationDone is received; used by WaitForClient().
+  readonly SemaphoreSlim _configuration_done = new SemaphoreSlim(0, 1);
+
   // Optional platform hooks wired by the host (e.g. EditorApplication.isPaused in Unity).
   public System.Action OnPause;
   public System.Action OnResume;
@@ -53,6 +56,15 @@ public class BHLDebugServer
     _listener = new TcpListener(IPAddress.Loopback, port);
     _listener.Start();
     Task.Run(() => AcceptLoopAsync(_cts.Token));
+  }
+
+  // Blocks the calling thread until a DAP client connects and sends
+  // configurationDone (i.e. all initial breakpoints are registered).
+  // Call this before starting BHL execution to avoid the attach race.
+  // Returns true if a client attached in time, false on timeout.
+  public bool WaitForClient(int timeout_ms = Timeout.Infinite)
+  {
+    return _configuration_done.Wait(timeout_ms);
   }
 
   public void Stop()
@@ -103,21 +115,34 @@ public class BHLDebugServer
   async Task DispatchAsync(Transport transport, JObject msg, CancellationToken ct)
   {
     var command = msg["command"]?.ToString();
-    switch(command)
+    try
     {
-      case "initialize":       await OnInitialize(transport, msg); break;
-      case "attach":           await OnAttach(transport, msg); break;
-      case "setBreakpoints":   await OnSetBreakpoints(transport, msg); break;
-      case "configurationDone":await OnConfigurationDone(transport, msg); break;
-      case "threads":          await OnThreads(transport, msg); break;
-      case "stackTrace":       await OnStackTrace(transport, msg); break;
-      case "scopes":           await OnScopes(transport, msg); break;
-      case "variables":        await OnVariables(transport, msg); break;
-      case "continue":         await OnContinue(transport, msg); break;
-      case "disconnect":       await OnDisconnect(transport, msg, ct); break;
-      default:
-        await transport.SendResponseAsync(msg, true); // ack unknown requests
-        break;
+      switch(command)
+      {
+        case "initialize":       await OnInitialize(transport, msg); break;
+        case "attach":           await OnAttach(transport, msg); break;
+        case "setBreakpoints":   await OnSetBreakpoints(transport, msg); break;
+        case "configurationDone":await OnConfigurationDone(transport, msg); break;
+        case "threads":          await OnThreads(transport, msg); break;
+        case "stackTrace":       await OnStackTrace(transport, msg); break;
+        case "scopes":           await OnScopes(transport, msg); break;
+        case "variables":        await OnVariables(transport, msg); break;
+        case "continue":         await OnContinue(transport, msg); break;
+        case "next":             await OnNext(transport, msg); break;
+        case "stepIn":           await OnStepIn(transport, msg); break;
+        case "stepOut":          await OnStepOut(transport, msg); break;
+        case "disconnect":       await OnDisconnect(transport, msg, ct); break;
+        default:
+          await transport.SendResponseAsync(msg, true); // ack unknown requests
+          break;
+      }
+    }
+    catch(Exception e)
+    {
+      await transport.SendResponseAsync(msg, false, new JObject
+      {
+        ["error"] = new JObject { ["id"] = 1, ["format"] = $"{command}: {e.Message}" }
+      });
     }
   }
 
@@ -165,6 +190,7 @@ public class BHLDebugServer
     {
       ["supportsConfigurationDoneRequest"] = true,
       ["supportsTerminateRequest"]         = true,
+      ["supportsStepBack"]                 = false,
     });
     await t.SendEventAsync("initialized");
   }
@@ -225,6 +251,7 @@ public class BHLDebugServer
   async Task OnConfigurationDone(Transport t, JObject req)
   {
     await t.SendResponseAsync(req, true);
+    try { _configuration_done.Release(); } catch(SemaphoreFullException) { }
   }
 
   async Task OnThreads(Transport t, JObject req)
@@ -269,9 +296,22 @@ public class BHLDebugServer
 
   async Task OnVariables(Transport t, JObject req)
   {
-    int var_ref  = req["arguments"]?["variablesReference"]?.Value<int>() ?? 0;
-    int frame_id = (var_ref - 1) / 1000;
-    var vars     = _session.BuildLocals(frame_id);
+    int var_ref = req["arguments"]?["variablesReference"]?.Value<int>() ?? 0;
+    JArray vars;
+    if(var_ref >= 10000)
+    {
+      vars = _session.BuildVarChildren(var_ref);
+    }
+    else
+    {
+      int frame_id = (var_ref - 1) / 1000;
+      vars = _session.BuildLocals(frame_id);
+      await t.SendEventAsync("output", new JObject
+      {
+        ["category"] = "console",
+        ["output"]   = _session.BuildLocalsDebugInfo(frame_id) + "\n",
+      });
+    }
     await t.SendResponseAsync(req, true, new JObject { ["variables"] = vars });
   }
 
@@ -280,6 +320,27 @@ public class BHLDebugServer
     await t.SendResponseAsync(req, true, new JObject { ["allThreadsContinued"] = true });
     await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
     _session.Continue();
+  }
+
+  async Task OnNext(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepOver();
+  }
+
+  async Task OnStepIn(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepInto();
+  }
+
+  async Task OnStepOut(Transport t, JObject req)
+  {
+    await t.SendResponseAsync(req, true);
+    await t.SendEventAsync("continued", new JObject { ["threadId"] = 1, ["allThreadsContinued"] = true });
+    _session.StepOut();
   }
 
   async Task OnDisconnect(Transport t, JObject req, CancellationToken ct)

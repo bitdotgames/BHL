@@ -6,17 +6,25 @@ namespace bhl
 
 public class VMDebugger
 {
+  public enum StepMode { None, Into, Over, Out }
+
   public struct BreakpointHit
   {
     public VM.ExecState exec;
     public Module module;
     public int ip;
+    public string reason; // "breakpoint" or "step"
     public int line => module?.decl.compiled.ip2src_line.TryMap(ip) ?? 0;
   }
 
   HashSet<int> _breakpoints = new HashSet<int>();
   // per source file: file_path → set of active IPs
   Dictionary<string, HashSet<int>> _by_source = new Dictionary<string, HashSet<int>>();
+
+  StepMode _step_mode = StepMode.None;
+  VM.ExecState _step_exec;
+  int _step_start_line;
+  int _step_start_frames;
 
   public Action<BreakpointHit> OnBreakpoint;
 
@@ -32,6 +40,9 @@ public class VMDebugger
     if(ip < 0)
       return false;
     _breakpoints.Add(ip);
+    if(!_by_source.TryGetValue(module.file_path, out var ips))
+      _by_source[module.file_path] = ips = new HashSet<int>();
+    ips.Add(ip);
     return true;
   }
 
@@ -72,17 +83,110 @@ public class VMDebugger
     _by_source.Clear();
   }
 
+  public void StartStep(StepMode mode, VM.ExecState exec, int ip)
+  {
+    _step_mode         = mode;
+    _step_exec         = exec;
+    _step_start_frames = EffectiveFramesCount(exec);
+
+    ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    _step_start_line = frame.module?.decl.compiled.ip2src_line.TryMap(ip) ?? 0;
+  }
+
+  public void ClearStep()
+  {
+    _step_mode = StepMode.None;
+    _step_exec = null;
+  }
+
   internal void TryFire(VM.ExecState exec, int ip)
+  {
+    TryFireBreakpoint(exec, ip);
+    if(_step_mode != StepMode.None)
+      TryFireStep(exec, ip);
+  }
+
+  void TryFireBreakpoint(VM.ExecState exec, int ip)
   {
     if(!_breakpoints.Contains(ip))
       return;
 
     ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    if(frame.module == null)
+      return;
+
+    // IPs are local to each module's bytecode, so verify the hit belongs to this module.
+    if(!_by_source.TryGetValue(frame.module.file_path, out var src_ips) || !src_ips.Contains(ip))
+      return;
+
+    _step_mode = StepMode.None;
     OnBreakpoint?.Invoke(new BreakpointHit
     {
       exec   = exec,
       module = frame.module,
       ip     = ip,
+      reason = "breakpoint",
+    });
+  }
+
+  // paral branches have an isolated frame stack starting at 1, which doesn't
+  // reflect the true call depth. Walk exec.parent to get the real depth.
+  static int EffectiveFramesCount(VM.ExecState exec)
+  {
+    int count = exec.frames_count;
+    if(exec.parent != null)
+      count += exec.parent.frames_count - 1;
+    return count;
+  }
+
+  // Opcodes that are compiler-generated lambda setup machinery and should
+  // never be step targets — the user has no source line to step to here.
+  static bool IsLambdaSetupOpcode(Module module, int ip)
+  {
+    var bytecode = module?.decl.compiled.bytecode;
+    if(bytecode == null || ip < 0 || ip >= bytecode.Length)
+      return false;
+    var op = (Opcodes)bytecode[ip];
+    return op == Opcodes.GetFuncIpPtr || op == Opcodes.SetUpval;
+  }
+
+  void TryFireStep(VM.ExecState exec, int ip)
+  {
+    // StepInto follows execution into child coroutines (yield someCoroutine()).
+    // StepOver/Out stay within the same fiber — this covers both the original
+    // exec and paral branch execs, which share the fiber but have their own ExecState.
+    // Completely unrelated fibers have a different fiber object and are always blocked.
+    if(_step_mode != StepMode.Into && exec != _step_exec && exec.fiber != _step_exec?.fiber)
+      return;
+
+    ref var frame = ref exec.frames[exec.regions[exec.regions_count - 1].frame_idx];
+    if(frame.module == null)
+      return;
+
+    if(IsLambdaSetupOpcode(frame.module, ip))
+      return;
+
+    int current_line   = frame.module.decl.compiled.ip2src_line.TryMap(ip);
+    int current_frames = EffectiveFramesCount(exec);
+
+    bool should_stop = _step_mode switch
+    {
+      StepMode.Into => current_line > 0 && current_line != _step_start_line,
+      StepMode.Over => current_line > 0 && current_line != _step_start_line && current_frames <= _step_start_frames,
+      StepMode.Out  => current_frames < _step_start_frames,
+      _             => false,
+    };
+
+    if(!should_stop)
+      return;
+
+    _step_mode = StepMode.None;
+    OnBreakpoint?.Invoke(new BreakpointHit
+    {
+      exec   = exec,
+      module = frame.module,
+      ip     = ip,
+      reason = "step",
     });
   }
 }
