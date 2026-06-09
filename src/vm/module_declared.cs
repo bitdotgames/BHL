@@ -169,7 +169,7 @@ public class ModuleDeclared : INamedResolver
     return ns.ResolveSymbolByPath(path);
   }
 
-  public const uint STREAM_VERSION = 3;
+  public const uint STREAM_VERSION = 2;
 
   public void ToStream(Stream dst, bool leave_open = false)
   {
@@ -268,6 +268,7 @@ public class ModuleDeclared : INamedResolver
       if(version != STREAM_VERSION)
         throw new Exception("Unsupported version: " + version);
 
+
       name = r.ReadString();
       file_path = r.ReadString();
       module.name = name;
@@ -314,9 +315,13 @@ public class ModuleDeclared : INamedResolver
       for(int i = 0; i < ip2src_line_len; ++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
 
-      bool has_local_var_table = r.ReadBoolean();
-      if(has_local_var_table)
-        local_var_table = LocalVarTable.Read(r);
+      // Read optional trailing debug section if present.
+      if(r.BaseStream.Position < r.BaseStream.Length)
+      {
+        bool has_local_var_table = r.ReadBoolean();
+        if(has_local_var_table)
+          local_var_table = LocalVarTable.Read(r);
+      }
     }
 
     var reader = new MsgPackDataReader(new MemoryStream(symb_bytes));
