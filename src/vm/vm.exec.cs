@@ -1,5 +1,4 @@
 #define BHL_STACKTRACE
-#define BHL_DEBUGGER
 //#define ENABLE_IL2CPP
 //#define BHL_USE_OPCODE_SWITCH
 using System;
@@ -97,7 +96,7 @@ public partial class VM
 
     while(init_exec.regions_count > 0)
     {
-      init_exec.ExecuteOnce();
+      init_exec.ExecuteOnce(debugger);
       if(init_exec.status == BHS.RUNNING)
         throw new Exception("Invalid state in init mode: " + init_exec.status);
     }
@@ -548,8 +547,10 @@ public partial class VM
     {
       status = BHS.SUCCESS;
 
+      var debugger = vm.debugger;
+
       while(regions_count > region_stop_idx && status == BHS.SUCCESS)
-        ExecuteOnce();
+        ExecuteOnce(debugger);
     }
 
     static unsafe void InitOpcodeHandlers()
@@ -803,7 +804,7 @@ public partial class VM
     ////////////////////////////////////////////////////////////////
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal unsafe void ExecuteOnce()
+    internal unsafe void ExecuteOnce(VMDebugger debugger = null)
     {
       ref var region = ref regions[regions_count - 1];
       ref var frame = ref frames[region.frame_idx];
@@ -831,9 +832,7 @@ public partial class VM
       {
         var bytes = frame.bytecode;
         var opcode = bytes[ip];
-#if BHL_DEBUGGER
-        vm.debugger?.TryFire(this, ip);
-#endif
+        debugger?.TryFire(this, ip);
 #if !BHL_USE_OPCODE_SWITCH
         op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
         ++ip;
