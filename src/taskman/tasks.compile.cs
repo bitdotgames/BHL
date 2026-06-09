@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--no-debug-info]");
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--debug-info]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -82,7 +82,7 @@ public static partial class Tasks
     var files = new List<string>();
 
     var proj = new ProjectConf();
-    bool add_debug_info = true;
+    bool add_debug_info = false;
 
     var p = new OptionSet()
     {
