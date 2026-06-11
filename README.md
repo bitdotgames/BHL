@@ -307,7 +307,7 @@ You can run unit tests by executing the following command:
 
 ## Version 3.0
 
-1. More optimal runtime memory storage layout
+1. ~~More optimal runtime memory storage layout~~
 1. DAP support
 1. LSP support
 
