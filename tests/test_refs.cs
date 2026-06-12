@@ -457,6 +457,37 @@ public class TestRefs : BHL_TestBase
     );
   }
 
+  [Fact]
+  public void TestPassByRefBadExprJsonTypeStackCleanedUp()
+  {
+    // After a ref-check failure, the json_type_stack must be restored.
+    // Without the fix, a leaked 'int' entry stays on the stack and is visible as
+    // the json type for subsequent untyped json expressions — producing a wrong
+    // "type 'int' can't be specified with {..}" error instead of the correct
+    // "can't determine type of {..} expression" error.
+    string bhl = @"
+    class A {
+      int x
+    }
+
+    func void foo(ref int n) {}
+
+    func void test() {
+      int n
+      foo(ref n + 1)
+      A a = true ? {x: 5} : {x: 6}
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+
+    Assert.Equal(5, proc.result.errors.Count);
+    Assert.Contains("expression is not passable by 'ref'",     proc.result.errors[0].text);
+    Assert.Contains("can't determine type of {..} expression", proc.result.errors[1].text);
+    Assert.Contains("can't determine type of {..} expression", proc.result.errors[2].text);
+  }
+
   [Fact(Skip = "TODO: controversial and quite difficult to implement")]
   public void TestPassByRefTmpClassField()
   {

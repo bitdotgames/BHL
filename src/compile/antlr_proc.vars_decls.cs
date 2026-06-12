@@ -4,121 +4,100 @@ namespace bhl;
 
 public partial class ANTLR_Processor
 {
-  private class VarsOrDeclsProxy
+  private abstract class VarsOrDeclsProxy
   {
-    bhlParser.VarDeclareContext[] vdecls;
-    bhlParser.VarOrDeclareContext[] vodecls;
-    bhlParser.VarDeclareOrChainExpContext[] vdeclsorexps;
-    bhlParser.ChainExpContext[] exps;
+    public abstract int Count { get; }
+    public abstract IParseTree At(int i);
+    public abstract bhlParser.TypeContext TypeAt(int i);
+    public abstract ITerminalNode LocalNameAt(int i);
+    public abstract bhlParser.ChainExpContext VarAccessAt(int i);
 
-    public int Count
+    public static VarsOrDeclsProxy From(bhlParser.VarDeclareContext[] items) =>
+      new VarDeclareProxy(items);
+    public static VarsOrDeclsProxy From(bhlParser.VarOrDeclareContext[] items) =>
+      new VarOrDeclareProxy(items);
+    public static VarsOrDeclsProxy From(bhlParser.VarOrDeclareContext item) =>
+      new VarOrDeclareProxy(new[] { item });
+    public static VarsOrDeclsProxy From(bhlParser.VarDeclareOrChainExpContext[] items) =>
+      new VarDeclareOrChainExpProxy(items);
+    public static VarsOrDeclsProxy From(bhlParser.ChainExpContext item) =>
+      new ChainExpProxy(new[] { item });
+  }
+
+  private sealed class VarDeclareProxy : VarsOrDeclsProxy
+  {
+    readonly bhlParser.VarDeclareContext[] items;
+    public VarDeclareProxy(bhlParser.VarDeclareContext[] items) => this.items = items;
+
+    public override int Count => items.Length;
+    public override IParseTree At(int i) => items[i];
+    public override bhlParser.TypeContext TypeAt(int i) => items[i].type();
+    public override ITerminalNode LocalNameAt(int i) => items[i].NAME();
+    public override bhlParser.ChainExpContext VarAccessAt(int i) => null;
+  }
+
+  private sealed class VarOrDeclareProxy : VarsOrDeclsProxy
+  {
+    readonly bhlParser.VarOrDeclareContext[] items;
+    public VarOrDeclareProxy(bhlParser.VarOrDeclareContext[] items) => this.items = items;
+
+    public override int Count => items.Length;
+    public override IParseTree At(int i) => items[i];
+    public override bhlParser.TypeContext TypeAt(int i) => items[i].varDeclare()?.type();
+    public override ITerminalNode LocalNameAt(int i)
     {
-      get
-      {
-        if(vdecls != null)
-          return vdecls.Length;
-        else if(vodecls != null)
-          return vodecls.Length;
-        else if(vdeclsorexps != null)
-          return vdeclsorexps.Length;
-        else if(exps != null)
-          return exps.Length;
-        return -1;
-      }
+      var vd = items[i].varDeclare();
+      return vd != null ? vd.NAME() : items[i].NAME();
     }
+    public override bhlParser.ChainExpContext VarAccessAt(int i) => null;
+  }
 
-    public VarsOrDeclsProxy(bhlParser.VarDeclareContext[] vdecls)
+  private sealed class VarDeclareOrChainExpProxy : VarsOrDeclsProxy
+  {
+    readonly bhlParser.VarDeclareOrChainExpContext[] items;
+    public VarDeclareOrChainExpProxy(bhlParser.VarDeclareOrChainExpContext[] items) => this.items = items;
+
+    public override int Count => items.Length;
+    public override IParseTree At(int i) => items[i];
+    public override bhlParser.TypeContext TypeAt(int i) => items[i].varDeclare()?.type();
+    public override ITerminalNode LocalNameAt(int i)
     {
-      this.vdecls = vdecls;
-    }
-
-    public VarsOrDeclsProxy(bhlParser.VarOrDeclareContext[] vodecls)
-    {
-      this.vodecls = vodecls;
-    }
-
-    public VarsOrDeclsProxy(bhlParser.VarDeclareOrChainExpContext[] vdeclsorexps)
-    {
-      this.vdeclsorexps = vdeclsorexps;
-    }
-
-    public VarsOrDeclsProxy(bhlParser.ChainExpContext[] exps)
-    {
-      this.exps = exps;
-    }
-
-    public IParseTree At(int i)
-    {
-      if(vdecls != null)
-        return (IParseTree)vdecls[i];
-      else if(vodecls != null)
-        return (IParseTree)vodecls[i];
-      else if(vdeclsorexps != null)
-        return (IParseTree)vdeclsorexps[i];
-      else if(exps != null)
-        return (IParseTree)exps[i];
-
+      var vd = items[i].varDeclare();
+      if(vd != null)
+        return vd.NAME();
+      var chain = items[i].chainExp();
+      if(chain.name() != null && chain.chainExpItem().Length == 0)
+        return chain.name().NAME();
       return null;
     }
-
-    public bhlParser.TypeContext TypeAt(int i)
+    public override bhlParser.ChainExpContext VarAccessAt(int i)
     {
-      if(vdecls != null)
-        return vdecls[i].type();
-      else if(vodecls != null)
-        return vodecls[i].varDeclare()?.type();
-      else if(vdeclsorexps != null)
-        return vdeclsorexps[i].varDeclare()?.type();
-
-      return null;
-    }
-
-    public ITerminalNode LocalNameAt(int i)
-    {
-      if(vdecls != null)
-        return vdecls[i].NAME();
-      else if(vodecls != null)
-      {
-        if(vodecls[i].varDeclare() != null)
-          return vodecls[i].varDeclare().NAME();
-        else
-          return vodecls[i].NAME();
-      }
-      else if(vdeclsorexps != null)
-      {
-        if(vdeclsorexps[i].varDeclare() != null)
-          return vdeclsorexps[i].varDeclare().NAME();
-        else if(vdeclsorexps[i].chainExp().name() != null &&
-                vdeclsorexps[i].chainExp().chainExpItem().Length == 0)
-          return vdeclsorexps[i].chainExp().name().NAME();
-      }
-      else if(exps != null)
-      {
-        if(exps[i].name() != null &&
-           exps[i].chainExpItem().Length == 0)
-          return exps[i].name().NAME();
-      }
-
-      return null;
-    }
-
-    public bhlParser.ChainExpContext VarAccessAt(int i)
-    {
-      if(vdeclsorexps != null && vdeclsorexps[i].chainExp() != null)
-      {
-        var chain = new ExpChain(null, vdeclsorexps[i].chainExp());
-        if(chain.IsMemorySlotAccess)
-          return vdeclsorexps[i].chainExp();
-      }
-      else if(exps != null)
-      {
-        var chain = new ExpChain(null, exps[i]);
-        if(chain.IsMemorySlotAccess)
-          return exps[i];
-      }
-
+      var chain_exp = items[i].chainExp();
+      if(chain_exp != null && new ExpChain(null, chain_exp).IsMemorySlotAccess)
+        return chain_exp;
       return null;
     }
   }
 
+  private sealed class ChainExpProxy : VarsOrDeclsProxy
+  {
+    readonly bhlParser.ChainExpContext[] items;
+    public ChainExpProxy(bhlParser.ChainExpContext[] items) => this.items = items;
+
+    public override int Count => items.Length;
+    public override IParseTree At(int i) => items[i];
+    public override bhlParser.TypeContext TypeAt(int i) => null;
+    public override ITerminalNode LocalNameAt(int i)
+    {
+      if(items[i].name() != null && items[i].chainExpItem().Length == 0)
+        return items[i].name().NAME();
+      return null;
+    }
+    public override bhlParser.ChainExpContext VarAccessAt(int i)
+    {
+      if(new ExpChain(null, items[i]).IsMemorySlotAccess)
+        return items[i];
+      return null;
+    }
+  }
 }

@@ -1178,7 +1178,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return true;
   }
 
-  class NormCallArg
+  struct NormCallArg
   {
     public bhlParser.CallArgContext ca;
     public Symbol orig;
@@ -1192,18 +1192,15 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     int required_args_num = total_args_num - default_args_num;
     var args_info = new FuncArgsInfo();
 
-    var norm_cargs = new List<NormCallArg>(total_args_num);
+    var norm_cargs = new NormCallArg[total_args_num];
     for(int i = 0; i < total_args_num; ++i)
     {
-      var arg = new NormCallArg();
-      arg.orig = func_symb.TryGetArg(i);
-      if(arg.orig == null)
+      norm_cargs[i].orig = func_symb.TryGetArg(i);
+      if(norm_cargs[i].orig == null)
       {
         AddError(func_symb.origin, "bad signature");
         return;
       }
-
-      norm_cargs.Add(arg);
     }
 
     var variadic_args = new List<bhlParser.CallArgContext>();
@@ -1249,7 +1246,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     PushAST(call);
     IParseTree prev_ca = null;
     //2. traversing normalized args
-    for(int i = 0; i < norm_cargs.Count; ++i)
+    for(int i = 0; i < norm_cargs.Length; ++i)
     {
       var na = norm_cargs[i];
 
@@ -1338,6 +1335,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(!TryVisit(na.ca))
           {
             PopAST();
+            PopJsonType();
             PopAST();
             PopCallByRef();
             return;
@@ -1351,6 +1349,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
             {
               AddError(na.ca, "expression is not passable by 'ref'");
               PopAST();
+              PopJsonType();
               PopAST();
               PopCallByRef();
               return;
@@ -2429,7 +2428,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return ProcPostIncDec(ctx, chain_ctx, op_ctx.operatorIncDec());
     else if(op_ctx.assignExp() != null)
     {
-      var vproxy = new VarsOrDeclsProxy(new bhlParser.ChainExpContext[] { chain_ctx });
+      var vproxy = VarsOrDeclsProxy.From(chain_ctx);
       return ProcDeclOrAssign(vproxy, op_ctx.assignExp(), op_ctx.Start.Line);
     }
 
@@ -3339,7 +3338,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   bool ProcDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    return ProcDeclOrAssign(new VarsOrDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
+    return ProcDeclOrAssign(VarsOrDeclsProxy.From(vdecl), assign_exp, start_line);
   }
 
   struct TypeIterator
@@ -3385,9 +3384,9 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       bool is_auto_var = false;
 
       //check if we declare a var or use an existing one
-      if(vproxy.TypeAt(i) != null)
+      var vd_type = vproxy.TypeAt(i);
+      if(vd_type != null)
       {
-        var vd_type = vproxy.TypeAt(i);
         is_auto_var = vd_type.GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
@@ -3424,9 +3423,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         var_ann.eval_type = var_symb.type.Get();
         LSP_SetSymbol(vd_name, var_symb);
       }
-      else if(vproxy.LocalNameAt(i) != null)
+      else if(vproxy.LocalNameAt(i) is {} vd_name)
       {
-        var vd_name = vproxy.LocalNameAt(i);
         var_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
         if(var_symb == null)
         {
@@ -3441,9 +3439,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
         var_ast.AddChild(ast);
       }
-      else if(vproxy.VarAccessAt(i) != null)
+      else if(vproxy.VarAccessAt(i) is {} var_exp)
       {
-        var var_exp = vproxy.VarAccessAt(i);
         if(assign_exp == null)
         {
           AddError(var_exp, "assign expression expected");
@@ -3509,7 +3506,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
   {
-    var vdecls = new VarsOrDeclsProxy(ctx.varDeclareList().varDeclare());
+    var vdecls = VarsOrDeclsProxy.From(ctx.varDeclareList().varDeclare());
     var assign_exp = ctx.assignExp();
     ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3518,7 +3515,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitStmDeclOrExpAssign(bhlParser.StmDeclOrExpAssignContext ctx)
   {
-    var vdecls = new VarsOrDeclsProxy(ctx.varDeclaresOrChainExps().varDeclareOrChainExp());
+    var vdecls = VarsOrDeclsProxy.From(ctx.varDeclaresOrChainExps().varDeclareOrChainExp());
     var assign_exp = ctx.assignExp();
     ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
