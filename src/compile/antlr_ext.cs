@@ -71,23 +71,23 @@ public abstract class bhlParserBase : Parser
   /// </summary>
   protected bool prev(string str)
   {
-    return ((ITokenStream)this.InputStream).LT(-1).Text.Equals(str);
+    return this.TokenStream.LT(-1).Text.Equals(str);
   }
 
   // Whether the next token value equals to @param str
   protected bool next(string str)
   {
-    return ((ITokenStream)this.InputStream).LT(1).Text.Equals(str);
+    return this.TokenStream.LT(1).Text.Equals(str);
   }
 
   protected bool closeBrace()
   {
-    return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACE;
+    return this.TokenStream.LT(1).Type == CLOSE_BRACE;
   }
 
   protected bool closeBracket()
   {
-    return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACKET;
+    return this.TokenStream.LT(1).Type == CLOSE_BRACKET;
   }
 
   /// <summary>
@@ -104,7 +104,7 @@ public abstract class bhlParserBase : Parser
 
     // Get the token ahead of the current index.
     int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-    IToken token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+    IToken token = this.TokenStream.Get(possibleIndexEosToken);
 
     if(token.Channel != Lexer.Hidden)
     {
@@ -123,7 +123,7 @@ public abstract class bhlParserBase : Parser
     {
       // Get the token ahead of the current whitespaces.
       possibleIndexEosToken = CurrentToken.TokenIndex - 2;
-      token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+      token = this.TokenStream.Get(possibleIndexEosToken);
     }
 
     // Get the token's text and type.
@@ -149,7 +149,7 @@ public abstract class bhlParserBase : Parser
 
     // Get the token ahead of the current index.
     int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-    IToken token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+    IToken token = this.TokenStream.Get(possibleIndexEosToken);
 
     if(token.Channel != Lexer.Hidden)
     {
