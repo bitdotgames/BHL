@@ -354,6 +354,5 @@ jsonValue
 eos
   : SEMI
   | EOF
-  | {this.lineTerminator()}?
-  | {this.closeBrace()}?
+  | {this.eosCondition()}?
   ;

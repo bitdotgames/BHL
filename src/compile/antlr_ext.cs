@@ -80,15 +80,8 @@ public abstract class bhlParserBase : Parser
     return CurrentToken.Text.Equals(str);
   }
 
-  protected bool closeBrace()
-  {
-    return CurrentToken.Type == CLOSE_BRACE;
-  }
-
-  protected bool closeBracket()
-  {
-    return CurrentToken.Type == CLOSE_BRACKET;
-  }
+  // Cheap token-type check short-circuits before the hidden-channel scan.
+  protected bool eosCondition() => CurrentToken.Type == CLOSE_BRACE || lineTerminator();
 
   /// <summary>
   /// Returns true if the hidden channel between the previous visible token
