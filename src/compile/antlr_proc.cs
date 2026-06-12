@@ -1211,9 +1211,10 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       norm_cargs[total_args_num - 1].variadic = true;
 
     //1. filling normalized call args
-    for(int ci = 0; ci < cargs.callArgsList()?.callArg().Length; ++ci)
+    var call_args = cargs.callArgsList()?.callArg();
+    for(int ci = 0; ci < call_args?.Length; ++ci)
     {
-      var ca = cargs.callArgsList().callArg()[ci];
+      var ca = call_args[ci];
       var ca_name = ca.NAME();
 
       var idx = ci;
@@ -1234,11 +1235,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
       }
 
-      if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs) && idx >= func_symb.GetTotalArgsNum() - 1)
+      if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs) && idx >= total_args_num - 1)
         variadic_args.Add(ca);
-      else if(idx >= func_symb.GetTotalArgsNum())
+      else if(idx >= total_args_num)
       {
-        AddError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_symb.GetTotalArgsNum());
+        AddError(ca, "there is no argument " + (idx + 1) + ", total arguments " + total_args_num);
         return;
       }
       else
@@ -1440,7 +1441,9 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call)
   {
     var func_args = func_type.arg_types;
-    int ca_len = cargs.callArgsList() == null ? 0 : cargs.callArgsList().callArg().Length;
+    var call_args_list = cargs.callArgsList();
+    var call_args = call_args_list?.callArg();
+    int ca_len = call_args?.Length ?? 0;
     IParseTree prev_ca = null;
     PushAST(call);
     for(int i = 0; i < func_args.Count; ++i)
@@ -1455,7 +1458,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         return;
       }
 
-      var ca = cargs.callArgsList().callArg()[i];
+      var ca = call_args[i];
       var ca_name = ca.NAME();
       bool is_ref = ca.REF() != null;
 
@@ -1482,13 +1485,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         return;
       }
 
-      if(arg_type_ref.Get() is RefType && ca.REF() == null)
+      if(arg_type is RefType && ca.REF() == null)
       {
         AddError(ca, "'ref' is missing");
         PopAST();
         return;
       }
-      else if(!(arg_type_ref.Get() is RefType) && ca.REF() != null)
+      else if(arg_type is not RefType && ca.REF() != null)
       {
         AddError(ca, "argument is not a 'ref'");
         PopAST();
@@ -1541,11 +1544,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
-    for(int i = 0; i < cargs.callArgsList()?.callArg().Length; ++i)
+    var call_args = cargs.callArgsList()?.callArg();
+    for(int i = 0; i < call_args?.Length; ++i)
     {
-      var ch = cargs.callArgsList().callArg()[i];
-      if(ch == curr && (i + 1) < cargs.callArgsList().callArg().Length)
-        return cargs.callArgsList().callArg()[i + 1];
+      if(call_args[i] == curr && (i + 1) < call_args.Length)
+        return call_args[i + 1];
     }
 
     //NOTE: graceful fallback
@@ -1559,9 +1562,10 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     var arg_types = new List<ProxyType>();
     if(types_ctx != null)
     {
-      for(int i = 0; i < types_ctx.refType().Length; ++i)
+      var ref_types = types_ctx.refType();
+      for(int i = 0; i < ref_types.Length; ++i)
       {
-        var ref_type = types_ctx.refType()[i];
+        var ref_type = ref_types[i];
         var arg_type = ParseType(ref_type.type());
         if(ref_type.REF() != null)
         {
@@ -1590,11 +1594,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     var sig = new FuncSignature(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type);
     if(fparams != null)
     {
-      for(int i = 0; i < fparams.funcParamDeclare().Length; ++i)
+      var param_decls = fparams.funcParamDeclare();
+      for(int i = 0; i < param_decls.Length; ++i)
       {
         var tp = new ProxyType();
 
-        var vd = fparams.funcParamDeclare()[i];
+        var vd = param_decls[i];
         if(vd?.type() == null)
         {
           AddError(vd, "invalid func signature");
@@ -1610,7 +1615,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
             if(vd.REF() != null)
               AddError(vd.REF(), "pass by 'ref' not allowed");
 
-            if(i != fparams.funcParamDeclare().Length - 1)
+            if(i != param_decls.Length - 1)
               AddError(vd, "variadic argument must be last");
 
             if(vd.assignExp() != null)

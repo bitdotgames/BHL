@@ -621,9 +621,10 @@ public partial class ANTLR_Processor
     if(pass.iface_ctx.extensions() != null)
     {
       var inherits = new List<InterfaceSymbol>();
-      for(int i = 0; i < pass.iface_ctx.extensions().nsName().Length; ++i)
+      var ext_names = pass.iface_ctx.extensions().nsName();
+      for(int i = 0; i < ext_names.Length; ++i)
       {
-        var ext_name = pass.iface_ctx.extensions().nsName()[i];
+        var ext_name = ext_names[i];
         var ext = ns.ResolveSymbolByPath(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
@@ -686,9 +687,10 @@ public partial class ANTLR_Processor
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
     //class members
-    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
+    var class_members = pass.class_ctx.classMember();
+    for(int i = 0; i < class_members.Length; ++i)
     {
-      var cm = pass.class_ctx.classMember()[i];
+      var cm = class_members[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
@@ -710,9 +712,10 @@ public partial class ANTLR_Processor
 
         var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new ProxyType());
 
-        for(int f = 0; f < fldd.fldAttribs().Length; ++f)
+        var fld_attribs = fldd.fldAttribs();
+        for(int f = 0; f < fld_attribs.Length; ++f)
         {
-          var attr = fldd.fldAttribs()[f];
+          var attr = fld_attribs[f];
           var attr_type = FieldAttrib.None;
 
           if(attr.STATIC() != null)
@@ -748,9 +751,10 @@ public partial class ANTLR_Processor
           fd.NAME().GetText()
         );
 
-        for(int f = 0; f < fd.funcAttribs().Length; ++f)
+        var func_attribs = fd.funcAttribs();
+        for(int f = 0; f < func_attribs.Length; ++f)
         {
-          var attr = fd.funcAttribs()[f];
+          var attr = func_attribs[f];
           var attr_type = FuncAttrib.None;
 
           if(attr.CORO() != null)
@@ -817,9 +821,10 @@ public partial class ANTLR_Processor
     pass.class_symb._resolve_only_decl_members = true;
 
     //class members
-    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
+    var class_members = pass.class_ctx.classMember();
+    for(int i = 0; i < class_members.Length; ++i)
     {
-      var cm = pass.class_ctx.classMember()[i];
+      var cm = class_members[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
@@ -843,8 +848,9 @@ public partial class ANTLR_Processor
         if(func_symb == null)
           break;
 
+        var func_attribs = fd.funcAttribs();
         func_symb.signature = ParseFuncSignature(
-          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].CORO() != null,
+          func_attribs.Length > 0 && func_attribs[0].CORO() != null,
           ParseType(fd.retType()),
           fd.funcParams()
         );
@@ -870,9 +876,10 @@ public partial class ANTLR_Processor
       var implements = new List<InterfaceSymbol>();
       ClassSymbol super_class = null;
 
-      for(int i = 0; i < pass.class_ctx.extensions().nsName().Length; ++i)
+      var ext_names = pass.class_ctx.extensions().nsName();
+      for(int i = 0; i < ext_names.Length; ++i)
       {
-        var ext_name = pass.class_ctx.extensions().nsName()[i];
+        var ext_name = ext_names[i];
 
         LSP_AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
 
@@ -950,9 +957,10 @@ public partial class ANTLR_Processor
       return;
 
     //class methods bodies
-    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
+    var class_members = pass.class_ctx.classMember();
+    for(int i = 0; i < class_members.Length; ++i)
     {
-      var cm = pass.class_ctx.classMember()[i];
+      var cm = class_members[i];
       var fd = cm.funcDecl();
 
       if(fd != null)
