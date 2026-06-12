@@ -1785,7 +1785,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: while we are inside lambda the eval type is its return type
     Annotate(ctx).eval_type = lmb_symb.GetReturnType();
 
-    ParseFuncBlock(lmb_ctx, lmb_ctx.funcBlock(), lmb_ctx.retType(), ast);
+    ParseFuncBlock(lmb_ctx, lmb_ctx.block(), lmb_ctx.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
     curr_type = lmb_symb.signature;
@@ -2126,21 +2126,6 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ProcExpChain(ctx, ctx, ref curr_type);
 
     Annotate(ctx).eval_type = curr_type;
-
-    return null;
-  }
-
-  public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
-  {
-    IType curr_type = null;
-    var ast = ProcLambda(
-      ctx,
-      ctx.funcLambda(),
-      ref curr_type
-    );
-
-    Annotate(ctx).eval_type = curr_type;
-    PeekAST().AddChild(ast);
 
     return null;
   }
@@ -2698,25 +2683,28 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return false;
   }
 
-  public override object VisitExpBitwise(bhlParser.ExpBitwiseContext ctx)
+  public override object VisitExpBitwiseAnd(bhlParser.ExpBitwiseAndContext ctx)
   {
-    LSP_AddSemanticToken(ctx.operatorBitwise(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.BAND(), SemanticToken.Operator);
+    return ProcBitOp(ctx, ctx.exp(0), ctx.exp(1), EnumBinaryOp.BIT_AND);
+  }
 
-    EnumBinaryOp op = default;
-    if(ctx.operatorBitwise().BOR() != null)
-      op = EnumBinaryOp.BIT_OR;
-    else if(ctx.operatorBitwise().BAND() != null)
-      op = EnumBinaryOp.BIT_AND;
-    else if(ctx.operatorBitwise().SHR() != null)
-      op = EnumBinaryOp.BIT_SHR;
-    else if(ctx.operatorBitwise().SHL() != null)
-      op = EnumBinaryOp.BIT_SHL;
-    else
-      throw new Exception("Unexpected token");
+  public override object VisitExpBitwiseOr(bhlParser.ExpBitwiseOrContext ctx)
+  {
+    LSP_AddSemanticToken(ctx.BOR(), SemanticToken.Operator);
+    return ProcBitOp(ctx, ctx.exp(0), ctx.exp(1), EnumBinaryOp.BIT_OR);
+  }
 
+  public override object VisitExpShift(bhlParser.ExpShiftContext ctx)
+  {
+    LSP_AddSemanticToken(ctx.operatorShift(), SemanticToken.Operator);
+    var op = ctx.operatorShift().SHR() != null ? EnumBinaryOp.BIT_SHR : EnumBinaryOp.BIT_SHL;
+    return ProcBitOp(ctx, ctx.exp(0), ctx.exp(1), op);
+  }
+
+  object ProcBitOp(ParserRuleContext ctx, bhlParser.ExpContext exp_0, bhlParser.ExpContext exp_1, EnumBinaryOp op)
+  {
     var ast = new AST_BinaryOpExp(op, ctx.Start.Line);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
 
     PushAST(ast);
     bool ok1 = TryVisit(exp_0);
@@ -2876,12 +2864,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    LSP_AddSemanticToken(ctx.@string().NORMALSTRING(), SemanticToken.String);
+    LSP_AddSemanticToken(ctx.NORMALSTRING(), SemanticToken.String);
 
     Annotate(ctx).eval_type = Types.String;
 
     var ast = new AST_Literal(ConstType.STR);
-    ast.sval = ctx.@string().NORMALSTRING().GetText();
+    ast.sval = ctx.NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length - 2);
     //replacing extra slashes by quotes
@@ -3761,12 +3749,6 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
     ProcBlock(BlockType.SEQ, ctx.statement());
-    return null;
-  }
-
-  public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
-  {
-    ProcBlock(BlockType.FUNC, ctx.block()?.statement());
     return null;
   }
 

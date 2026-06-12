@@ -19,12 +19,12 @@ mimport
   ;
 
 decl
-  : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareOptAssign | enumDecl)
+  : nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareOptAssign | enumDecl
   ;
 
 dotName
- : NAME memberAccess*
- ;
+  : NAME memberAccess*
+  ;
 
 nsName
   : GLOBAL? dotName
@@ -59,28 +59,26 @@ exp
   | FALSE                                     #ExpLiteralFalse
   | TRUE                                      #ExpLiteralTrue
   | number                                    #ExpLiteralNum
-  | string                                    #ExpLiteralStr
+  | NORMALSTRING                              #ExpLiteralStr
   | OPEN_PAREN type CLOSE_PAREN exp           #ExpTypeCast
   | chainExp                                  #ExpChain
-  | funcLambda                                #ExpLambda
   | TYPEOF OPEN_PAREN type CLOSE_PAREN        #ExpTypeof
   | jsonObject                                #ExpJsonObj
   | jsonArray                                 #ExpJsonArr
   | YIELD chainExp                            #ExpYieldCall
-  | exp AS type                               #ExpAs
-  | exp IS type                               #ExpIs
+  | newExp                                    #ExpNew
   | operatorUnary exp                         #ExpUnary
-  | exp operatorBitwise exp                   #ExpBitwise
   | exp operatorMulDivMod exp                 #ExpMulDivMod
   | exp operatorAddSub exp                    #ExpAddSub
+  | exp operatorShift exp                     #ExpShift
   | exp operatorComparison exp                #ExpCompare
+  | exp AS type                               #ExpAs
+  | exp IS type                               #ExpIs
+  | exp BAND exp                              #ExpBitwiseAnd
+  | exp BOR exp                               #ExpBitwiseOr
   | exp LAND exp                              #ExpLogicalAnd
   | exp LOR exp                               #ExpLogicalOr
   | exp ternaryIfExp                          #ExpTernaryIf
-  | newExp                                    #ExpNew
-  //TODO: do we need those for intellisense?
-  //| chainExp '.'                              #ExpIncompleteMember
-  //| chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
   ;
 
 ternaryIfExp
@@ -161,7 +159,7 @@ callArgs
   ;
 
 callArgsList
-  :  callArg (COMMA callArg)*
+  : callArg (COMMA callArg)*
   ;
 
 callArg
@@ -180,16 +178,9 @@ nsDecl
   : NAMESPACE dotName OPEN_BRACE decl* CLOSE_BRACE
   ;
 
+// classBlock + classMembers inlined: -2 rule invocations per class
 classDecl
-  : CLASS NAME extensions? classBlock
-  ;
-
-classBlock
-  : OPEN_BRACE classMembers CLOSE_BRACE
-  ;
-
-classMembers
-  : classMember*
+  : CLASS NAME extensions? OPEN_BRACE classMember* CLOSE_BRACE
   ;
 
 fldAttribs
@@ -201,23 +192,12 @@ fldDeclare
   ;
 
 classMember
-  : (fldDeclare | funcDecl | classDecl | enumDecl | interfaceDecl)
+  : fldDeclare | funcDecl | classDecl | enumDecl | interfaceDecl
   ;
 
+// interfaceBlock + interfaceMembers + interfaceMember inlined: -3 rule invocations per interface, -1 per method
 interfaceDecl
-  : INTERFACE NAME extensions? interfaceBlock
-  ;
-
-interfaceBlock
-  : OPEN_BRACE interfaceMembers CLOSE_BRACE
-  ;
-
-interfaceMembers
-  : interfaceMember*
-  ;
-
-interfaceMember
-  : interfaceFuncDecl
+  : INTERFACE NAME extensions? OPEN_BRACE interfaceFuncDecl* CLOSE_BRACE
   ;
 
 enumDecl
@@ -233,27 +213,25 @@ enumMember
   ;
 
 funcAttribs
-  : (CORO | VIRTUAL | OVERRIDE | STATIC)
+  : CORO | VIRTUAL | OVERRIDE | STATIC
   ;
 
+// funcBlock inlined: -1 rule invocation per function
 funcDecl
-  : funcAttribs* FUNC retType? NAME OPEN_PAREN funcParams? CLOSE_PAREN funcBlock
+  : funcAttribs* FUNC retType? NAME OPEN_PAREN funcParams? CLOSE_PAREN block
   ;
 
 funcType
   : CORO? FUNC retType? OPEN_PAREN types? CLOSE_PAREN
   ;
 
-funcBlock
-  : block
+// funcBlock inlined: -1 rule invocation per lambda
+funcLambda
+  : CORO? FUNC retType? OPEN_PAREN funcParams? CLOSE_PAREN captureList? block
   ;
 
 interfaceFuncDecl
   : CORO? FUNC retType? NAME OPEN_PAREN funcParams? CLOSE_PAREN
-  ;
-
-funcLambda
-  : CORO? FUNC retType? OPEN_PAREN funcParams? CLOSE_PAREN captureList? funcBlock
   ;
 
 refType
@@ -310,7 +288,7 @@ varDeclaresOrChainExps
   ;
 
 modifyOp
-  : assignExp | operatorIncDec | (operatorSelfOp exp)
+  : assignExp | operatorIncDec | operatorSelfOp exp
   ;
 
 expModifyOp
@@ -321,8 +299,10 @@ assignExp
   : ASSIGN exp
   ;
 
-operatorBitwise
-  : BOR | BAND | SHR | SHL
+// operatorBitwise split: shifts placed between +/- and comparisons (C-like precedence);
+// BAND and BOR inlined directly into exp with separate precedence tiers
+operatorShift
+  : SHR | SHL
   ;
 
 operatorIncDec
@@ -353,34 +333,22 @@ number
   : INT | HEX | FLOAT
   ;
 
-string
-  : NORMALSTRING
-  ;
-
+// empty case merged in: no backtracking for {} — (jsonPair...)? handles it directly
 jsonObject
-  :   OPEN_BRACE jsonPair (COMMA jsonPair)* CLOSE_BRACE
-  |   jsonEmptyObj
-  ;
-
-jsonEmptyObj
-  : OPEN_BRACE CLOSE_BRACE
+  : OPEN_BRACE (jsonPair (COMMA jsonPair)*)? CLOSE_BRACE
   ;
 
 jsonPair
   : NAME COLON jsonValue
   ;
 
+// empty case merged in: no backtracking for []
 jsonArray
-  :  OPEN_BRACKET jsonValue (COMMA jsonValue)* CLOSE_BRACKET
-  |  jsonEmptyArr
-  ;
-
-jsonEmptyArr
-  : OPEN_BRACKET CLOSE_BRACKET
+  : OPEN_BRACKET (jsonValue (COMMA jsonValue)*)? CLOSE_BRACKET
   ;
 
 jsonValue
-  :  exp
+  : exp
   ;
 
 eos

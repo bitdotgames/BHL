@@ -4659,7 +4659,7 @@ public class TestClass : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "mismatched input '='",
+      "extraneous input '='",
       new PlaceAssert(bhl, @"
       static int foo = 42
 ---------------------^"

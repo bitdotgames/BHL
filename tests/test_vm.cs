@@ -1595,6 +1595,105 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestBitShiftLowerPrecedenceThanAdd()
+  {
+    // 1 + 2 << 1 must parse as (1 + 2) << 1 = 6, not 1 + (2 << 1) = 5
+    string bhl = @"
+    func int test()
+    {
+      return 1 + 2 << 1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+          .EmitChain(Opcodes.Add)
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitChain(Opcodes.BitShl)
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(6, fb.Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBitAndLowerPrecedenceThanAdd()
+  {
+    // 2 + 3 & 5 must parse as (2 + 3) & 5 = 5, not 2 + (3 & 5) = 3
+    string bhl = @"
+    func int test()
+    {
+      return 2 + 3 & 5
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
+          .EmitChain(Opcodes.Add)
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 5) })
+          .EmitChain(Opcodes.BitAnd)
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(5, fb.Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBitAndHigherPrecedenceThanBitOr()
+  {
+    // 4 | 2 & 3 must parse as 4 | (2 & 3) = 6, not (4 | 2) & 3 = 2
+    string bhl = @"
+    func int test()
+    {
+      return 4 | 2 & 3
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
+          .EmitChain(Opcodes.BitAnd)
+          .EmitChain(Opcodes.BitOr)
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(6, fb.Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestMod()
   {
     string bhl = @"

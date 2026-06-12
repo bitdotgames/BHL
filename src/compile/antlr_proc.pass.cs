@@ -489,15 +489,15 @@ public partial class ANTLR_Processor
       return;
 
     PushScope(pass.func_ast.symbol);
-    ParseFuncBlock(pass.func_ctx, pass.func_ctx.funcBlock(), pass.func_ctx.retType(), pass.func_ast);
+    ParseFuncBlock(pass.func_ctx, pass.func_ctx.block(), pass.func_ctx.retType(), pass.func_ast);
     PopScope();
   }
 
-  void ParseFuncBlock(ParserRuleContext ctx, bhlParser.FuncBlockContext block_ctx, bhlParser.RetTypeContext ret_ctx,
+  void ParseFuncBlock(ParserRuleContext ctx, bhlParser.BlockContext block_ctx, bhlParser.RetTypeContext ret_ctx,
     AST_FuncDecl func_ast)
   {
     PushAST(func_ast.block());
-    TryVisit(block_ctx);
+    ProcBlock(BlockType.FUNC, block_ctx?.statement());
     PopAST();
 
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
@@ -564,55 +564,51 @@ public partial class ANTLR_Processor
     if(pass.iface_ctx?.NAME() == null)
       return;
 
-    for(int i = 0; i < pass.iface_ctx.interfaceBlock()?.interfaceMembers()?.interfaceMember().Length; ++i)
+    for(int i = 0; i < pass.iface_ctx.interfaceFuncDecl().Length; ++i)
     {
-      var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
+      var fd = pass.iface_ctx.interfaceFuncDecl()[i];
 
-      var fd = ib.interfaceFuncDecl();
-      if(fd != null)
+      LSP_AddSemanticToken(fd.FUNC(), SemanticToken.Keyword);
+
+      if(fd.NAME() == null)
       {
-        LSP_AddSemanticToken(fd.FUNC(), SemanticToken.Keyword);
+        AddError(fd, "incomplete parsing context");
+        return;
+      }
 
-        if(fd.NAME() == null)
-        {
-          AddError(fd, "incomplete parsing context");
-          return;
-        }
+      int default_args_num;
+      var sig = ParseFuncSignature(fd.CORO() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+      if(default_args_num != 0)
+      {
+        AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num],
+          "default argument value is not allowed in this context");
+        return;
+      }
 
-        int default_args_num;
-        var sig = ParseFuncSignature(fd.CORO() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
-        if(default_args_num != 0)
-        {
-          AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num],
-            "default argument value is not allowed in this context");
-          return;
-        }
+      var func_symb = new FuncSymbolScript(
+        null,
+        sig,
+        fd.NAME().GetText()
+      );
+      if(!pass.iface_symb.TryDefine(func_symb, out SymbolError err))
+      {
+        AddError(fd.NAME(), err.Message);
+        return;
+      }
 
-        var func_symb = new FuncSymbolScript(
-          null,
-          sig,
-          fd.NAME().GetText()
-        );
-        if(!pass.iface_symb.TryDefine(func_symb, out SymbolError err))
-        {
-          AddError(fd.NAME(), err.Message);
-          return;
-        }
+      LSP_SetSymbol(fd.NAME(), func_symb);
 
-        LSP_SetSymbol(fd.NAME(), func_symb);
-
-        var func_params = fd.funcParams();
-        if(func_params != null)
-        {
-          PushScope(func_symb);
-          //NOTE: we push some dummy interim AST and later
-          //      simply discard it since we don't care about
-          //      func args related AST for interfaces
-          PushAST(new AST_Interim());
-          TryVisit(func_params);
-          PopAST();
-          PopScope();
-        }
+      var func_params = fd.funcParams();
+      if(func_params != null)
+      {
+        PushScope(func_symb);
+        //NOTE: we push some dummy interim AST and later
+        //      simply discard it since we don't care about
+        //      func args related AST for interfaces
+        PushAST(new AST_Interim());
+        TryVisit(func_params);
+        PopAST();
+        PopScope();
       }
     }
   }
@@ -690,9 +686,9 @@ public partial class ANTLR_Processor
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
     //class members
-    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
+    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classMember()[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
@@ -821,9 +817,9 @@ public partial class ANTLR_Processor
     pass.class_symb._resolve_only_decl_members = true;
 
     //class members
-    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
+    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classMember()[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
@@ -954,9 +950,9 @@ public partial class ANTLR_Processor
       return;
 
     //class methods bodies
-    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
+    for(int i = 0; i < pass.class_ctx.classMember().Length; ++i)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+      var cm = pass.class_ctx.classMember()[i];
       var fd = cm.funcDecl();
 
       if(fd != null)
@@ -973,7 +969,7 @@ public partial class ANTLR_Processor
                               "'");
 
         PushScope(func_symb);
-        ParseFuncBlock(fd, fd.funcBlock(), fd.retType(), func_ast);
+        ParseFuncBlock(fd, fd.block(), fd.retType(), func_ast);
         PopScope();
       }
     }
