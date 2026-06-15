@@ -498,7 +498,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return ProcLambdaCall(chain.ctx, chain.lmb_ctx, chain.items, ref curr_type,
         write: write, yielded: yielded, called_in_place: chain.IsFuncCall);
 
-    var walker = new ChainWalker(this, chain, curr_type, write, yielded, root_scope);
+    var walker = new ExpChainWalker(this, chain, curr_type, write, yielded, root_scope);
     return walker.Walk(ref curr_type);
   }
 
@@ -1275,7 +1275,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     interim.AddChild(ast);
     PushAST(interim);
 
-    var walker = new ChainWalker(this, curr_type, write);
+    var walker = new ExpChainWalker(this, curr_type, write);
     if(!walker.WalkItems(chain_items))
     {
       PopAST();

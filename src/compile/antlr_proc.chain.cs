@@ -6,44 +6,44 @@ public partial class ANTLR_Processor
 {
   // Encapsulates the mutable cursor state for walking a single chain expression.
   // Created on the stack per chain evaluation; never stored or boxed.
-  ref struct ChainWalker
+  ref struct ExpChainWalker
   {
     readonly ANTLR_Processor _proc;
     readonly ExpChain _chain;
     readonly bool _write;
     readonly bool _yielded;
 
-    ITerminalNode _currName;
+    ITerminalNode _curr_name;
     IScope        _scope;
-    IType         _currType;
-    Symbol        _currSymb;
+    IType         _curr_type;
+    Symbol        _curr_symb;
     int           _offset;
 
-    internal IType CurrType => _currType;
+    internal IType CurrType => _curr_type;
 
-    internal ChainWalker(ANTLR_Processor proc, ExpChain chain, IType currType, bool write, bool yielded, IScope rootScope)
+    internal ExpChainWalker(ANTLR_Processor proc, ExpChain chain, IType currType, bool write, bool yielded, IScope rootScope)
     {
       _proc     = proc;
       _chain    = chain;
       _write    = write;
       _yielded  = yielded;
-      _currType = currType;
-      _currName = null;
-      _currSymb = null;
+      _curr_type = currType;
+      _curr_name = null;
+      _curr_symb = null;
       _offset   = 0;
       _scope    = rootScope ?? (chain.IsGlobalNs ? proc.ns : proc.curr_scope);
     }
 
     // Minimal constructor for processing only chain items (lambda-tail case).
-    internal ChainWalker(ANTLR_Processor proc, IType currType, bool write)
+    internal ExpChainWalker(ANTLR_Processor proc, IType currType, bool write)
     {
       _proc     = proc;
       _chain    = default;
       _write    = write;
       _yielded  = false;
-      _currType = currType;
-      _currName = null;
-      _currSymb = null;
+      _curr_type = currType;
+      _curr_name = null;
+      _curr_symb = null;
       _offset   = 0;
       _scope    = proc.curr_scope;
     }
@@ -53,14 +53,14 @@ public partial class ANTLR_Processor
       if(_chain.paren_exp_ctx != null)
       {
         if(_proc.TryVisit(_chain.paren_exp_ctx))
-          _currType = _proc.Annotate(_chain.paren_exp_ctx).eval_type;
+          _curr_type = _proc.Annotate(_chain.paren_exp_ctx).eval_type;
       }
 
-      _currName = _chain.name_ctx?.NAME();
+      _curr_name = _chain.name_ctx?.NAME();
 
       _proc.PushAST(new AST_Interim());
 
-      if(_currName != null && !WalkHead())
+      if(_curr_name != null && !WalkHead())
       {
         _proc.PopAST();
         return false;
@@ -72,11 +72,11 @@ public partial class ANTLR_Processor
         return false;
       }
 
-      if(_currName != null)
-        WalkItem(null, null, _currName.Symbol.Line, _write,
+      if(_curr_name != null)
+        WalkItem(null, null, _curr_name.Symbol.Line, _write,
           is_leftover: true, is_root: _chain.items.Count == 0);
 
-      if(_chain.IsMemorySlotAccess && _currSymb is FuncSymbol m && _scope is ClassSymbol)
+      if(_chain.IsMemorySlotAccess && _curr_symb is FuncSymbol m && _scope is ClassSymbol)
       {
         if(!_write)
         {
@@ -101,16 +101,16 @@ public partial class ANTLR_Processor
       _proc.ValidateChainCall(_chain.ctx, 0, chain_ast.children, _yielded);
       _proc.PeekAST().AddChildren(chain_ast);
 
-      type = _currType;
+      type = _curr_type;
       return true;
     }
 
     bool WalkHead()
     {
-      var nameText = _currName.GetText();
+      var nameText = _curr_name.GetText();
 
       if(nameText == "this" || nameText == "base")
-        _proc.LSP_AddSemanticToken(_currName, SemanticToken.Keyword);
+        _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Keyword);
 
       var name_symb = _scope.ResolveWithFallback(nameText);
 
@@ -118,22 +118,22 @@ public partial class ANTLR_Processor
 
       if(name_symb == null)
       {
-        _proc.AddError(_currName, "symbol '" + _currName.GetText() + "' not resolved");
+        _proc.AddError(_curr_name, "symbol '" + _curr_name.GetText() + "' not resolved");
         return false;
       }
 
       ApplyNamespaceOffset(ref name_symb);
 
       if(name_symb is IType type_symb)
-        _currType = type_symb;
+        _curr_type = type_symb;
       else if(name_symb is ITyped typed)
-        _currType = typed.GetIType();
+        _curr_type = typed.GetIType();
       else
-        _currType = null;
+        _curr_type = null;
 
-      if(_currType == null)
+      if(_curr_type == null)
       {
-        _proc.AddError(_currName, $"'{_currName.GetText()}' cannot be used as an expression");
+        _proc.AddError(_curr_name, $"'{_curr_name.GetText()}' cannot be used as an expression");
         return false;
       }
 
@@ -142,12 +142,12 @@ public partial class ANTLR_Processor
 
     void ApplyBaseCall(ref Symbol name_symb)
     {
-      if(_currName.GetText() != "base" || !(_proc.PeekFuncDecl()?.scope is ClassSymbol cs))
+      if(_curr_name.GetText() != "base" || !(_proc.PeekFuncDecl()?.scope is ClassSymbol cs))
         return;
 
       if(cs.super_class == null)
       {
-        _proc.AddError(_currName, "no base class found");
+        _proc.AddError(_curr_name, "no base class found");
         return;
       }
 
@@ -156,7 +156,7 @@ public partial class ANTLR_Processor
 
       if(_chain.items.Count <= _offset)
       {
-        _proc.AddError(_currName, "bad base call");
+        _proc.AddError(_curr_name, "bad base call");
         return;
       }
 
@@ -167,12 +167,12 @@ public partial class ANTLR_Processor
         return;
       }
 
-      _currName = macc.NAME();
+      _curr_name = macc.NAME();
       ++_offset;
 
       var func_decl = _proc.PeekFuncDecl();
-      _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, _currName.Symbol.Line, func_decl.Resolve("this")));
-      _proc.PeekAST().AddChild(new AST_TypeCast(cs.super_class, force_type: true, line_num: _currName.Symbol.Line));
+      _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, _curr_name.Symbol.Line, func_decl.Resolve("this")));
+      _proc.PeekAST().AddChild(new AST_TypeCast(cs.super_class, force_type: true, line_num: _curr_name.Symbol.Line));
     }
 
     void ApplyNamespaceOffset(ref Symbol name_symb)
@@ -197,7 +197,7 @@ public partial class ANTLR_Processor
           return;
         }
 
-        _currName = macc.NAME();
+        _curr_name = macc.NAME();
         ++_offset;
 
         if(name_symb is Namespace name_ns)
@@ -217,28 +217,28 @@ public partial class ANTLR_Processor
         if(item is bhlParser.CallArgsContext cargs)
         {
           WalkItem(cargs, null, cargs.Start.Line, write: false, is_root: _offset == 0);
-          _currName = null;
+          _curr_name = null;
         }
         else if(item is bhlParser.ArrAccessContext arracc)
         {
           WalkItem(null, arracc, arracc.Start.Line, write: _write && is_last, is_root: c == _offset);
-          _currName = null;
+          _curr_name = null;
         }
         else if(item is bhlParser.MemberAccessContext macc)
         {
           ClassSymbol class_symb = null;
-          if(_currName != null)
+          if(_curr_name != null)
           {
             WalkItem(null, null, macc.Start.Line, write: false, is_root: c == _offset);
-            class_symb = _currSymb as ClassSymbol;
+            class_symb = _curr_symb as ClassSymbol;
           }
           else
-            _currSymb = null;
+            _curr_symb = null;
 
-          _scope = _currType as IScope;
+          _scope = _curr_type as IScope;
           if(!(_scope is IInstantiable) && !(_scope is EnumSymbol))
           {
-            _proc.AddError(macc, $"type '{_currType?.GetName() ?? "?"}' does not support member access");
+            _proc.AddError(macc, $"type '{_curr_type?.GetName() ?? "?"}' does not support member access");
             return false;
           }
 
@@ -251,7 +251,7 @@ public partial class ANTLR_Processor
           if(!CheckStaticInstanceAccess(macc, class_symb))
             return false;
 
-          _currName = macc.NAME();
+          _curr_name = macc.NAME();
         }
         else
           throw new System.Exception("Unhandled chain item");
@@ -309,24 +309,24 @@ public partial class ANTLR_Processor
     {
       AST_Call ast = null;
 
-      if(_currName != null)
+      if(_curr_name != null)
       {
-        var nameText  = _currName.GetText();
+        var nameText  = _curr_name.GetText();
         var name_symb = is_root
           ? _scope.ResolveWithFallback(nameText)
           : _scope.ResolveRelatedOnly(nameText);
 
         if(name_symb == null)
         {
-          _proc.AddError(_currName, "symbol '" + nameText + "' not resolved");
-          _currSymb = null;
+          _proc.AddError(_curr_name, "symbol '" + nameText + "' not resolved");
+          _curr_symb = null;
           return;
         }
 
-        _proc.LSP_SetSymbol(_currName, name_symb);
+        _proc.LSP_SetSymbol(_curr_name, name_symb);
 
-        var prev_symb = _currSymb;
-        _currSymb     = name_symb;
+        var prev_symb = _curr_symb;
+        _curr_symb     = name_symb;
 
         var var_symb  = name_symb as VariableSymbol;
         var func_symb = name_symb as FuncSymbol;
@@ -335,7 +335,7 @@ public partial class ANTLR_Processor
         {
           if(var_symb is FieldSymbol && !(var_symb.type.Get() is FuncSignature))
           {
-            _proc.AddError(_currName, $"'{nameText}' is not a function");
+            _proc.AddError(_curr_name, $"'{nameText}' is not a function");
             return;
           }
 
@@ -344,35 +344,35 @@ public partial class ANTLR_Processor
           {
             if(!(_scope is IInstantiable))
             {
-              ast = new AST_Call(EnumCall.FUNC_PTR_VAR, line, var_symb, 0, _currName);
+              ast = new AST_Call(EnumCall.FUNC_PTR_VAR, line, var_symb, 0, _curr_name);
               _proc.AddCallArgs(ftype, cargs, ref ast);
             }
             else
             {
-              _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, var_symb, 0, _currName));
-              ast = new AST_Call(EnumCall.FUNC_PTR_MVAR, line, var_symb, 0, _currName);
+              _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, var_symb, 0, _curr_name));
+              ast = new AST_Call(EnumCall.FUNC_PTR_MVAR, line, var_symb, 0, _curr_name);
               _proc.AddCallArgs(ftype, cargs, ref ast);
             }
-            _currType = ftype.return_type.Get();
-            if(_currType == null)
-              _proc.AddError(_currName, "type '" + ftype.return_type + "' not found");
+            _curr_type = ftype.return_type.Get();
+            if(_curr_type == null)
+              _proc.AddError(_curr_name, "type '" + ftype.return_type + "' not found");
           }
           else if(func_symb != null)
           {
             var call_type = _scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static)
               ? EnumCall.MFUNC : EnumCall.FUNC;
-            ast = new AST_Call(call_type, line, func_symb, 0, _currName);
+            ast = new AST_Call(call_type, line, func_symb, 0, _curr_name);
             //NOTE: attach receiver variable for proper MFUNC dispatch
             if(call_type == EnumCall.MFUNC && prev_symb is VariableSymbol var_symbol)
               ast.ctx_var = var_symbol;
-            _proc.LSP_AddSemanticToken(_currName,
+            _proc.LSP_AddSemanticToken(_curr_name,
               func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);
             _proc.AddCallArgs(func_symb, cargs, ref ast);
-            _currType = func_symb.GetReturnType();
+            _curr_type = func_symb.GetReturnType();
           }
           else
           {
-            _proc.AddError(_currName, $"'{nameText}' is not a function");
+            _proc.AddError(_curr_name, $"'{nameText}' is not a function");
             return;
           }
         }
@@ -385,7 +385,7 @@ public partial class ANTLR_Processor
 
             if(_scope is InterfaceSymbol)
             {
-              _proc.AddError(_currName, "attributes not supported by interfaces");
+              _proc.AddError(_curr_name, "attributes not supported by interfaces");
               return;
             }
 
@@ -394,39 +394,39 @@ public partial class ANTLR_Processor
               var_symb._is_ref_decl = true;
 
             ast = new AST_Call(is_write ? EnumCall.VARW : EnumCall.VAR,
-              line, var_symb, 0, _currName, pass_as_ref);
+              line, var_symb, 0, _curr_name, pass_as_ref);
 
             if(fld_symb != null && _scope is ClassSymbolNative)
             {
               if(ast.type == EnumCall.VAR && fld_symb.getter == null)
               {
-                _proc.AddError(_currName, "get operation is not defined");
+                _proc.AddError(_curr_name, "get operation is not defined");
                 return;
               }
               else if(ast.type == EnumCall.VARW && fld_symb.setter == null)
               {
-                _proc.AddError(_currName, "set operation is not defined");
+                _proc.AddError(_curr_name, "set operation is not defined");
                 return;
               }
             }
 
-            _currType = var_symb.type.Get();
-            if(_currType == null)
-              _proc.AddError(_currName, "type '" + var_symb.type + "' not found");
+            _curr_type = var_symb.type.Get();
+            if(_curr_type == null)
+              _proc.AddError(_curr_name, "type '" + var_symb.type + "' not found");
           }
           else if(func_symb != null)
           {
-            ast       = new AST_Call(EnumCall.GET_ADDR, line, func_symb, 0, _currName);
-            _currType = func_symb.signature;
+            ast       = new AST_Call(EnumCall.GET_ADDR, line, func_symb, 0, _curr_name);
+            _curr_type = func_symb.signature;
           }
           else if(name_symb is EnumSymbol enum_symb)
           {
             if(is_leftover)
             {
-              _proc.AddError(_currName, $"'{nameText}' is an enum type and cannot be used as a value");
+              _proc.AddError(_curr_name, $"'{nameText}' is an enum type and cannot be used as a value");
               return;
             }
-            _currType = enum_symb;
+            _curr_type = enum_symb;
           }
           else if(name_symb is EnumItemSymbol enum_item)
           {
@@ -437,36 +437,36 @@ public partial class ANTLR_Processor
           else if(name_symb is ClassSymbol class_symb)
           {
             if(is_leftover)
-              _proc.AddError(_currName, $"'{nameText}' is a class type and cannot be used as a value");
-            _currType = class_symb;
+              _proc.AddError(_curr_name, $"'{nameText}' is a class type and cannot be used as a value");
+            _curr_type = class_symb;
           }
           else
           {
-            _proc.AddError(_currName, $"'{nameText}' cannot be used in an expression");
+            _proc.AddError(_curr_name, $"'{nameText}' cannot be used in an expression");
             return;
           }
         }
       }
       else if(cargs != null)
       {
-        var ftype = _currType as FuncSignature;
+        var ftype = _curr_type as FuncSignature;
         if(ftype == null)
         {
-          _proc.AddError(cargs, $"cannot call expression of type '{_currType?.GetName() ?? "?"}'");
+          _proc.AddError(cargs, $"cannot call expression of type '{_curr_type?.GetName() ?? "?"}'");
           return;
         }
         ast       = new AST_Call(EnumCall.FUNC_PTR_RES, line, null);
         _proc.AddCallArgs(ftype, cargs, ref ast);
-        _currType = ftype.return_type.Get();
-        if(_currType == null)
-          _proc.AddError(_currName, "type '" + ftype.return_type + "' not found");
+        _curr_type = ftype.return_type.Get();
+        if(_curr_type == null)
+          _proc.AddError(_curr_name, "type '" + ftype.return_type + "' not found");
       }
 
       if(ast != null)
         _proc.PeekAST().AddChild(ast);
 
       if(arracc != null)
-        _proc.AddArrIndex(arracc, ref _currType, line, write);
+        _proc.AddArrIndex(arracc, ref _curr_type, line, write);
     }
   }
 }
