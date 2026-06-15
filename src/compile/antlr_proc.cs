@@ -650,13 +650,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         idx = func_symb.FindArgIdx(ca_name.GetText());
         if(idx == -1)
         {
-          AddError(ca_name, "no such named argument");
+          AddError(ca_name, $"no argument named '{ca_name.GetText()}' in '{func_symb.name}'");
           return;
         }
 
         if(norm_cargs[idx].ca != null)
         {
-          AddError(ca_name, "argument already passed before");
+          AddError(ca_name, $"argument '{ca_name.GetText()}' is already specified");
           return;
         }
       }
@@ -933,7 +933,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(ca_len != func_args.Count)
     {
-      AddError(cargs, "too many arguments");
+      AddError(cargs, $"too many arguments: expected {func_args.Count}, got {ca_len}");
       return;
     }
 
@@ -2052,14 +2052,14 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       op_type == EnumBinaryOp.LT ||
       op_type == EnumBinaryOp.LTE
     )
-      Annotate(ctx).eval_type = _types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
+      Annotate(ctx).eval_type = _types.CheckRelationalBinOp(ann_lhs, ann_rhs, op, errors);
     else
     {
       if(op_type == EnumBinaryOp.ADD &&
          CheckImplicitCastToString(ctx, ast, ops_edge_idx, ann_lhs, ann_rhs, lhs_self_op))
         Annotate(ctx).eval_type = Types.String;
       else
-        Annotate(ctx).eval_type = _types.CheckBinOp(ann_lhs, ann_rhs, errors);
+        Annotate(ctx).eval_type = _types.CheckBinOp(ann_lhs, ann_rhs, op, errors);
     }
 
     PeekAST().AddChild(ast);
@@ -2183,7 +2183,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
+    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), "&&", errors);
 
     PeekAST().AddChild(ast);
 
@@ -2214,7 +2214,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
+    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), "||", errors);
 
     PeekAST().AddChild(ast);
 

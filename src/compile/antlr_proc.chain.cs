@@ -133,7 +133,7 @@ public partial class ANTLR_Processor
 
       if(_currType == null)
       {
-        _proc.AddError(_currName, "bad chain call");
+        _proc.AddError(_currName, $"'{_currName.GetText()}' cannot be used as an expression");
         return false;
       }
 
@@ -238,7 +238,7 @@ public partial class ANTLR_Processor
           _scope = _currType as IScope;
           if(!(_scope is IInstantiable) && !(_scope is EnumSymbol))
           {
-            _proc.AddError(macc, "type doesn't support member access via '.'");
+            _proc.AddError(macc, $"type '{_currType?.GetName() ?? "?"}' does not support member access");
             return false;
           }
 
@@ -335,7 +335,7 @@ public partial class ANTLR_Processor
         {
           if(var_symb is FieldSymbol && !(var_symb.type.Get() is FuncSignature))
           {
-            _proc.AddError(_currName, "symbol is not a function");
+            _proc.AddError(_currName, $"'{nameText}' is not a function");
             return;
           }
 
@@ -372,7 +372,7 @@ public partial class ANTLR_Processor
           }
           else
           {
-            _proc.AddError(_currName, "symbol is not a function");
+            _proc.AddError(_currName, $"'{nameText}' is not a function");
             return;
           }
         }
@@ -423,7 +423,7 @@ public partial class ANTLR_Processor
           {
             if(is_leftover)
             {
-              _proc.AddError(_currName, "symbol usage is not valid");
+              _proc.AddError(_currName, $"'{nameText}' is an enum type and cannot be used as a value");
               return;
             }
             _currType = enum_symb;
@@ -437,12 +437,12 @@ public partial class ANTLR_Processor
           else if(name_symb is ClassSymbol class_symb)
           {
             if(is_leftover)
-              _proc.AddError(_currName, "symbol usage is not valid");
+              _proc.AddError(_currName, $"'{nameText}' is a class type and cannot be used as a value");
             _currType = class_symb;
           }
           else
           {
-            _proc.AddError(_currName, "symbol usage is not valid");
+            _proc.AddError(_currName, $"'{nameText}' cannot be used in an expression");
             return;
           }
         }
@@ -452,7 +452,7 @@ public partial class ANTLR_Processor
         var ftype = _currType as FuncSignature;
         if(ftype == null)
         {
-          _proc.AddError(cargs, "no func to call");
+          _proc.AddError(cargs, $"cannot call expression of type '{_currType?.GetName() ?? "?"}'");
           return;
         }
         ast       = new AST_Call(EnumCall.FUNC_PTR_RES, line, null);

@@ -493,17 +493,19 @@ public class Types : INamedResolver
     return true;
   }
 
-  public IType CheckBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors)
+  public IType CheckBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, string op, CompileErrors errors)
   {
     if(!IsBinOpCompatible(lhs.eval_type))
     {
-      errors.Add(new ParseError(lhs, "operator is not overloaded"));
+      errors.Add(new ParseError(lhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
       return null;
     }
 
     if(!IsBinOpCompatible(rhs.eval_type))
     {
-      errors.Add(new ParseError(rhs, "operator is not overloaded"));
+      errors.Add(new ParseError(rhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
       return null;
     }
 
@@ -518,17 +520,19 @@ public class Types : INamedResolver
     return op_func.GetReturnType();
   }
 
-  public IType CheckRelationalBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors)
+  public IType CheckRelationalBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, string op, CompileErrors errors)
   {
     if(!IsNumeric(lhs.eval_type))
     {
-      errors.Add(new ParseError(lhs, "operator is not overloaded"));
+      errors.Add(new ParseError(lhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
       return Bool;
     }
 
     if(!IsNumeric(rhs.eval_type))
     {
-      errors.Add(new ParseError(rhs, "operator is not overloaded"));
+      errors.Add(new ParseError(rhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
       return Bool;
     }
 
@@ -564,7 +568,8 @@ public class Types : INamedResolver
   public IType CheckUnaryMinus(AnnotatedParseTree a, CompileErrors errors)
   {
     if(!(a.eval_type == Int || a.eval_type == Float))
-      errors.Add(new ParseError(a, "must be numeric type"));
+      errors.Add(new ParseError(a,
+        $"operator '-' cannot be applied to operand of type '{a.eval_type?.GetName() ?? "?"}'"));
 
     return a.eval_type;
   }
@@ -587,13 +592,15 @@ public class Types : INamedResolver
     return Int;
   }
 
-  public IType CheckLogicalOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors)
+  public IType CheckLogicalOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, string op, CompileErrors errors)
   {
     if(lhs.eval_type != Bool)
-      errors.Add(new ParseError(lhs, "must be bool type"));
+      errors.Add(new ParseError(lhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
 
     if(rhs.eval_type != Bool)
-      errors.Add(new ParseError(rhs, "must be bool type"));
+      errors.Add(new ParseError(rhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
 
     return Bool;
   }
@@ -601,7 +608,8 @@ public class Types : INamedResolver
   public IType CheckLogicalNot(AnnotatedParseTree a, CompileErrors errors)
   {
     if(a.eval_type != Bool)
-      errors.Add(new ParseError(a, "must be bool type"));
+      errors.Add(new ParseError(a,
+        $"operator '!' cannot be applied to operand of type '{a.eval_type?.GetName() ?? "?"}'"));
 
     return a.eval_type;
   }

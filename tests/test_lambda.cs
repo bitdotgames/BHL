@@ -151,7 +151,7 @@ public class TestLambda : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "type doesn't support member access via '.'",
+      "does not support member access",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }.foo
 ----------------------------------------------^"

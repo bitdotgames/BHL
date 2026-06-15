@@ -596,7 +596,7 @@ public class TestFuncPtrs : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "too many arguments",
+      "too many arguments: expected",
       new PlaceAssert(bhl, @"
       ptr(10, 30)
 ---------^"

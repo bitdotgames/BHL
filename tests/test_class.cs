@@ -2764,7 +2764,7 @@ public class TestClass : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      "symbol is not a function",
+      "is not a function",
       new PlaceAssert(bhl, @"
       c.r()
 --------^"
@@ -4996,7 +4996,7 @@ public class TestClass : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "symbol usage is not valid",
+      "cannot be used",
       new PlaceAssert(bhl, @"
       test1(Bar)
 ------------^"

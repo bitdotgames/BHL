@@ -1849,7 +1849,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "no func to call",
+      "cannot call expression of type",
       new PlaceAssert(bhl, @"
       foo() ()
 ------------^"
@@ -1966,7 +1966,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "symbol is not a function",
+      "is not a function",
       new PlaceAssert(bhl, @"
         return time()
 ---------------^"
@@ -6153,7 +6153,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "argument already passed before",
+      "is already specified",
       new PlaceAssert(bhl, @"
       return foo(k: 1, k: 2)
 -----------------------^"
@@ -6350,7 +6350,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "no such named argument",
+      "no argument named",
       new PlaceAssert(bhl, @"
       foo(b: 24, k: 3, f : 1)
 -----------------------^"
@@ -8390,7 +8390,7 @@ public class TestVM : BHL_TestBase
 
       AssertError<Exception>(
         delegate() { Compile(bhl); },
-        "symbol usage is not valid",
+        "cannot be used",
         new PlaceAssert(bhl, @"
         return string
 ---------------^"
@@ -8413,7 +8413,7 @@ public class TestVM : BHL_TestBase
 
       AssertError<Exception>(
         delegate() { Compile(bhl); },
-        "symbol usage is not valid",
+        "cannot be used",
         new PlaceAssert(bhl, @"
         return Foo.IFoo
 -------------------^"
@@ -8435,7 +8435,7 @@ public class TestVM : BHL_TestBase
 
       AssertError<Exception>(
         delegate() { Compile(bhl); },
-        "symbol usage is not valid",
+        "cannot be used",
         new PlaceAssert(bhl, @"
         return Bar
 ---------------^"
@@ -8459,7 +8459,7 @@ public class TestVM : BHL_TestBase
 
       AssertError<Exception>(
         delegate() { Compile(bhl); },
-        "symbol usage is not valid",
+        "cannot be used",
         new PlaceAssert(bhl, @"
         return Foo.Bar
 -------------------^"
@@ -8994,7 +8994,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "symbol is not a function",
+      "is not a function",
       new PlaceAssert(bhl, @"
       return int(foo())
 -------------^"

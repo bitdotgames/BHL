@@ -208,7 +208,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       Color c3 = c1 + c2
 -----------------^"
@@ -233,7 +233,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       Color c3 = c1 - c2
 -----------------^"
@@ -258,7 +258,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       Color c3 = c1 * c2
 -----------------^"
@@ -283,7 +283,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       Color c3 = c1 / c2
 -----------------^"
@@ -308,7 +308,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
 ---------------^"
@@ -333,7 +333,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool r = c1 >= c2
 ---------------^"
@@ -358,7 +358,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
 ---------------^"
@@ -383,7 +383,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"operator is not overloaded",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
 ---------------^"
@@ -407,7 +407,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be numeric type",
+      @"cannot be applied to operand of type",
       new PlaceAssert(bhl, @"
       Color c2 = -c1
 ------------------^"
@@ -482,7 +482,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be bool type",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool a = c2 && c1
 ---------------^"
@@ -507,7 +507,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be bool type",
+      @"cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       bool a = c2 || c1
 ---------------^"
@@ -531,7 +531,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be bool type",
+      @"cannot be applied to operand of type",
       new PlaceAssert(bhl, @"
       bool a = !c1
 ----------------^"
