@@ -572,18 +572,17 @@ public class Types : INamedResolver
   public IType CheckBitNot(AnnotatedParseTree a, CompileErrors errors)
   {
     if(a.eval_type != Int)
-      errors.Add(new ParseError(a, "must be int type"));
+      errors.Add(new ParseError(a,
+        $"operator '~' cannot be applied to operand of type '{a.eval_type?.GetName() ?? "?"}'"));
 
     return Int;
   }
 
-  public IType CheckBitOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors)
+  public IType CheckBitOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, string op, CompileErrors errors)
   {
-    if(lhs.eval_type != Int)
-      errors.Add(new ParseError(lhs, "must be int type"));
-
-    if(rhs.eval_type != Int)
-      errors.Add(new ParseError(rhs, "must be int type"));
+    if(lhs.eval_type != Int || rhs.eval_type != Int)
+      errors.Add(new ParseError(lhs,
+        $"operator '{op}' cannot be applied to operands of type '{lhs.eval_type?.GetName() ?? "?"}' and '{rhs.eval_type?.GetName() ?? "?"}'"));
 
     return Int;
   }

@@ -432,7 +432,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be int type",
+      @"operator '&' cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       int a = c2 & c1
 --------------^"
@@ -457,7 +457,7 @@ public class TestOperatorOverload : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      @"must be int type",
+      @"operator '|' cannot be applied to operands of type",
       new PlaceAssert(bhl, @"
       int a = c2 | c1
 --------------^"

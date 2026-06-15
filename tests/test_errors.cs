@@ -530,4 +530,58 @@ public class TestErrors : BHL_TestBase
 //    //Console.WriteLine(Trees.ToStringTree(proc.parsed.prog, proc.parsed.parser.RuleNames));
 //    Console.WriteLine(proc.parsed);
 //  }
+
+  [Fact]
+  public void TestWarnBitwiseAndNextToComparison()
+  {
+    string bhl = @"
+    func bool test(int flags, int mask)
+    {
+      return flags & mask != 0
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+    // The expression is also a type error (comparison returns bool, & requires int),
+    // so the warning fires alongside the error explaining what went wrong.
+    Assert.True(proc.result.errors.Count > 0);
+    Assert.Equal(1, proc.result.warnings.Count);
+    Assert.Contains("suggest parentheses around comparison in operand of '&'",
+      proc.result.warnings[0].text);
+  }
+
+  [Fact]
+  public void TestWarnBitwiseOrNextToComparison()
+  {
+    string bhl = @"
+    func bool test(int flags, int mask)
+    {
+      return flags | mask == 0
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+    Assert.True(proc.result.errors.Count > 0);
+    Assert.Equal(1, proc.result.warnings.Count);
+    Assert.Contains("suggest parentheses around comparison in operand of '|'",
+      proc.result.warnings[0].text);
+  }
+
+  [Fact]
+  public void TestNoWarnBitwiseWithExplicitParens()
+  {
+    string bhl = @"
+    func bool test(int flags, int mask)
+    {
+      return (flags & mask) != 0
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+    Assert.Equal(0, proc.result.errors.Count);
+    Assert.Equal(0, proc.result.warnings.Count);
+  }
 }

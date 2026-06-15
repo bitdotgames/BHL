@@ -177,6 +177,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
+  void AddWarning(IParseTree place, string msg)
+  {
+    warnings.Add(new ParseWarning(module, place, tokens, msg));
+  }
+
   void PushBlock(AST_Block block)
   {
     var fsymb = PeekFuncDecl();
@@ -2104,13 +2109,22 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   public override object VisitExpBitwiseAnd(bhlParser.ExpBitwiseAndContext ctx)
   {
     LSP_AddSemanticToken(ctx.BAND(), SemanticToken.Operator);
+    WarnBitwiseNextToComparison(ctx.exp(0), ctx.exp(1), "&");
     return ProcBitOp(ctx, ctx.exp(0), ctx.exp(1), EnumBinaryOp.BIT_AND);
   }
 
   public override object VisitExpBitwiseOr(bhlParser.ExpBitwiseOrContext ctx)
   {
     LSP_AddSemanticToken(ctx.BOR(), SemanticToken.Operator);
+    WarnBitwiseNextToComparison(ctx.exp(0), ctx.exp(1), "|");
     return ProcBitOp(ctx, ctx.exp(0), ctx.exp(1), EnumBinaryOp.BIT_OR);
+  }
+
+  void WarnBitwiseNextToComparison(bhlParser.ExpContext lhs, bhlParser.ExpContext rhs, string op)
+  {
+    if(lhs is bhlParser.ExpCompareContext || rhs is bhlParser.ExpCompareContext)
+      AddWarning(lhs is bhlParser.ExpCompareContext ? lhs : rhs,
+        $"suggest parentheses around comparison in operand of '{op}'");
   }
 
   public override object VisitExpShift(bhlParser.ExpShiftContext ctx)
@@ -2132,7 +2146,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(!ok1 || !ok2)
       return null;
 
-    Annotate(ctx).eval_type = _types.CheckBitOp(Annotate(exp_0), Annotate(exp_1), errors);
+    var op_str = op switch {
+      EnumBinaryOp.BIT_AND => "&",
+      EnumBinaryOp.BIT_OR  => "|",
+      EnumBinaryOp.BIT_SHR => ">>",
+      _                    => "<<"
+    };
+    Annotate(ctx).eval_type = _types.CheckBitOp(Annotate(exp_0), Annotate(exp_1), op_str, errors);
 
     PeekAST().AddChild(ast);
 

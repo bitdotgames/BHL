@@ -300,7 +300,7 @@ assignExp
   ;
 
 // operatorBitwise split: shifts placed between +/- and comparisons (C-like precedence);
-// BAND and BOR inlined directly into exp with separate precedence tiers
+// BAND and BOR inlined directly into exp with separate precedence tiers.
 operatorShift
   : SHR | SHL
   ;
