@@ -23,6 +23,15 @@ public class LocalVarTable
     return null;
   }
 
+  public int TryGetSlot(int func_ip, string name)
+  {
+    if(_data.TryGetValue(func_ip, out var slots))
+      foreach(var kv in slots)
+        if(kv.Value == name)
+          return kv.Key;
+    return -1;
+  }
+
   public void Write(System.IO.BinaryWriter w)
   {
     w.Write(_data.Count);

@@ -156,6 +156,7 @@ public class DebugSession
   public JArray BuildStackFrames() => RunOnMainThread(BuildStackFramesInternal);
   public JArray BuildLocals(int frame_idx) => RunOnMainThread(() => BuildLocalsInternal(frame_idx));
   public JArray BuildVarChildren(int var_ref) => RunOnMainThread(() => BuildVarChildrenInternal(var_ref));
+  public JObject EvalExpression(string expr, int frame_idx) => RunOnMainThread(() => EvalExpressionInternal(expr, frame_idx));
 
   public string BuildLocalsDebugInfo(int frame_idx) => RunOnMainThread(() =>
   {
@@ -232,6 +233,28 @@ public class DebugSession
     if(_var_registry.TryGetValue(var_ref, out var builder))
       return builder();
     return new JArray();
+  }
+
+  JObject EvalExpressionInternal(string expr, int frame_idx)
+  {
+    if(stopped_hit == null)
+      return new JObject { ["result"] = "<not paused>", ["type"] = "", ["variablesReference"] = 0 };
+
+    try
+    {
+      var val = vm.EvalExpression(stopped_hit.Value.exec, frame_idx, expr);
+      var v = ValToVar("result", val);
+      return new JObject
+      {
+        ["result"]             = v["value"],
+        ["type"]               = v["type"],
+        ["variablesReference"] = v["variablesReference"],
+      };
+    }
+    catch(Exception e)
+    {
+      return new JObject { ["result"] = e.Message, ["type"] = "", ["variablesReference"] = 0 };
+    }
   }
 
   // -----------------------------------------------------------------------

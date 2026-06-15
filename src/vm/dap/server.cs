@@ -131,6 +131,7 @@ public class BHLDebugServer
         case "next":             await OnNext(transport, msg); break;
         case "stepIn":           await OnStepIn(transport, msg); break;
         case "stepOut":          await OnStepOut(transport, msg); break;
+        case "evaluate":         await OnEvaluate(transport, msg); break;
         case "disconnect":       await OnDisconnect(transport, msg, ct); break;
         default:
           await transport.SendResponseAsync(msg, true); // ack unknown requests
@@ -191,6 +192,7 @@ public class BHLDebugServer
       ["supportsConfigurationDoneRequest"] = true,
       ["supportsTerminateRequest"]         = true,
       ["supportsStepBack"]                 = false,
+      ["supportsEvaluateForHovers"]        = true,
     });
     await t.SendEventAsync("initialized");
   }
@@ -313,6 +315,16 @@ public class BHLDebugServer
       });
     }
     await t.SendResponseAsync(req, true, new JObject { ["variables"] = vars });
+  }
+
+  async Task OnEvaluate(Transport t, JObject req)
+  {
+    var args     = req["arguments"] as JObject;
+    var expr     = args?["expression"]?.ToString() ?? "";
+    int frame_id = args?["frameId"]?.Value<int>() ?? 0;
+
+    var result = _session.EvalExpression(expr, frame_id);
+    await t.SendResponseAsync(req, true, result);
   }
 
   async Task OnContinue(Transport t, JObject req)

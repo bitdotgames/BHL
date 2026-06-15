@@ -869,4 +869,53 @@ coro func test() {
       Assert.True(hit_lines[i] >= hit_lines[i - 1],
         $"Cursor jumped backward: {string.Join(", ", hit_lines)}");
   }
+
+  [Fact]
+  public void TestEvalExpressionIntLocal()
+  {
+    string bhl = @"
+func int foo() {
+  int x = 10
+  return x
+}
+";
+    var vm = MakeVM(Compile(bhl, add_debug_info: true));
+    var d = MakeDebugger(vm);
+
+    Val eval_result = default;
+    d.OnBreakpoint = b => {
+      int frame_idx = b.exec.frames_count - 1;
+      eval_result = vm.EvalExpression(b.exec, frame_idx, "x + 1");
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 4);
+
+    Execute(vm, "foo");
+
+    Assert.Equal(11, (int)eval_result.num);
+  }
+
+  [Fact]
+  public void TestEvalExpressionMultipleLocals()
+  {
+    string bhl = @"
+func int foo() {
+  int x = 3
+  int y = 4
+  return x + y
+}
+";
+    var vm = MakeVM(Compile(bhl, add_debug_info: true));
+    var d = MakeDebugger(vm);
+
+    Val eval_result = default;
+    d.OnBreakpoint = b => {
+      int frame_idx = b.exec.frames_count - 1;
+      eval_result = vm.EvalExpression(b.exec, frame_idx, "x * y");
+    };
+    d.AddBreakpoint(vm.FindModule(TestModuleName), line: 5);
+
+    Execute(vm, "foo");
+
+    Assert.Equal(12, (int)eval_result.num);
+  }
 }

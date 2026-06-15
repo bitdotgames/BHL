@@ -7,7 +7,7 @@ namespace bhl
 
 public partial class VM : INamedResolver
 {
-  Types types;
+  public Types types;
 
   public VMDebugger debugger;
 
