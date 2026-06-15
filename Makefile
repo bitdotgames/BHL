@@ -42,4 +42,4 @@ examples:
 
 .PHONY: geng
 geng:
-	./util/g4sharp ./grammar/*.g && mv ./grammar/bhl*.cs ./src/g/ && rm ./grammar/*.interp && rm ./grammar/*.tokens
+	./util/g4sharp ./grammar/*.g && mv ./grammar/bhl*.cs ./src/compile/g/ && rm ./grammar/*.interp && rm ./grammar/*.tokens

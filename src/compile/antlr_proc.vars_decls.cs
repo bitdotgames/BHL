@@ -1,6 +1,7 @@
 using Antlr4.Runtime.Tree;
 
-namespace bhl;
+namespace bhl
+{
 
 public partial class ANTLR_Processor
 {
@@ -100,4 +101,5 @@ public partial class ANTLR_Processor
       return null;
     }
   }
+}
 }

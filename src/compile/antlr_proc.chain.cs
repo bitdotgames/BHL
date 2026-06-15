@@ -1,6 +1,7 @@
 using Antlr4.Runtime.Tree;
 
-namespace bhl;
+namespace bhl
+{
 
 public partial class ANTLR_Processor
 {
@@ -469,4 +470,5 @@ public partial class ANTLR_Processor
         _proc.AddArrIndex(arracc, ref _curr_type, line, write);
     }
   }
+}
 }

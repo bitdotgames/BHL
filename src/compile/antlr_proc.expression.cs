@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Antlr4.Runtime;
 
-namespace bhl;
+namespace bhl
+{
 
 public partial class ANTLR_Processor
 {
@@ -160,4 +161,5 @@ public partial class ANTLR_Processor
     }
   }
 
+}
 }

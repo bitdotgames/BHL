@@ -153,6 +153,10 @@ public class DebugSession
   // -----------------------------------------------------------------------
   // Public API — all dispatched to the main thread
 
+  // Set by the compiler assembly (bhl_front) via ModuleInitializer when available.
+  // Null in runtime-only builds; non-null once the compiler assembly has loaded.
+  public static Func<VM, VM.ExecState, int, string, Val> EvalProvider;
+
   public JArray BuildStackFrames() => RunOnMainThread(BuildStackFramesInternal);
   public JArray BuildLocals(int frame_idx) => RunOnMainThread(() => BuildLocalsInternal(frame_idx));
   public JArray BuildVarChildren(int var_ref) => RunOnMainThread(() => BuildVarChildrenInternal(var_ref));
@@ -240,9 +244,12 @@ public class DebugSession
     if(stopped_hit == null)
       return new JObject { ["result"] = "<not paused>", ["type"] = "", ["variablesReference"] = 0 };
 
+    if(EvalProvider == null)
+      return new JObject { ["result"] = "<eval requires compiler assembly>", ["type"] = "", ["variablesReference"] = 0 };
+
     try
     {
-      var val = vm.EvalExpression(stopped_hit.Value.exec, frame_idx, expr);
+      var val = EvalProvider(vm, stopped_hit.Value.exec, frame_idx, expr);
       var v = ValToVar("result", val);
       return new JObject
       {

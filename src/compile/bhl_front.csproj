@@ -6,11 +6,11 @@
     <DefineConstants>BHL_FRONT;BHL_DEBUGGER</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>CS8981</NoWarn>
+    <NoWarn>CS8981;CA2255</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\g\*.cs"/>
+    <Compile Include=".\g\*.cs"/>
     <Compile Include="..\vm\**\*.cs"/>
     <Compile Include=".\*.cs"/>
     <Compile Update="..\vm\util\val_list_adapter.cs">

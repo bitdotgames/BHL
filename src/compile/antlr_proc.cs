@@ -6,7 +6,8 @@ using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
-namespace bhl;
+namespace bhl
+{
 
 public class AnnotatedParseTree
 {
@@ -3976,4 +3977,5 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return false;
   }
 
+}
 }

@@ -3,7 +3,8 @@ using System.IO;
 using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
-namespace bhl;
+namespace bhl
+{
 
 public enum BlockType
 {
@@ -917,4 +918,5 @@ public static class AST_Extensions
     int num = fparams.children.Count;
     return num;
   }
+}
 }

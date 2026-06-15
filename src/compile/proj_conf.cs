@@ -3,7 +3,8 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace bhl;
+namespace bhl
+{
 
 //NOTE: representing only part of the original ProjectConf
 public class ProjectConfShort
@@ -162,4 +163,5 @@ public class ProjectConf : ProjectConfShort
 
     return new EmptyPostProcessor();
   }
+}
 }

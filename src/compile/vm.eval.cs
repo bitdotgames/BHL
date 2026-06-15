@@ -1,9 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
+using bhl.dap;
 
-namespace bhl;
+namespace bhl
+{
+
+static class EvalSessionBridge
+{
+  [ModuleInitializer]
+  internal static void Register()
+  {
+    DebugSession.EvalProvider = (vm, exec, frame_idx, expr) => vm.EvalExpression(exec, frame_idx, expr);
+  }
+}
 
 public partial class VM
 {
@@ -117,4 +129,5 @@ public partial class VM
 
     return compiled_decl;
   }
+}
 }

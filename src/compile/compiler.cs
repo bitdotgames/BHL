@@ -4,7 +4,8 @@ using System.Collections.Generic;
 //NOTE: removing related warnings due to CLSCompliant annotations in ANTLR generated code
 [assembly: CLSCompliant(false)]
 
-namespace bhl;
+namespace bhl
+{
 
 public class ModuleCompiler : AST_Visitor
 {
@@ -2071,4 +2072,5 @@ public class ModuleCompiler : AST_Visitor
       Bytecode.Decode(bytes, ow, ref pos);
     return pos - start_pos;
   }
+}
 }

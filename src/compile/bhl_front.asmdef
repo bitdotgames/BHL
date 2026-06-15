@@ -1,17 +1,21 @@
 {
-  "name": "bhl",
+  "name": "bhl_front",
+  "rootNamespace": "bhl",
   "references": [
-    "bhl_msgpack"
+    "bhl"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": true,
   "overrideReferences": true,
   "precompiledReferences": [
-    "Newtonsoft.Json.dll"
+    "Antlr4.Runtime.Standard.dll",
+    "lz4net.dll"
   ],
-  "autoReferenced": true,
-  "defineConstraints": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "BHL_FRONT"
+  ],
   "versionDefines": [],
   "noEngineReferences": false
 }

@@ -5,7 +5,8 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using bhl.marshall;
 
-namespace bhl;
+namespace bhl
+{
 
 public class CompileConf
 {
@@ -964,4 +965,5 @@ public class CompilationExecutor
       }
     );
   }
+}
 }

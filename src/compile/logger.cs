@@ -1,7 +1,8 @@
 using System;
 using System.IO;
 
-namespace bhl;
+namespace bhl
+{
 
 public interface ILogWriter
 {
@@ -84,4 +85,5 @@ public class Logger
   {
     writer.Error(DateTime.Now, msg);
   }
+}
 }

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace bhl;
+namespace bhl
+{
 
 public interface IFrontPostProcessor
 {
@@ -105,4 +106,5 @@ public class CombinedPostProcessor : IFrontPostProcessor
     for(int i = 0; i < _postprocessors.Count; i++)
       _postprocessors[i].Tally();
   }
+}
 }
