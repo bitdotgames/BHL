@@ -25,33 +25,18 @@ static class BHLBuildEnvDetector
         var list = new List<string>(
           raw.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
 
-        bool changed = false;
-        changed |= SetDefine(list, "BHL_FRONT", antlrPresent);
-        changed |= SetDefine(list, "BHL_LZ4",   lz4Present);
+        list.RemoveAll(d => d.StartsWith("BHL_"));
 
-        if(changed)
-          PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
+        if(antlrPresent) list.Add("BHL_PARSER");
+        if(lz4Present)   list.Add("BHL_LZ4");
+
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
       }
       catch(Exception)
       {
         // some BuildTargetGroups are not supported on this Unity installation
       }
     }
-  }
-
-  static bool SetDefine(List<string> list, string define, bool enable)
-  {
-    if(enable && !list.Contains(define))
-    {
-      list.Add(define);
-      return true;
-    }
-    else if(!enable && list.Contains(define))
-    {
-      list.Remove(define);
-      return true;
-    }
-    return false;
   }
 
   static bool IsObsolete(BuildTargetGroup group)

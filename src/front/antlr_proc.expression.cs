@@ -1,4 +1,4 @@
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
 
 using System.Collections.Generic;
 using Antlr4.Runtime;

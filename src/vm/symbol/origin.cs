@@ -3,7 +3,7 @@ namespace bhl
 
 public class Origin
 {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   public AnnotatedParseTree parsed;
 #endif
   public string native_file_path;
@@ -13,7 +13,7 @@ public class Origin
   {
     get
     {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
       if(parsed != null)
         return parsed.file;
 #endif
@@ -30,7 +30,7 @@ public class Origin
   {
     get
     {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
       if(parsed != null)
         return parsed.range;
 #endif
@@ -38,7 +38,7 @@ public class Origin
     }
   }
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   public Origin(AnnotatedParseTree ptree)
   {
     this.parsed = ptree;

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-# Wraps .cs files in a directory with #if BHL_FRONT / #endif guards.
+# Wraps .cs files in a directory with #if (BHL_FRONT || BHL_PARSER) / #endif guards.
 # Skips files that already have the guard.
 # Usage: bhl_front_guard <directory>
 
 import os, sys
 
+GUARD = '#if (BHL_FRONT || BHL_PARSER)'
+
 def guard(path):
     with open(path) as f:
         src = f.read()
-    if src.startswith('#if BHL_FRONT'):
+    if src.startswith(GUARD):
         return
     lines = src.splitlines(keepends=True)
-    if '#if BHL_FRONT' in src:
-        lines = [l for l in lines if l.strip() != '#if BHL_FRONT']
-    lines.insert(0, '#if BHL_FRONT\n\n')
+    if GUARD in src:
+        lines = [l for l in lines if l.strip() != GUARD]
+    lines.insert(0, GUARD + '\n\n')
     if '\n#endif\n' not in src:
         lines.append('\n#endif\n')
     with open(path, 'w') as f:

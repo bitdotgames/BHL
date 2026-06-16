@@ -1,4 +1,4 @@
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
 
 using System;
 using System.IO;
@@ -7,13 +7,13 @@ using System.IO;
 namespace bhl
 {
 
-public interface ILogWriter
+public interface ILog
 {
   void Write(DateTime time, int level, string msg);
   void Error(DateTime time, string msg);
 }
 
-public class NoLogger : ILogWriter
+public class NoLogger : ILog
 {
   public void Write(DateTime time, int level, string msg)
   {
@@ -24,7 +24,7 @@ public class NoLogger : ILogWriter
   }
 }
 
-public class ConsoleLogger : ILogWriter
+public class ConsoleLogger : ILog
 {
   public void Write(DateTime time, int level, string msg)
   {
@@ -37,7 +37,7 @@ public class ConsoleLogger : ILogWriter
   }
 }
 
-public class FileLogger : ILogWriter
+public class FileLogger : ILog
 {
   string file_path;
 
@@ -67,10 +67,10 @@ public class FileLogger : ILogWriter
 
 public class Logger
 {
-  ILogWriter writer;
+  ILog writer;
   int max_level; //it's a max allowed level, the lower, the less verbose
 
-  public Logger(int max_level, ILogWriter writer)
+  public Logger(int max_level, ILog writer)
   {
     this.max_level = max_level;
     this.writer = writer;

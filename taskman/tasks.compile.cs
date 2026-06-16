@@ -42,7 +42,7 @@ public static partial class Tasks
       if(!proj.bindings_dll.EndsWith(".dll"))
         throw new Exception("Resulting 'bindings_dll' invalid extension: " + proj.bindings_dll);
 
-      bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
+      bindings_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
       string bindings_dll_path = DotnetBuildLibrary(
         tm,
         force_rebuild,
@@ -62,7 +62,7 @@ public static partial class Tasks
       if(!proj.postproc_dll.EndsWith(".dll"))
         throw new Exception("Resulting 'postproc_dll' invalid extension: " + proj.postproc_dll);
 
-      postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
+      postproc_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
       postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
       string postproc_dll_path = DotnetBuildLibrary(
         tm,

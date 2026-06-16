@@ -87,7 +87,7 @@ public class ScriptedBindings : IUserBindings
 
   public void Register(Types ts)
   {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
     //var sw = System.Diagnostics.Stopwatch.StartNew();
     var vm = CompilationExecutor.CompileAndLoadVM(
       script_paths,

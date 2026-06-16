@@ -15,7 +15,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     set { _scope_idx = value; }
   }
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   //designates that this very symbol must declared as reference
   internal bool _is_ref_decl;
   //referenced upvalue, keep in mind it can be a 'local' variable from the
@@ -43,7 +43,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   {
   }
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   public IType GuessType()
   {
     return origin?.parsed == null ? type.Get() : origin.parsed.eval_type;
@@ -87,7 +87,7 @@ public class GlobalVariableSymbol : VariableSymbol
   public GlobalVariableSymbol(Origin origin, string name, ProxyType type)
     : base(origin, name, type)
   {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
     _is_ref_decl = true;
 #endif
   }

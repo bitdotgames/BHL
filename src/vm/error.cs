@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 #endif
@@ -11,7 +11,7 @@ namespace bhl
 
 public static class ErrorUtils
 {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   public static string ToJson(ICompileError ie)
   {
     return string.Format(
@@ -34,7 +34,7 @@ public static class ErrorUtils
       (msg.Length > 200 ? msg.Substring(0, 100) + "..." + msg.Substring(msg.Length - 100) : msg));
   }
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   public static string MakeMessage(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg)
   {
     var range = new SourceRange(place.SourceInterval, tokens);
@@ -44,7 +44,7 @@ public static class ErrorUtils
 
   public static string MakeMessage(Symbol symb, string msg)
   {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
     if(symb?.origin?.parsed != null)
       return MakeMessage(symb.origin.parsed.module, symb.origin.parsed.tree, symb.origin.parsed.tokens, msg);
     else
@@ -103,7 +103,7 @@ public static class ErrorUtils
 }
 
 public class SymbolError : Exception
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   , ICompileError
 #endif
 {

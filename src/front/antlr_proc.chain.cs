@@ -1,4 +1,4 @@
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
 
 using Antlr4.Runtime.Tree;
 

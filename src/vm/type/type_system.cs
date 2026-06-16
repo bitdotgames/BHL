@@ -36,7 +36,7 @@ public class Types : INamedResolver
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>()
   {
     { new Tuple<IType, IType>(String, String), String },
@@ -405,7 +405,7 @@ public class Types : INamedResolver
     return type == String;
   }
 
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
   static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, AnnotatedParseTree lhs,
     AnnotatedParseTree rhs, CompileErrors errors)
   {

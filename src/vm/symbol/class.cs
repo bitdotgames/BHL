@@ -141,7 +141,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     }
     else if (sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static))
     {
-#if BHL_FRONT
+#if (BHL_FRONT || BHL_PARSER)
       // if field is static we mark it as a reference type variable so that it will be
       // declared properly
       fld._is_ref_decl = true;
