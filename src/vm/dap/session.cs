@@ -337,6 +337,9 @@ public class DebugSession
   {
     string display;
     string type_name = v.type?.GetName() ?? "";
+    var refc = v._refc ?? (v.obj as IRefcounted);
+    if(refc != null)
+      type_name += $" (refs:{refc.refs})";
     int var_ref = 0;
 
     if(v.type == Types.Int)

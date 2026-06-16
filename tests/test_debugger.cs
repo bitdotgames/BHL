@@ -882,7 +882,7 @@ func int foo() {
     var vm = MakeVM(Compile(bhl, add_debug_info: true));
     var d = MakeDebugger(vm);
 
-    Val eval_result = default;
+    Val[] eval_result = null;
     d.OnBreakpoint = b => {
       int frame_idx = b.exec.frames_count - 1;
       eval_result = vm.EvalExpression(b.exec, frame_idx, "x + 1");
@@ -891,7 +891,7 @@ func int foo() {
 
     Execute(vm, "foo");
 
-    Assert.Equal(11, (int)eval_result.num);
+    Assert.Equal(11, (int)eval_result[0].num);
   }
 
   [Fact]
@@ -907,7 +907,7 @@ func int foo() {
     var vm = MakeVM(Compile(bhl, add_debug_info: true));
     var d = MakeDebugger(vm);
 
-    Val eval_result = default;
+    Val[] eval_result = null;
     d.OnBreakpoint = b => {
       int frame_idx = b.exec.frames_count - 1;
       eval_result = vm.EvalExpression(b.exec, frame_idx, "x * y");
@@ -916,6 +916,6 @@ func int foo() {
 
     Execute(vm, "foo");
 
-    Assert.Equal(12, (int)eval_result.num);
+    Assert.Equal(12, (int)eval_result[0].num);
   }
 }
