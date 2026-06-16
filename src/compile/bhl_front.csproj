@@ -3,7 +3,7 @@
     <AssemblyName>bhl_front</AssemblyName>
     <OutputType>Library</OutputType>
     <RootNamespace>bhl</RootNamespace>
-    <DefineConstants>BHL_FRONT;BHL_DEBUGGER</DefineConstants>
+    <DefineConstants>BHL_FRONT</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>CS8981;CA2255</NoWarn>
@@ -13,9 +13,6 @@
     <Compile Include=".\g\*.cs"/>
     <Compile Include="..\vm\**\*.cs"/>
     <Compile Include=".\*.cs"/>
-    <Compile Update="..\vm\util\val_list_adapter.cs">
-      <Link>util\val_list_adapter.cs</Link>
-    </Compile>
   </ItemGroup>
 
   <ItemGroup>
