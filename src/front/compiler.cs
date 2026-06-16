@@ -1,7 +1,7 @@
+#if BHL_FRONT
+
 using System;
 using System.Collections.Generic;
-
-#if BHL_FRONT
 
 
 //NOTE: removing related warnings due to CLSCompliant annotations in ANTLR generated code

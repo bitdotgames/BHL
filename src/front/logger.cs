@@ -1,7 +1,7 @@
+#if BHL_FRONT
+
 using System;
 using System.IO;
-
-#if BHL_FRONT
 
 
 namespace bhl

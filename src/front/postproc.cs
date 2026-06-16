@@ -1,9 +1,9 @@
+#if BHL_FRONT
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
-#if BHL_FRONT
 
 
 namespace bhl

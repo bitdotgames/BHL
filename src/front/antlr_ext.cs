@@ -1,8 +1,9 @@
+#if BHL_FRONT
+
 using Antlr4.Runtime;
 using System.IO;
 using static bhlParser;
 
-#if BHL_FRONT
 
 
 /// <summary>

@@ -1,3 +1,5 @@
+#if BHL_FRONT
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -97,7 +99,6 @@ public partial class VM
 
     using var src_stream = new MemoryStream(Encoding.UTF8.GetBytes(src));
 
-#if BHL_FRONT
 
 
     var processor = ANTLR_Processor.ParseAndMakeProcessor(

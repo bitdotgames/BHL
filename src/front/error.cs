@@ -1,3 +1,5 @@
+#if BHL_FRONT
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,8 +8,6 @@ using Antlr4.Runtime.Tree;
 using Antlr4.Runtime.Dfa;
 using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Sharpen;
-
-#if BHL_FRONT
 
 
 namespace bhl

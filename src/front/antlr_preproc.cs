@@ -1,10 +1,10 @@
+#if BHL_FRONT
+
 using System;
 using System.IO;
 using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-
-#if BHL_FRONT
 
 
 namespace bhl

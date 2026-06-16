@@ -8,15 +8,14 @@ import os, sys
 def guard(path):
     with open(path) as f:
         src = f.read()
-    if '#if BHL_FRONT' in src:
+    if src.startswith('#if BHL_FRONT'):
         return
     lines = src.splitlines(keepends=True)
-    insert_at = 0
-    for i, line in enumerate(lines):
-        if line.startswith('using '):
-            insert_at = i + 1
-    lines.insert(insert_at, '\n#if BHL_FRONT\n')
-    lines.append('\n#endif\n')
+    if '#if BHL_FRONT' in src:
+        lines = [l for l in lines if l.strip() != '#if BHL_FRONT']
+    lines.insert(0, '#if BHL_FRONT\n\n')
+    if '\n#endif\n' not in src:
+        lines.append('\n#endif\n')
     with open(path, 'w') as f:
         f.writelines(lines)
     print(f'  guarded {os.path.basename(path)}')

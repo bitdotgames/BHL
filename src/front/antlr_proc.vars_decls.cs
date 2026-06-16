@@ -1,6 +1,6 @@
-using Antlr4.Runtime.Tree;
-
 #if BHL_FRONT
+
+using Antlr4.Runtime.Tree;
 
 
 namespace bhl
