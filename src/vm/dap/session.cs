@@ -281,6 +281,9 @@ public class DebugSession
     {
       var vals = EvalProvider(vm, exec, frame_idx, expr);
 
+      if(vals.Length == 0)
+        return new JObject { ["result"] = "void", ["type"] = "void", ["variablesReference"] = 0 };
+
       if(vals.Length == 1)
       {
         var v = ValToVar("result", vals[0]);

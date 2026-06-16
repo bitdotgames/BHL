@@ -48,7 +48,7 @@ public partial class VM
       locals.Add((name, type_str, val));
     }
 
-    var ret_type_str = TryGetTupleReturnTypeStr(expr) ?? "any";
+    var ret_type_str = TryGetKnownReturnTypeStr(expr) ?? "any";
     var src = BuildEvalSource(locals, expr, ret_type_str);
     var decl = CompileEvalSource(src);
 
@@ -77,6 +77,9 @@ public partial class VM
 
       var result_stack = Execute(fs, args);
 
+      if(ret_type_str == "void")
+        return System.Array.Empty<Val>();
+
       var result = new Val[result_stack.sp];
       for(int i = 0; i < result_stack.sp; ++i)
         result[i] = result_stack.vals[i];
@@ -89,11 +92,10 @@ public partial class VM
     }
   }
 
-  // Returns the tuple type name string (e.g. "int,string") if the expression is
-  // a direct call to a function that returns a tuple, otherwise null.
-  string TryGetTupleReturnTypeStr(string expr)
+  // Returns "void", the tuple type name (e.g. "int,string"), or null (= use "any").
+  // Only fires for direct function calls whose name is a simple identifier.
+  string TryGetKnownReturnTypeStr(string expr)
   {
-    // Extract the leading identifier (function name) before the first '('
     int i = 0;
     while(i < expr.Length && (char.IsLetterOrDigit(expr[i]) || expr[i] == '_'))
       i++;
@@ -108,7 +110,9 @@ public partial class VM
     if(sym == null) return null;
 
     var ret = sym.GetReturnType();
-    return ret is TupleType ? ret.GetName() : null;
+    if(ret == Types.Void) return "void";
+    if(ret is TupleType)  return ret.GetName();
+    return null;
   }
 
   static string BuildEvalSource(List<(string name, string type_str, Val val)> locals, string expr, string ret_type_str)
@@ -124,7 +128,8 @@ public partial class VM
       sb.Append(' ');
       sb.Append(locals[i].name);
     }
-    sb.Append(") { return ");
+    sb.Append(") { ");
+    if(ret_type_str != "void") sb.Append("return ");
     sb.Append(expr);
     sb.Append("; }");
     return sb.ToString();
