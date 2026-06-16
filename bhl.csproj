@@ -10,12 +10,12 @@
 
   <ItemGroup>
     <Compile Include="bhl.cs" />
-    <Compile Include="src\taskman\*.cs" />
+    <Compile Include="taskman\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="src\compile\bhl_front.csproj" />
-    <ProjectReference Include="src\lsp\bhl_lsp.csproj" />
+    <ProjectReference Include="src\front\bhl_front.csproj" />
+    <ProjectReference Include="lsp\bhl_lsp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
