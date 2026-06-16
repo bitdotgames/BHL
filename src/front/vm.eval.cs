@@ -12,8 +12,13 @@ namespace bhl
 
 static class EvalSessionBridge
 {
-  [ModuleInitializer]
+#if UNITY_5_3_OR_NEWER
+  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+  static void Register()
+#else
+  [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register()
+#endif
   {
     DebugSession.EvalProvider = (vm, exec, frame_idx, expr) => vm.EvalExpression(exec, frame_idx, expr);
   }

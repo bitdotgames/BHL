@@ -7,15 +7,12 @@ namespace bhl
 {
 
 [InitializeOnLoad]
-static class BHLFrontDetector
+static class BHLBuildEnvDetector
 {
-  const string DEFINE = "BHL_FRONT";
-
-  static BHLFrontDetector()
+  static BHLBuildEnvDetector()
   {
     bool antlrPresent = Type.GetType("Antlr4.Runtime.Lexer, Antlr4.Runtime.Standard") != null;
     bool lz4Present   = Type.GetType("LZ4ps.LZ4Codec, LZ4") != null;
-    bool shouldEnable = antlrPresent && lz4Present;
 
     foreach(BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
     {
@@ -29,17 +26,8 @@ static class BHLFrontDetector
           raw.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
 
         bool changed = false;
-
-        if(shouldEnable && !list.Contains(DEFINE))
-        {
-          list.Add(DEFINE);
-          changed = true;
-        }
-        else if(!shouldEnable && list.Contains(DEFINE))
-        {
-          list.Remove(DEFINE);
-          changed = true;
-        }
+        changed |= SetDefine(list, "BHL_FRONT", antlrPresent);
+        changed |= SetDefine(list, "BHL_LZ4",   lz4Present);
 
         if(changed)
           PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
@@ -49,6 +37,21 @@ static class BHLFrontDetector
         // some BuildTargetGroups are not supported on this Unity installation
       }
     }
+  }
+
+  static bool SetDefine(List<string> list, string define, bool enable)
+  {
+    if(enable && !list.Contains(define))
+    {
+      list.Add(define);
+      return true;
+    }
+    else if(!enable && list.Contains(define))
+    {
+      list.Remove(define);
+      return true;
+    }
+    return false;
   }
 
   static bool IsObsolete(BuildTargetGroup group)

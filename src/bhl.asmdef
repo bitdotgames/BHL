@@ -8,7 +8,8 @@
   "allowUnsafeCode": true,
   "overrideReferences": true,
   "precompiledReferences": [
-    "Newtonsoft.Json.dll"
+    "Newtonsoft.Json.dll",
+    "Antlr4.Runtime.Standard.dll"
   ],
   "autoReferenced": true,
   "defineConstraints": [],

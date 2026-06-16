@@ -579,8 +579,10 @@ public class CompilationExecutor
 
             if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(compiled_file));
+#if BHL_LZ4
             else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4)
               mwriter.Write(EncodeToLZ4(File.ReadAllBytes(compiled_file)));
+#endif
             else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
               mwriter.Write(compiled_file);
             else
@@ -603,11 +605,13 @@ public class CompilationExecutor
     return changed;
   }
 
+#if BHL_LZ4
   static byte[] EncodeToLZ4(byte[] bytes)
   {
     var lz4_bytes = LZ4ps.LZ4Codec.Encode64(bytes, 0, bytes.Length);
     return lz4_bytes;
   }
+#endif
 
   SymbolError CheckUniqueSymbols(Namespace ns, ProcAndCompileWorker w)
   {

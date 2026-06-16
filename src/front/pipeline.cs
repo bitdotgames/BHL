@@ -100,7 +100,7 @@ public class TransformAsyncStage<TIn, TOut> : IPipelineStage<TIn, TOut>
 
 public class Pipeline<TIn, TOut>
 {
-  private readonly List<IPipelineStageBase> _stages = new();
+  private readonly List<(Func<string> title, Func<object, CancellationToken, Task<object>> run)> _stages = new();
 
   private readonly Logger _logger;
 
@@ -114,7 +114,8 @@ public class Pipeline<TIn, TOut>
     Func<TPIn, CancellationToken, Task<TPOut>> worker
   )
   {
-    _stages.Add(new ParallelStage<TPIn, TPOut>(title, worker));
+    var stage = new ParallelStage<TPIn, TPOut>(title, worker);
+    _stages.Add((() => stage.Title, async (input, token) => (object)await stage.Run((IEnumerable<TPIn>)input, token)));
     return this;
   }
 
@@ -123,7 +124,12 @@ public class Pipeline<TIn, TOut>
     Func<TPIn, TPOut> worker
   )
   {
-    _stages.Add(new TransformStage<TPIn, TPOut>(name, worker));
+    var stage = new TransformStage<TPIn, TPOut>(name, worker);
+    _stages.Add((() => stage.Title, (input, token) =>
+    {
+      token.ThrowIfCancellationRequested();
+      return Task.FromResult<object>(worker((TPIn)input));
+    }));
     return this;
   }
 
@@ -131,13 +137,12 @@ public class Pipeline<TIn, TOut>
   {
     object current = input;
 
-    foreach (var stage in _stages)
+    foreach(var (getTitle, run) in _stages)
     {
       var sw = Stopwatch.StartNew();
-      dynamic _stage = stage;
-      current = await _stage.Run((dynamic)current, token);
+      current = await run(current, token);
       sw.Stop();
-      _logger.Log(1, $"{stage.Title} ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+      _logger.Log(1, $"{getTitle()} ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
     }
 
     return (TOut)current;
