@@ -155,7 +155,11 @@ public class DebugSession
 
   // Set by the compiler assembly (bhl_front) via ModuleInitializer when available.
   // Null in runtime-only builds; non-null once the compiler assembly has loaded.
-  public static Func<VM, VM.ExecState, int, string, Val> EvalProvider;
+  // Returns Val[] — length 1 for scalar results, length > 1 for tuple results.
+  public static Func<VM, VM.ExecState, int, string, Val[]> EvalProvider;
+
+  // Optional: called with a short diagnostic string after each evaluate request.
+  public Action<string> OnLog;
 
   public JArray BuildStackFrames() => RunOnMainThread(BuildStackFramesInternal);
   public JArray BuildLocals(int frame_idx) => RunOnMainThread(() => BuildLocalsInternal(frame_idx));
@@ -186,7 +190,7 @@ public class DebugSession
     for(int i = exec.frames_count - 1; i >= 0; --i)
     {
       var frame = exec.frames[i];
-      if(frame.module == null) continue;
+      if(frame.module == null || frame.module.name.StartsWith("__")) continue;
 
       int ip = (i == exec.frames_count - 1)
         ? stopped_hit.Value.ip
@@ -244,23 +248,82 @@ public class DebugSession
     if(stopped_hit == null)
       return new JObject { ["result"] = "<not paused>", ["type"] = "", ["variablesReference"] = 0 };
 
+    var exec = stopped_hit.Value.exec;
+
+    // Fast path: plain identifier → look it up in locals without compiling.
+    if(IsSimpleIdentifier(expr) && frame_idx >= 0 && frame_idx < exec.frames_count)
+    {
+      var frame = exec.frames[frame_idx];
+      var table = frame.module?.decl.compiled.local_var_table;
+      if(table != null)
+      {
+        for(int i = 0; i < frame.locals_vars_num; ++i)
+        {
+          if(table.TryGet(frame.start_ip, i) == expr)
+          {
+            var v = ValToVar(expr, frame.locals.vals[frame.locals_offset + i]);
+            OnLog?.Invoke($"eval fast: {expr} = {v["value"]}");
+            return new JObject
+            {
+              ["result"]             = v["value"],
+              ["type"]               = v["type"],
+              ["variablesReference"] = v["variablesReference"],
+            };
+          }
+        }
+      }
+    }
+
     if(EvalProvider == null)
       return new JObject { ["result"] = "<eval requires compiler assembly>", ["type"] = "", ["variablesReference"] = 0 };
 
     try
     {
-      var val = EvalProvider(vm, stopped_hit.Value.exec, frame_idx, expr);
-      var v = ValToVar("result", val);
+      var vals = EvalProvider(vm, exec, frame_idx, expr);
+
+      if(vals.Length == 1)
+      {
+        var v = ValToVar("result", vals[0]);
+        OnLog?.Invoke($"eval compiled: {expr} = {v["value"]}");
+        return new JObject
+        {
+          ["result"]             = v["value"],
+          ["type"]               = v["type"],
+          ["variablesReference"] = v["variablesReference"],
+        };
+      }
+
+      // Tuple: build children eagerly while the eval stack is still live.
+      var children = new JArray();
+      for(int i = 0; i < vals.Length; ++i)
+        children.Add(ValToVar($"[{i}]", vals[i]));
+
+      var sb = new System.Text.StringBuilder("(");
+      for(int i = 0; i < vals.Length; ++i)
+      {
+        if(i > 0) sb.Append(", ");
+        sb.Append(ValDisplay(vals[i]));
+      }
+      sb.Append(")");
+      var display = sb.ToString();
+
+      var captured = children;
+      int var_ref = AllocVarRef(() => captured);
+      OnLog?.Invoke($"eval compiled: {expr} = {display}");
       return new JObject
       {
-        ["result"]             = v["value"],
-        ["type"]               = v["type"],
-        ["variablesReference"] = v["variablesReference"],
+        ["result"]             = display,
+        ["type"]               = "tuple",
+        ["variablesReference"] = var_ref,
       };
     }
     catch(Exception e)
     {
-      return new JObject { ["result"] = e.Message, ["type"] = "", ["variablesReference"] = 0 };
+      var msg = e is VM.Error ve && ve.InnerException != null
+        ? ve.InnerException.Message
+        : e.Message;
+      OnLog?.Invoke($"eval error: {expr} → {msg}");
+      return new JObject { ["result"] = msg, ["type"] = "", ["variablesReference"] = 0 };
     }
   }
 
@@ -430,6 +493,15 @@ public class DebugSession
     foreach(System.Collections.DictionaryEntry kv in dict)
       result.Add(ObjToVar(kv.Key?.ToString() ?? "null", kv.Value));
     return result;
+  }
+
+  static bool IsSimpleIdentifier(string s)
+  {
+    if(string.IsNullOrEmpty(s)) return false;
+    if(!char.IsLetter(s[0]) && s[0] != '_') return false;
+    for(int i = 1; i < s.Length; ++i)
+      if(!char.IsLetterOrDigit(s[i]) && s[i] != '_') return false;
+    return true;
   }
 
   static string Unwrap(Exception e) =>

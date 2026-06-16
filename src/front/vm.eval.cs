@@ -26,7 +26,7 @@ static class EvalSessionBridge
 
 public partial class VM
 {
-  public Val EvalExpression(ExecState exec, int frame_idx, string expr)
+  public Val[] EvalExpression(ExecState exec, int frame_idx, string expr)
   {
     if(frame_idx < 0 || frame_idx >= exec.frames_count)
       throw new Exception($"Frame index {frame_idx} out of range");
@@ -48,7 +48,8 @@ public partial class VM
       locals.Add((name, type_str, val));
     }
 
-    var src = BuildEvalSource(locals, expr);
+    var ret_type_str = TryGetTupleReturnTypeStr(expr) ?? "any";
+    var src = BuildEvalSource(locals, expr, ret_type_str);
     var decl = CompileEvalSource(src);
 
     var module = new Module(decl);
@@ -67,11 +68,19 @@ public partial class VM
 
       var args = new StackList<Val>();
       foreach(var (_, _, v) in locals)
+      {
+        // The eval frame will call ReleaseLocals() on these, so we must Retain
+        // them here to avoid releasing refs still owned by the paused fiber's frame.
+        v._refc?.Retain();
         args.Add(v);
+      }
 
       var result_stack = Execute(fs, args);
 
-      return result_stack.sp > 0 ? result_stack.vals[result_stack.sp - 1] : default;
+      var result = new Val[result_stack.sp];
+      for(int i = 0; i < result_stack.sp; ++i)
+        result[i] = result_stack.vals[i];
+      return result;
     }
     finally
     {
@@ -80,10 +89,34 @@ public partial class VM
     }
   }
 
-  static string BuildEvalSource(List<(string name, string type_str, Val val)> locals, string expr)
+  // Returns the tuple type name string (e.g. "int,string") if the expression is
+  // a direct call to a function that returns a tuple, otherwise null.
+  string TryGetTupleReturnTypeStr(string expr)
+  {
+    // Extract the leading identifier (function name) before the first '('
+    int i = 0;
+    while(i < expr.Length && (char.IsLetterOrDigit(expr[i]) || expr[i] == '_'))
+      i++;
+    if(i == 0) return null;
+
+    int j = i;
+    while(j < expr.Length && expr[j] == ' ') j++;
+    if(j >= expr.Length || expr[j] != '(') return null;
+
+    var name = expr.Substring(0, i);
+    var sym = ResolveNamedByPath(name) as FuncSymbol;
+    if(sym == null) return null;
+
+    var ret = sym.GetReturnType();
+    return ret is TupleType ? ret.GetName() : null;
+  }
+
+  static string BuildEvalSource(List<(string name, string type_str, Val val)> locals, string expr, string ret_type_str)
   {
     var sb = new StringBuilder();
-    sb.Append("func any __eval__(");
+    sb.Append("func ");
+    sb.Append(ret_type_str);
+    sb.Append(" __eval__(");
     for(int i = 0; i < locals.Count; ++i)
     {
       if(i > 0) sb.Append(", ");

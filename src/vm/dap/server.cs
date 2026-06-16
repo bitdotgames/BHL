@@ -88,6 +88,11 @@ public class BHLDebugServer
       _session          = new DebugSession(_vm, _transport);
       _session.OnPause  = OnPause;
       _session.OnResume = OnResume;
+      _session.OnLog    = msg => _ = _transport.SendEventAsync("output", new JObject
+      {
+        ["category"] = "console",
+        ["output"]   = "[bhl] " + msg + "\n",
+      });
       _session.SetCancellationToken(ct);
 
       try { await RunSessionAsync(_transport, ct); }
@@ -311,7 +316,7 @@ public class BHLDebugServer
       await t.SendEventAsync("output", new JObject
       {
         ["category"] = "console",
-        ["output"]   = _session.BuildLocalsDebugInfo(frame_id) + "\n",
+        ["output"]   = "[bhl] " + _session.BuildLocalsDebugInfo(frame_id) + "\n",
       });
     }
     await t.SendResponseAsync(req, true, new JObject { ["variables"] = vars });
