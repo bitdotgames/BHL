@@ -35,7 +35,10 @@ public class ModuleDeclared : INamedResolver
   public CompiledModule compiled = CompiledModule.Empty;
   public bool is_native => compiled == CompiledModule.Empty;
 
-  internal bool is_ready;
+  // Set by Phase_SetResult so SetupCachedModules skips this module in future incremental cycles.
+  internal bool is_compiled;
+  // Set by Setup() so it never runs twice on the same module.
+  internal bool is_setup;
 
   public ModuleDeclared(string name = "", string file_path = "")
   {
@@ -88,10 +91,10 @@ public class ModuleDeclared : INamedResolver
   {
     lock(this)
     {
-      if(is_ready)
+      if(is_setup)
         return;
       Setup(import2module, SetupFlags.All);
-      is_ready = true;
+      is_setup = true;
     }
   }
 

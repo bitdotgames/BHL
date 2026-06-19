@@ -26,6 +26,9 @@ static class EvalSessionBridge
 
 public partial class VM
 {
+  public Val[] EvalExpression(string expr) =>
+    EvalCore(new List<(string, string, Val)>(), expr);
+
   public Val[] EvalExpression(ExecState exec, int frame_idx, string expr)
   {
     if(frame_idx < 0 || frame_idx >= exec.frames_count)
@@ -48,6 +51,11 @@ public partial class VM
       locals.Add((name, type_str, val));
     }
 
+    return EvalCore(locals, expr);
+  }
+
+  Val[] EvalCore(List<(string name, string type_str, Val val)> locals, string expr)
+  {
     var ret_type_str = TryGetKnownReturnTypeStr(expr) ?? "any";
     var src = BuildEvalSource(locals, expr, ret_type_str);
     var decl = CompileEvalSource(src);
@@ -142,8 +150,6 @@ public partial class VM
 
     using var src_stream = new MemoryStream(Encoding.UTF8.GetBytes(src));
 
-
-
     var processor = ANTLR_Processor.ParseAndMakeProcessor(
       decl,
       null,
@@ -157,24 +163,29 @@ public partial class VM
     if(err_hub.errors.Count > 0)
       throw new Exception($"Eval error: {err_hub.errors[0].text}");
 
-    processor.Phase_Outline();
-    processor.Phase_ParseTypes1();
-    processor.Phase_ParseTypes2();
-    processor.Phase_ParseFuncBodies();
-    processor.Phase_SetResult();
-    // Phase_SetResult marks the module as ready; reset it so LoadModule.Setup() runs SetupFuncSymbol
-    decl.is_ready = false;
+    // Make all currently-loaded module symbols visible to the eval compiler.
+    // types.ns is already linked via InitScope; TryLink skips duplicates.
+    foreach(var kv in modules)
+      decl.ns.Link(kv.Key.ns);
+
+    var bundle = new ProjectCompilationStateBundle(types);
+    bundle.file2proc["__eval__"] = processor;
+    bundle.file2cached = null;
+    ANTLR_Processor.ProcessAll(bundle);
 
     if(err_hub.errors.Count > 0)
       throw new Exception($"Eval error: {err_hub.errors[0].text}");
 
-    var compiler = new ModuleCompiler(processor.result);
-    compiler.Compile_VisitAST();
-    compiler.Compile_PatchInstructions();
-    var compiled_decl = compiler.Compile_Finish();
-    compiled_decl.AssignId();
+    // Inject a synthetic import list so the compiler can emit correct module indices
+    // for calls to functions defined in currently-loaded modules.
+    var import_ast = new AST_Import();
+    foreach(var kv in modules)
+      if(types.IsImported(kv.Key))
+        import_ast.module_names.Add(kv.Key.name);
+    if(import_ast.module_names.Count > 0)
+      processor.result.ast.children.Insert(0, import_ast);
 
-    return compiled_decl;
+    return new ModuleCompiler(processor.result).Compile();
   }
 }
 }
