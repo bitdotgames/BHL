@@ -152,12 +152,9 @@ public partial class VM
 
     var processor = ANTLR_Processor.ParseAndMakeProcessor(
       decl,
-      null,
       src_stream,
       types,
-      err_hub,
-      null,
-      out _
+      err_hub
     );
 
     if(err_hub.errors.Count > 0)

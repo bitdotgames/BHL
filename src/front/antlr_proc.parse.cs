@@ -145,6 +145,24 @@ public partial class ANTLR_Processor
 
   public static ANTLR_Processor ParseAndMakeProcessor(
     ModuleDeclared module,
+    Stream src,
+    Types ts,
+    CompileErrorsHub err_hub
+  )
+  {
+    return ParseAndMakeProcessor(
+      module,
+      null,
+      src,
+      ts,
+      err_hub,
+      null,
+      out _
+    );
+  }
+
+  public static ANTLR_Processor ParseAndMakeProcessor(
+    ModuleDeclared module,
     FileImports imports_maybe,
     Stream src,
     Types ts,
