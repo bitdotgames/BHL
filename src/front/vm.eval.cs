@@ -26,8 +26,11 @@ static class EvalSessionBridge
 
 public partial class VM
 {
-  public Val[] EvalExpression(string expr) =>
-    EvalCore(new List<(string, string, Val)>(), expr);
+  public Val[] EvalExpression(string expr, IReadOnlyList<string> preamble = null) =>
+    EvalCore(new List<(string, string, Val)>(), expr, preamble: preamble);
+
+  public Val[] EvalStatement(string stmt, IReadOnlyList<string> preamble = null) =>
+    EvalCore(new List<(string, string, Val)>(), stmt, forced_ret_type: "void", preamble: preamble);
 
   public Val[] EvalExpression(ExecState exec, int frame_idx, string expr)
   {
@@ -54,11 +57,11 @@ public partial class VM
     return EvalCore(locals, expr);
   }
 
-  Val[] EvalCore(List<(string name, string type_str, Val val)> locals, string expr)
+  Val[] EvalCore(List<(string name, string type_str, Val val)> locals, string expr, string forced_ret_type = null, IReadOnlyList<string> preamble = null)
   {
-    var ret_type_str = TryGetKnownReturnTypeStr(expr) ?? "any";
-    var src = BuildEvalSource(locals, expr, ret_type_str);
-    var decl = CompileEvalSource(src);
+    var ret_type_str = forced_ret_type ?? TryGetKnownReturnTypeStr(expr) ?? "any";
+    var src = BuildEvalSource(locals, expr, ret_type_str, preamble);
+    var decl = CompileSource(src, "__eval__");
 
     var module = new Module(decl);
     LoadModule(module);
@@ -123,7 +126,7 @@ public partial class VM
     return null;
   }
 
-  static string BuildEvalSource(List<(string name, string type_str, Val val)> locals, string expr, string ret_type_str)
+  static string BuildEvalSource(List<(string name, string type_str, Val val)> locals, string expr, string ret_type_str, IReadOnlyList<string> preamble = null)
   {
     var sb = new StringBuilder();
     sb.Append("func ");
@@ -137,16 +140,28 @@ public partial class VM
       sb.Append(locals[i].name);
     }
     sb.Append(") { ");
+    if(preamble != null)
+      foreach(var stmt in preamble)
+      {
+        sb.Append(stmt);
+        sb.Append("; ");
+      }
     if(ret_type_str != "void") sb.Append("return ");
     sb.Append(expr);
     sb.Append("; }");
     return sb.ToString();
   }
 
-  ModuleDeclared CompileEvalSource(string src)
+  public void LoadSource(string src, string module_name)
+  {
+    var decl = CompileSource(src, module_name);
+    LoadModule(new Module(decl));
+  }
+
+  ModuleDeclared CompileSource(string src, string module_name)
   {
     var err_hub = CompileErrorsHub.MakeEmpty();
-    var decl = new ModuleDeclared("__eval__", "");
+    var decl = new ModuleDeclared(module_name, "");
 
     using var src_stream = new MemoryStream(Encoding.UTF8.GetBytes(src));
 
