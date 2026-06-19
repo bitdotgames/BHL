@@ -20,31 +20,20 @@ public static partial class Tasks
 
     while(true)
     {
-      Console.Write("> ");
-
-      string line;
-      try
-      {
-        line = ReadLine(history);
-      }
-      catch(Exception)
-      {
-        break;
-      }
-
-      if(line == null)
+      string input = ReadInput(history);
+      if(input == null)
         break;
 
-      line = line.Trim();
-      if(line.Length == 0)
+      input = input.Trim();
+      if(input.Length == 0)
         continue;
 
-      if(history.Count == 0 || history[history.Count - 1] != line)
-        history.Add(line);
+      if(history.Count == 0 || history[history.Count - 1] != input)
+        history.Add(input);
 
       try
       {
-        var result = session.Eval(line);
+        var result = session.Eval(input);
         if(result.Length == 1)
           Console.WriteLine(ValToString(result[0]));
         else if(result.Length > 1)
@@ -68,6 +57,62 @@ public static partial class Tasks
     return ThreadTask.CompletedTask;
   }
 
+  // Collects one logical input block, spanning multiple lines when braces are open.
+  static string ReadInput(List<string> history)
+  {
+    var lines = new List<string>();
+
+    while(true)
+    {
+      Console.Write(lines.Count == 0 ? "> " : "... ");
+
+      string line;
+      try { line = ReadLine(history); }
+      catch { return null; }
+
+      if(line == null)
+        return lines.Count > 0 ? string.Join("\n", lines) : null;
+
+      lines.Add(line);
+
+      if(!HasOpenBraces(string.Join("\n", lines)))
+        return string.Join("\n", lines);
+    }
+  }
+
+  // Returns true when the input contains more '{' than '}' (ignoring strings and // comments).
+  static bool HasOpenBraces(string input)
+  {
+    int depth = 0;
+    bool inString = false;
+
+    for(int i = 0; i < input.Length; i++)
+    {
+      char c = input[i];
+
+      if(inString)
+      {
+        if(c == '\\' && i + 1 < input.Length) { i++; continue; }
+        if(c == '"') inString = false;
+        continue;
+      }
+
+      if(c == '"') { inString = true; continue; }
+
+      // skip // line comments
+      if(c == '/' && i + 1 < input.Length && input[i + 1] == '/')
+      {
+        while(i < input.Length && input[i] != '\n') i++;
+        continue;
+      }
+
+      if(c == '{') depth++;
+      else if(c == '}') depth--;
+    }
+
+    return depth > 0;
+  }
+
   // Reads one line with up/down arrow history navigation.
   // Falls back to Console.ReadLine() when stdin is redirected (non-interactive).
   static string ReadLine(List<string> history)
@@ -76,8 +121,8 @@ public static partial class Tasks
       return Console.ReadLine();
 
     var sb = new StringBuilder();
-    int historyPos = history.Count; // one past end = the line being typed
-    string savedLine = "";          // saves the typed line when the user presses Up
+    int historyPos = history.Count;
+    string savedLine = "";
 
     while(true)
     {
@@ -118,10 +163,7 @@ public static partial class Tasks
           break;
 
         default:
-          // Ctrl+D (EOT)
-          if(key.KeyChar == '\x04')
-            return null;
-          // Ignore non-printable / special keys (arrows, function keys, etc.)
+          if(key.KeyChar == '\x04') return null; // Ctrl+D
           if(key.KeyChar >= ' ')
           {
             sb.Append(key.KeyChar);

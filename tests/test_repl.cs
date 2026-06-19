@@ -102,6 +102,32 @@ public class TestRepl : BHL_TestBase
   }
 
   [Fact]
+  public void TestMultilineFunc()
+  {
+    var repl = MakeRepl();
+
+    repl.Eval("func int add(int a, int b) {\n  return a + b\n}");
+    var result = repl.Eval("add(3, 4)");
+
+    Assert.Single(result);
+    Assert.Equal(7, (int)result[0].num);
+  }
+
+  [Fact]
+  public void TestMultilineClass()
+  {
+    var repl = MakeRepl();
+
+    repl.Eval("class Vec2 {\n  int x\n  int y\n}");
+    repl.Eval("var v = new Vec2");
+    repl.Eval("v.x = 5");
+    var result = repl.Eval("v.x");
+
+    Assert.Single(result);
+    Assert.Equal(5, (int)result[0].num);
+  }
+
+  [Fact]
   public void TestPreloadedModuleVisible()
   {
     var repl = MakeRepl(@"
