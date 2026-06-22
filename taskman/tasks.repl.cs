@@ -80,7 +80,7 @@ public static partial class Tasks
     }
   }
 
-  // Returns true when the input contains more '{' than '}' (ignoring strings and // comments).
+  // Returns true when input has more '{' than '}' (ignoring strings and // comments).
   static bool HasOpenBraces(string input)
   {
     int depth = 0;
@@ -99,7 +99,6 @@ public static partial class Tasks
 
       if(c == '"') { inString = true; continue; }
 
-      // skip // line comments
       if(c == '/' && i + 1 < input.Length && input[i + 1] == '/')
       {
         while(i < input.Length && input[i] != '\n') i++;
@@ -113,7 +112,7 @@ public static partial class Tasks
     return depth > 0;
   }
 
-  // Reads one line with up/down arrow history navigation.
+  // Reads one line with cursor movement and up/down arrow history navigation.
   // Falls back to Console.ReadLine() when stdin is redirected (non-interactive).
   static string ReadLine(List<string> history)
   {
@@ -121,6 +120,7 @@ public static partial class Tasks
       return Console.ReadLine();
 
     var sb = new StringBuilder();
+    int cur = 0;                    // cursor position within sb (0 = before first char)
     int historyPos = history.Count;
     string savedLine = "";
 
@@ -137,20 +137,45 @@ public static partial class Tasks
           return sb.ToString();
 
         case ConsoleKey.Backspace:
-          if(sb.Length > 0)
+          if(cur > 0)
           {
-            sb.Length--;
-            Console.Write("\b \b");
+            sb.Remove(cur - 1, 1);
+            cur--;
+            Console.Write('\b');
+            RedrawTail(sb, cur);
           }
+          break;
+
+        case ConsoleKey.Delete:
+          if(cur < sb.Length)
+          {
+            sb.Remove(cur, 1);
+            RedrawTail(sb, cur);
+          }
+          break;
+
+        case ConsoleKey.LeftArrow:
+          if(cur > 0) { cur--; Console.Write('\b'); }
+          break;
+
+        case ConsoleKey.RightArrow:
+          if(cur < sb.Length) Console.Write(sb[cur++]);
+          break;
+
+        case ConsoleKey.Home:
+          while(cur > 0) { Console.Write('\b'); cur--; }
+          break;
+
+        case ConsoleKey.End:
+          while(cur < sb.Length) Console.Write(sb[cur++]);
           break;
 
         case ConsoleKey.UpArrow:
           if(historyPos > 0)
           {
-            if(historyPos == history.Count)
-              savedLine = sb.ToString();
+            if(historyPos == history.Count) savedLine = sb.ToString();
             historyPos--;
-            ReplaceConsoleLine(sb, history[historyPos]);
+            cur = SetLine(sb, cur, history[historyPos]);
           }
           break;
 
@@ -158,7 +183,7 @@ public static partial class Tasks
           if(historyPos < history.Count)
           {
             historyPos++;
-            ReplaceConsoleLine(sb, historyPos == history.Count ? savedLine : history[historyPos]);
+            cur = SetLine(sb, cur, historyPos == history.Count ? savedLine : history[historyPos]);
           }
           break;
 
@@ -166,21 +191,42 @@ public static partial class Tasks
           if(key.KeyChar == '\x04') return null; // Ctrl+D
           if(key.KeyChar >= ' ')
           {
-            sb.Append(key.KeyChar);
-            Console.Write(key.KeyChar);
+            sb.Insert(cur, key.KeyChar);
+            cur++;
+            // write the new char + tail, then backtrack to cur
+            Console.Write(sb.ToString(cur - 1, sb.Length - cur + 1));
+            for(int i = sb.Length - cur; i > 0; i--)
+              Console.Write('\b');
           }
           break;
       }
     }
   }
 
-  static void ReplaceConsoleLine(StringBuilder sb, string newContent)
+  // Rewrites sb[from..end] + a trailing space (clears any deleted character),
+  // then moves the terminal cursor back to position 'from'.
+  static void RedrawTail(StringBuilder sb, int from)
   {
-    for(int i = 0; i < sb.Length; i++)
-      Console.Write("\b \b");
+    Console.Write(sb.ToString(from, sb.Length - from));
+    Console.Write(' ');
+    for(int i = sb.Length - from + 1; i > 0; i--)
+      Console.Write('\b');
+  }
+
+  // Replaces the current line content with 'text', returns new cursor pos (end of text).
+  static int SetLine(StringBuilder sb, int cur, string text)
+  {
+    // Move terminal cursor to start of input
+    for(int i = 0; i < cur; i++) Console.Write('\b');
+    // Overwrite with new text
+    Console.Write(text);
+    // Erase any characters left over from the old (longer) content
+    int extra = sb.Length - text.Length;
+    for(int i = 0; i < extra; i++) Console.Write(' ');
+    for(int i = 0; i < extra; i++) Console.Write('\b');
     sb.Clear();
-    sb.Append(newContent);
-    Console.Write(newContent);
+    sb.Append(text);
+    return text.Length;
   }
 
   static string ValToString(Val v)
