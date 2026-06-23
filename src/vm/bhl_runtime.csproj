@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- DAP requires Newtonsoft.Json which is not a runtime dependency -->
-    <Compile Remove="dap\**\*.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
   </ItemGroup>
 </Project>
