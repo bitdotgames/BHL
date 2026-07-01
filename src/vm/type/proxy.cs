@@ -76,7 +76,12 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     //      with the normalized one, this is useful for cases when comparing proxies
     //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
     if(resolved != null)
+    {
       path = GetNormalizedTypePath(resolved);
+      //NOTE: once resolving is done let's nullify the reference to resolver
+      //      so it can be GC'ed
+      resolver = null;
+    }
   }
 
   static NamePath GetNormalizedTypePath(IType obj)
