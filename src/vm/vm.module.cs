@@ -21,7 +21,7 @@ public partial class VM : INamedResolver
 
   public struct ModuleSymbol
   {
-    public Module module;
+    public ModuleDeclared module;
     public Symbol symbol;
   }
 
@@ -232,7 +232,7 @@ public partial class VM : INamedResolver
     if(symb == null)
       return LoadModuleSymbolError.SymbolNotFound;
 
-    ms.module = module;
+    ms.module = module.decl;
     ms.symbol = symb;
 
     if(use_cache)
