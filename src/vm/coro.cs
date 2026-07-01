@@ -109,6 +109,7 @@ public class CoroutinePool
 
     ++coro.vm.coro_pool.dels;
     coro.vm = null;
+    coro.pool = null;
     pool.stack.Push(coro);
 
     if(pool.stack.Count > pool.miss)
