@@ -36,7 +36,6 @@ public class Types : INamedResolver
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
 
-#if (BHL_FRONT || BHL_PARSER)
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>()
   {
     { new Tuple<IType, IType>(String, String), String },
@@ -72,7 +71,6 @@ public class Types : INamedResolver
   {
     { new Tuple<IType, IType>(Int, Float) },
   };
-#endif
 
   static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>()
   {
