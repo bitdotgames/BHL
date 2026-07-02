@@ -114,7 +114,7 @@ public partial class VM : INamedResolver
 
     foreach(var kv in types.modules)
     {
-      Module m = kv.Value;
+      var m = new Module(kv.Value);
       m.Setup(null);
       RegisterModule(m);
     }
