@@ -717,9 +717,8 @@ public class TestTypeCasts : BHL_TestBase
       ));
       ts.ns.Define(cl1);
 
-      var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
-        typeof(NativeFoo)
+      var cl2 = new ClassSymbolNative(new Origin(), "Foo", typeof(NativeFoo),
+        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); }
       );
       cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"),
         delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
@@ -1188,7 +1187,7 @@ public class TestTypeCasts : BHL_TestBase
       BindColor(ts);
 
       {
-        var cl = new ClassSymbolNative(new Origin(), "Foo", null,
+        var cl = new ClassSymbolNative(new Origin(), "Foo",
           delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
@@ -1221,7 +1220,7 @@ public class TestTypeCasts : BHL_TestBase
       BindColor(ts);
 
       {
-        var cl = new ClassSymbolNative(new Origin(), "Foo", null,
+        var cl = new ClassSymbolNative(new Origin(), "Foo",
           delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);

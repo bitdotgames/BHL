@@ -283,9 +283,8 @@ public class BHL_TestBase
 
   public ClassSymbolNative BindColor(Types ts, bool call_setup = true)
   {
-    var cl = new ClassSymbolNative(new Origin(), "Color", null,
-      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new Color(), type); },
-      typeof(Color)
+    var cl = new ClassSymbolNative(new Origin(), "Color", typeof(Color),
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new Color(), type); }
     );
 
     ts.ns.Define(cl);
@@ -547,7 +546,7 @@ public class BHL_TestBase
   public void BindFoo(Types ts)
   {
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null,
+      var cl = new ClassSymbolNative(new Origin(), "Foo",
         delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new Foo(), type); }
       );
       ts.ns.Define(cl);
@@ -616,7 +615,7 @@ public class BHL_TestBase
 
   public ClassSymbolNative BindBar(Types ts)
   {
-    var cl = new ClassSymbolNative(new Origin(), "Bar", null,
+    var cl = new ClassSymbolNative(new Origin(), "Bar",
       delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new Bar(), type); }
     );
 

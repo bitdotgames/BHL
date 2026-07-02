@@ -326,7 +326,7 @@ public static class ScopeExtensions
     public TypeArg(string name)
     {
       this.name = name;
-      this.tp = default(ProxyType);
+      this.tp = null;
     }
 
     public TypeArg(ProxyType tp)
@@ -343,12 +343,14 @@ public static class ScopeExtensions
 
   public static ProxyType T(this INamedResolver self, string name)
   {
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType(name);
     return new ProxyType(self, name);
   }
 
   public static ProxyType T(this INamedResolver self, TypeArg tn)
   {
-    if(!tn.tp.IsEmpty())
+    if(tn.tp != null)
       return tn.tp;
     else
       return self.T(tn.name);
@@ -361,16 +363,35 @@ public static class ScopeExtensions
 
   public static ProxyType TArr(this INamedResolver self, TypeArg tn)
   {
-    var arr_type = new GenericArrayTypeSymbol(new Origin(), self.T(tn));
-    arr_type.Setup();
-    return self.T(arr_type);
+    var item_type = self.T(tn);
+
+    ProxyType Make()
+    {
+      var arr_type = new GenericArrayTypeSymbol(new Origin(), item_type);
+      arr_type.Setup();
+      return self.T(arr_type);
+    }
+
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType("[]" + item_type, _ => Make());
+    return Make();
   }
 
   public static ProxyType TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
   {
-    var map_type = new GenericMapTypeSymbol(new Origin(), self.T(kt), self.T(vt));
-    map_type.Setup();
-    return self.T(map_type);
+    var key_type = self.T(kt);
+    var val_type = self.T(vt);
+
+    ProxyType Make()
+    {
+      var map_type = new GenericMapTypeSymbol(new Origin(), key_type, val_type);
+      map_type.Setup();
+      return self.T(map_type);
+    }
+
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType("[" + key_type + "]" + val_type, _ => Make());
+    return Make();
   }
 
   public static ProxyType TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)
@@ -381,10 +402,25 @@ public static class ScopeExtensions
   public static ProxyType TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type,
     params TypeArg[] arg_types)
   {
-    var sig = new FuncSignature(attribs, self.T(ret_type));
-    foreach(var arg_type in arg_types)
-      sig.AddArg(self.T(arg_type));
-    return self.T(sig);
+    var ret = self.T(ret_type);
+    var args = new ProxyType[arg_types.Length];
+    for(int i = 0; i < arg_types.Length; ++i)
+      args[i] = self.T(arg_types[i]);
+
+    ProxyType Make()
+    {
+      var sig = new FuncSignature(attribs, ret);
+      foreach(var arg in args)
+        sig.AddArg(arg);
+      return self.T(sig);
+    }
+
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType(
+        "func#" + (int)attribs + " " + ret + "(" + string.Join(",", (object[])args) + ")",
+        _ => Make()
+      );
+    return Make();
   }
 
   public static ProxyType TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
@@ -398,12 +434,23 @@ public static class ScopeExtensions
     return self.TTuple(types);
   }
 
-  public static ProxyType TTuple(this INamedResolver self, params TypeArg[] types)
+  public static ProxyType TTuple(this INamedResolver self, params TypeArg[] type_args)
   {
-    var tuple = new TupleType();
-    foreach(var type in types)
-      tuple.Add(self.T(type));
-    return self.T(tuple);
+    var items = new ProxyType[type_args.Length];
+    for(int i = 0; i < type_args.Length; ++i)
+      items[i] = self.T(type_args[i]);
+
+    ProxyType Make()
+    {
+      var tuple = new TupleType();
+      foreach(var item in items)
+        tuple.Add(item);
+      return self.T(tuple);
+    }
+
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType("tuple#" + string.Join(",", (object[])items), _ => Make());
+    return Make();
   }
 }
 

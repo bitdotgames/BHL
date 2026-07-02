@@ -5,8 +5,19 @@ using bhl.marshall;
 namespace bhl
 {
 
+// Optional capability of INamedResolver implementations which intern
+// ProxyType instances so that similar requests return the same cached instance
+public interface IProxyTypeCache
+{
+  ProxyType InternProxyType(string name);
+
+  //NOTE: for interning of composite types (arrays, maps, func signatures, tuples)
+  //      which are constructed by the factory only in case of a cache miss
+  ProxyType InternProxyType(string key, Func<string, ProxyType> factory);
+}
+
 // For lazy evaluation of types and forward declarations
-public struct ProxyType : IMarshallable, IEquatable<ProxyType>
+public class ProxyType : IMarshallable, IEquatable<ProxyType>
 {
   public IType resolved;
 
@@ -14,6 +25,13 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   //NOTE: for symbols it's a full absolute path from the very top namespace
   public NamePath path;
+
+  public ProxyType()
+  {
+    resolver = null;
+    path = default;
+    resolved = null;
+  }
 
   public ProxyType(INamedResolver resolver, string path)
   {
@@ -128,6 +146,10 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public bool Equals(ProxyType o)
   {
+    if(o == null)
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
     if(resolved != null && o.resolved != null)
       return o.resolved.Equals(resolved);
     else if(resolver != null && o.resolver == resolver && o.path.Equals(path))

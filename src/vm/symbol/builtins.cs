@@ -68,7 +68,7 @@ public class StringSymbol : ClassSymbolNative
   public const uint CLASS_ID = 3;
 
   public StringSymbol()
-    : base(new Origin(), "string", native_type: typeof(string))
+    : base(new Origin(), "string", null, typeof(string))
   {
   }
 

@@ -443,7 +443,7 @@ public class TestClass : BHL_TestBase
     {
       BindColor(ts);
 
-      var cl = new ClassSymbolNative(new Origin(), "ColorNested", null,
+      var cl = new ClassSymbolNative(new Origin(), "ColorNested",
         (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new ColorNested(), type); }
       );
 
@@ -545,7 +545,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null,
+      var cl = new ClassSymbolNative(new Origin(), "Foo",
         (VM.ExecState exec, ref Val v, IType type) =>
         {
           //dummy
@@ -589,7 +589,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null,
+      var cl = new ClassSymbolNative(new Origin(), "Foo",
         (VM.ExecState exec, ref Val v, IType type) =>
         {
           //dummy
@@ -4006,9 +4006,8 @@ public class TestClass : BHL_TestBase
   void BindVirtualFooBar(Types ts)
   {
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new VirtFoo(), type); },
-        typeof(VirtFoo)
+      var cl = new ClassSymbolNative(new Origin(), "Foo", typeof(VirtFoo),
+        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new VirtFoo(), type); }
       );
       ts.ns.Define(cl);
 
@@ -4598,7 +4597,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null,
+      var cl = new ClassSymbolNative(new Origin(), "NativeFoo",
         (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new NativeFoo(), type); }
       );
       ts.ns.Define(cl);

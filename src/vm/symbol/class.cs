@@ -51,6 +51,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
+    this._super_class = new ProxyType();
 
     this.creator = creator;
   }
@@ -483,6 +484,24 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public ClassSymbolNative(
     Origin origin,
     string name,
+    System.Type native_type,
+    VM.ClassCreator creator = null,
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
+  )
+    : this(
+      origin, name,
+      new ProxyType(), null,
+      creator,
+      native_type, native_object_getter,
+      native_comparer
+      )
+  {
+  }
+
+  public ClassSymbolNative(
+    Origin origin,
+    string name,
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
@@ -576,7 +595,9 @@ public class ClassSymbolNative : ClassSymbol, INativeType
         throw new Exception("Parent class is not found: " + curr_class.tmp_super_class);
 
       //let's reset tmp member once it's resolved
-      curr_class.tmp_super_class.Clear();
+      //NOTE: since ProxyType instances can be shared (interned) we must not
+      //      Clear() the instance in-place, let's replace the reference instead
+      curr_class.tmp_super_class = new ProxyType();
     }
 
     List<InterfaceSymbol> implements = null;

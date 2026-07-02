@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using bhl;
 using Xunit;
@@ -374,7 +375,7 @@ public class TestARC : BHL_TestBase
   void BindRefC(Types ts, StringBuilder logs)
   {
     {
-      var cl = new ClassSymbolNative(new Origin(), "RefC", null,
+      var cl = new ClassSymbolNative(new Origin(), "RefC",
         delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new RefC(logs), type); }
       );
       {

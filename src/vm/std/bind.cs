@@ -17,10 +17,10 @@ public static partial class std
 
       var bind = m.ns.Nest("std").Nest("bind");
 
-      var symbol_type = new ClassSymbolNative(new Origin(), "Symbol", null, null, typeof(bhl.Namespace));
+      var symbol_type = new ClassSymbolNative(new Origin(), "Symbol", typeof(bhl.Namespace));
       bind.Define(symbol_type);
 
-      var ns_type = new ClassSymbolNative(new Origin(), "Namespace", null, null, typeof(bhl.Namespace));
+      var ns_type = new ClassSymbolNative(new Origin(), "Namespace", typeof(bhl.Namespace));
       bind.Define(ns_type);
       {
         {
@@ -79,7 +79,7 @@ public static partial class std
       }
       ns_type.Setup();
 
-      var proxy_type = new ClassSymbolNative(new Origin(), "ProxyType", null, null, typeof(bhl.ProxyType));
+      var proxy_type = new ClassSymbolNative(new Origin(), "ProxyType", typeof(bhl.ProxyType));
       bind.Define(proxy_type);
       proxy_type.Setup();
 
@@ -87,12 +87,11 @@ public static partial class std
         var cl = new ClassSymbolNative(
           new Origin(),
           "Types",
-          null,
+          typeof(bhl.Types),
           (VM.ExecState exec, ref Val val, IType itype) =>
           {
             val.SetObj( new bhl.Types(), itype);
-          },
-          typeof(bhl.Types)
+          }
           );
         bind.Define(cl);
 
@@ -226,7 +225,7 @@ public static partial class std
       bind.Define(fsn_type);
       fsn_type.Setup();
 
-      var fsn_arg_type = new ClassSymbolNative(new Origin(), "FuncArgSymbol", null, null, typeof(bhl.FuncArgSymbol));
+      var fsn_arg_type = new ClassSymbolNative(new Origin(), "FuncArgSymbol", typeof(bhl.FuncArgSymbol));
       bind.Define(fsn_arg_type);
       fsn_arg_type.Setup();
 

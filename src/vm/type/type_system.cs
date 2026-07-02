@@ -5,7 +5,7 @@ using bhl.marshall;
 namespace bhl
 {
 
-public class Types : INamedResolver
+public class Types : INamedResolver, IProxyTypeCache
 {
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
@@ -110,6 +110,22 @@ public class Types : INamedResolver
   static ModuleDeclared static_module = new ModuleDeclared();
 
   internal Dictionary<string, ModuleDeclared> modules = new Dictionary<string, ModuleDeclared>();
+
+  //NOTE: interning of ProxyType instances requested by name, e.g T("Color"),
+  //      so that similar requests return the same cached instance;
+  //      concurrent since Types instance is shared by compile threads
+  System.Collections.Concurrent.ConcurrentDictionary<string, ProxyType> _proxy_cache =
+    new System.Collections.Concurrent.ConcurrentDictionary<string, ProxyType>();
+
+  public ProxyType InternProxyType(string name)
+  {
+    return _proxy_cache.GetOrAdd(name, static (n, ts) => new ProxyType(ts, n), this);
+  }
+
+  public ProxyType InternProxyType(string key, Func<string, ProxyType> factory)
+  {
+    return _proxy_cache.GetOrAdd(key, factory);
+  }
 
   static Types()
   {
