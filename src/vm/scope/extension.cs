@@ -338,6 +338,8 @@ public static class ScopeExtensions
 
   public static ProxyType T(this INamedResolver self, IType t)
   {
+    if(self is IProxyTypeCache cache)
+      return cache.InternProxyType(t);
     return new ProxyType(t);
   }
 

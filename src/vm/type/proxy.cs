@@ -14,6 +14,9 @@ public interface IProxyTypeCache
   //NOTE: for interning of composite types (arrays, maps, func signatures, tuples)
   //      which are constructed by the factory only in case of a cache miss
   ProxyType InternProxyType(string key, Func<string, ProxyType> factory);
+
+  //NOTE: for interning of proxies wrapping an already resolved IType
+  ProxyType InternProxyType(IType t);
 }
 
 // For lazy evaluation of types and forward declarations

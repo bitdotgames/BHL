@@ -23,6 +23,11 @@ public partial class Types : INamedResolver, IProxyTypeCache
   System.Collections.Concurrent.ConcurrentDictionary<string, ProxyType> _proxy_cache =
     new System.Collections.Concurrent.ConcurrentDictionary<string, ProxyType>();
 
+  //NOTE: interning of ProxyType instances wrapping an already resolved IType;
+  //      weak-keyed so it never pins the type instances it caches
+  System.Runtime.CompilerServices.ConditionalWeakTable<IType, ProxyType> _resolved_proxy_cache =
+    new System.Runtime.CompilerServices.ConditionalWeakTable<IType, ProxyType>();
+
   public ProxyType InternProxyType(string name)
   {
     return _proxy_cache.GetOrAdd(name, static (n, ts) => new ProxyType(ts, n), this);
@@ -31,6 +36,11 @@ public partial class Types : INamedResolver, IProxyTypeCache
   public ProxyType InternProxyType(string key, Func<string, ProxyType> factory)
   {
     return _proxy_cache.GetOrAdd(key, factory);
+  }
+
+  public ProxyType InternProxyType(IType t)
+  {
+    return _resolved_proxy_cache.GetValue(t, static key => new ProxyType(key));
   }
 
   static Types()
