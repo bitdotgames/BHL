@@ -145,9 +145,9 @@ public class Taskman
 
     if(BuildUtils.IsWin)
     {
-      string tmp_path = BuildUtils.GetSelfDir() + "/build/";
+      string tmp_dir = Path.Combine(BuildUtils.GetSelfDir(), "build");
       string cmd = binary + " " + args;
-      var bat_file = tmp_path + Hash.CRC32(cmd) + ".bat";
+      var bat_file = Path.Combine(tmp_dir, Hash.CRC32(cmd) + ".bat");
       BuildUtils.Write(bat_file, cmd);
 
       p.StartInfo.FileName = "cmd.exe";
