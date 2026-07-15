@@ -16,7 +16,7 @@ public static partial class Tasks
     {
       return Path.GetDirectoryName(
         Path.GetFullPath(
-          Path.GetDirectoryName(BuildUtils.GetSelfFile()) + "/../../../../")
+          BuildUtils.GetSelfDir() + "/../../../../")
       );
     }
   }

@@ -44,12 +44,17 @@ static public class BuildUtils
 
   public static string GetSelfFile()
   {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
+    //NOTE: Assembly.Location is empty for single-file apps, so we reconstruct
+    //      the assembly path from the app base dir; returns "" when the assembly
+    //      isn't a standalone file on disk (single-file deployment)
+    var asm = System.Reflection.Assembly.GetExecutingAssembly();
+    var path = Path.Combine(AppContext.BaseDirectory, asm.GetName().Name + ".dll");
+    return File.Exists(path) ? path : "";
   }
 
   public static string GetSelfDir()
   {
-    return Path.GetDirectoryName(GetSelfFile());
+    return AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, '/');
   }
 
   static public bool NeedToRegen(string file, IEnumerable<string> deps)
