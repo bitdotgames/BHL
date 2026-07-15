@@ -6,28 +6,51 @@ on:
       - 'lsp-v*'
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+  standalone:
+    runs-on: ubuntu-latest          # no R2R => all RIDs cross-build from one host
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [linux-x64, linux-arm64, osx-x64, osx-arm64, win-x64]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
-        run: dotnet publish src/lsp/bhl_lsp.csproj -c Release
+      - name: Build ${{ matrix.rid }}
+        run: make publish-standalone-one RID=${{ matrix.rid }}
 
-      - name: Zip
+      - name: Package
         run: |
-          cd build/bhl_lsp/Release/net8.0/publish
-          zip -r ${{ github.workspace }}/bhl-lsp-${{ github.ref_name }}.zip .
+          out="build/dist/${{ matrix.rid }}"
+          name="bhl-lsp-${{ github.ref_name }}-${{ matrix.rid }}"
+          if [ -f "$out/bhl.exe" ]; then
+            (cd "$out" && zip -q "$GITHUB_WORKSPACE/$name.zip" bhl.exe)
+          else
+            chmod +x "$out/bhl"
+            tar -C "$out" -czf "$name.tar.gz" bhl
+          fi
+          shasum -a 256 "$name".* > "$name.sha256"
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          files: bhl-lsp-${{ github.ref_name }}.zip
+          name: ${{ matrix.rid }}
+          path: bhl-lsp-${{ github.ref_name }}-${{ matrix.rid }}.*
+
+  release:
+    needs: standalone
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}

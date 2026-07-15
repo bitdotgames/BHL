@@ -23,7 +23,40 @@ jobs:
           echo "## Benchmark results for ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           cat bench/BenchmarkDotNet.Artifacts/results/*-report-github.md >> $GITHUB_STEP_SUMMARY
 
+  standalone:
+    runs-on: ubuntu-latest          # no R2R => all RIDs cross-build from one host
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [linux-x64, linux-arm64, osx-x64, osx-arm64, win-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build ${{ matrix.rid }}
+        run: make publish-standalone-one RID=${{ matrix.rid }}
+
+      - name: Package
+        run: |
+          out="build/dist/${{ matrix.rid }}"
+          name="bhl-${{ github.ref_name }}-${{ matrix.rid }}"
+          if [ -f "$out/bhl.exe" ]; then
+            (cd "$out" && zip -q "$GITHUB_WORKSPACE/$name.zip" bhl.exe)
+          else
+            chmod +x "$out/bhl"
+            tar -C "$out" -czf "$name.tar.gz" bhl
+          fi
+          shasum -a 256 "$name".* > "$name.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rid }}
+          path: bhl-${{ github.ref_name }}-${{ matrix.rid }}.*
+
   release:
+    needs: standalone
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,17 +67,26 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
+      # framework-dependent zip (kept for backward compatibility)
+      - name: Publish (framework-dependent)
         run: dotnet publish bhl.csproj -c Release
 
-      - name: Zip
+      - name: Zip (framework-dependent)
         run: |
           cd build/bhl/Release/net8.0/publish
-          zip -r ${{ github.workspace }}/bhl-${{ github.ref_name }}.zip .
+          zip -r "$GITHUB_WORKSPACE/bhl-${{ github.ref_name }}.zip" .
+
+      # standalone, dotnet-free binaries built by the matrix above
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: bhl-${{ github.ref_name }}.zip
+          files: |
+            bhl-${{ github.ref_name }}.zip
+            dist/*
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
