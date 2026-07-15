@@ -504,8 +504,8 @@ public class FuncSymbolVirtual : FuncSymbol
 {
   protected int default_args_num;
 
-  public List<FuncSymbol> overrides = new List<FuncSymbol>();
-  public List<ProxyType> owners = new List<ProxyType>();
+  public List<FuncSymbol> overrides = new List<FuncSymbol>(1);
+  public List<ProxyType> owners = new List<ProxyType>(1);
 
   public FuncSymbolVirtual(Origin origin, string name, FuncSignature signature, int default_args_num = 0)
     : base(origin, name, signature)

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 #pragma warning disable CS8981
@@ -147,14 +146,14 @@ public static partial class std
             {
               ref var self = ref exec.GetSelfRef();
               var types = (Types)self.obj;
-              var args = new List<ScopeExtensions.TypeArg>();
               var vargs = (ValList)exec.stack.Pop().obj;
+              var vargs_list = new List<ScopeExtensions.TypeArg>(vargs.Count);
               foreach(var varg in vargs)
-                args.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
+                vargs_list.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
               vargs.Release();
               exec.stack.Pop(); //for self
 
-              var proxy = types.TTuple(args.ToArray());
+              var proxy = types.TTuple(vargs_list.ToArray());
               exec.stack.Push(Val.NewObj(proxy, proxy_type));
               return null;
             },
@@ -169,16 +168,16 @@ public static partial class std
             {
               ref var self = ref exec.GetSelfRef();
               var types = (Types)self.obj;
-              var args = new List<ScopeExtensions.TypeArg>();
               var vargs = (ValList)exec.stack.Pop().obj;
+              var vargs_list = new List<ScopeExtensions.TypeArg>(vargs.Count);
               foreach(var varg in vargs)
-                args.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
+                vargs_list.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
               vargs.Release();
               var return_type = (ProxyType)exec.stack.Pop().obj;
               bool is_coro = exec.stack.Pop();
               exec.stack.Pop(); //for self
 
-              var proxy = types.TFunc(is_coro, return_type, args.ToArray());
+              var proxy = types.TFunc(is_coro, return_type, vargs_list.ToArray());
               exec.stack.Push(Val.NewObj(proxy, proxy_type));
               return null;
             },
@@ -372,12 +371,12 @@ public static partial class std
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ValList implements = args_info.IsDefaultArgUsed(0) ? null : (ValList)exec.stack.Pop().obj;
-            List<ProxyType> proxy_implements = null;
+            IList<ProxyType> proxy_implements = null;
             if(implements != null)
             {
-              proxy_implements = new List<ProxyType>();
-              foreach(var imp in implements)
-                proxy_implements.Add((ProxyType)imp.obj);
+              proxy_implements = new ProxyType[implements.Count];
+              for (int i = 0; i < implements.Count; i++)
+                proxy_implements[i] = (ProxyType)implements[i].obj;
             }
             implements?.Release();
 
@@ -408,19 +407,19 @@ public static partial class std
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ValList inherits = args_info.IsDefaultArgUsed(0) ? null : (ValList)exec.stack.Pop().obj;
-            List<ProxyType> proxy_inherits = null;
+            IList<ProxyType> proxy_inherits = null;
             if(inherits != null)
             {
-              proxy_inherits = new List<ProxyType>();
-              foreach(var imp in inherits)
-                proxy_inherits.Add((ProxyType)imp.obj);
+              proxy_inherits = new ProxyType[inherits.Count];
+              for (int i = 0; i < inherits.Count; i++)
+                proxy_inherits[i] = (ProxyType)inherits[i].obj;
             }
             inherits?.Release();
 
-            var funcs = new List<FuncSymbol>();
             var func_args = (ValList)exec.stack.Pop().obj;
+            var funcs_args_list = new List<FuncSymbol>(func_args.Count);
             foreach(var func_arg in func_args)
-              funcs.Add((FuncSymbol)func_arg.obj);
+              funcs_args_list.Add((FuncSymbol)func_arg.obj);
             func_args.Release();
 
             string name = exec.stack.Pop();
@@ -429,7 +428,7 @@ public static partial class std
               new Origin(), //pass it from above?
               name,
               proxy_inherits,
-              funcs.ToArray()
+              funcs_args_list.ToArray()
             );
             exec.stack.Push(Val.NewObj(ifs, ifs_type));
             return null;
