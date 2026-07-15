@@ -24,7 +24,7 @@ jobs:
       - name: Package
         run: |
           out="build/dist/${{ matrix.rid }}"
-          name="bhl-lsp-${{ github.ref_name }}-${{ matrix.rid }}"
+          name="bhl-${{ github.ref_name }}-${{ matrix.rid }}"
           if [ -f "$out/bhl.exe" ]; then
             (cd "$out" && zip -q "$GITHUB_WORKSPACE/$name.zip" bhl.exe)
           else
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.rid }}
-          path: bhl-lsp-${{ github.ref_name }}-${{ matrix.rid }}.*
+          path: bhl-${{ github.ref_name }}-${{ matrix.rid }}.*
 
   release:
     needs: standalone
