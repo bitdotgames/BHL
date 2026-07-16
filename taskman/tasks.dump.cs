@@ -138,36 +138,70 @@ public static partial class Tasks
 
     root["modules"] = modules;
 
-    //NOTE: walking the actual symbol table requires fully loading each module
-    //      (resolving imports/types via the VM), which is a lot more expensive
-    //      than just reading the bundle's container header above.
-    //      Each module gets its own fresh VM/Types/loader: if loading one module
-    //      throws (e.g. a missing native binding), the VM is left with internal
-    //      'loading in progress' state that has no public reset API, and reusing
-    //      it would make every subsequent module fail with an unrelated
-    //      "Already loading modules" error instead of its own real one
+    //NOTE: walking the actual symbol table requires resolving imports/types,
+    //      which ModuleDeclared.Setup() does on its own - no VM/bytecode
+    //      execution needed (no init code, no global var initializers, no
+    //      native bindings called), we just supply it a callback that loads
+    //      and sets up sibling modules from this same bundle on demand
     if(include_symbols)
     {
-      foreach(var name in module_names)
+      var types = new Types();
+      using(var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
       {
-        var mod = name2mod[name];
-        try
-        {
-          var types = new Types();
-          using(var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-          {
-            var loader = new ModuleLoader(types, fs);
-            var vm = new VM(types, loader);
+        var loader = new ModuleLoader(types, fs);
+        var decl_cache = new Dictionary<string, ModuleDeclared>();
 
-            if(vm.LoadModule(name, out var module))
-              mod["symbols"] = DumpNamespaceMembers(module.ns);
-            else
-              mod["symbols_error"] = "module could not be loaded";
-          }
-        }
-        catch(Exception e)
+        ModuleDeclared LoadDecl(string dep_name)
         {
-          mod["symbols_error"] = e.Message;
+          if(decl_cache.TryGetValue(dep_name, out var cached))
+            return cached;
+
+          //NOTE: native pseudo-modules (std, std/io, std/bind, ...) are
+          //      registered directly on Types rather than stored in the
+          //      bundle; they're hand-built in C#, already fully resolved,
+          //      and (like in the real VM) never go through
+          //      ModuleDeclared.Setup() - used as-is
+          var native = types.FindRegisteredModule(dep_name);
+          if(native != null)
+          {
+            decl_cache[dep_name] = native;
+            return native;
+          }
+
+          var decl = loader.Load(dep_name, null);
+          if(decl == null)
+            throw new Exception("module not found: " + dep_name);
+
+          //NOTE: cache before Setup() so mutually recursive imports resolve
+          //      to this same (still-being-set-up) instance instead of
+          //      recursing forever; if Setup() fails partway we evict it so
+          //      a later module doesn't silently reuse a half-set-up instance
+          decl_cache[dep_name] = decl;
+          try
+          {
+            decl.Setup(LoadDecl);
+          }
+          catch
+          {
+            decl_cache.Remove(dep_name);
+            throw;
+          }
+
+          return decl;
+        }
+
+        foreach(var name in module_names)
+        {
+          var mod = name2mod[name];
+          try
+          {
+            var decl = LoadDecl(name);
+            mod["symbols"] = DumpNamespaceMembers(decl.ns);
+          }
+          catch(Exception e)
+          {
+            mod["symbols_error"] = e.Message;
+          }
         }
       }
     }
