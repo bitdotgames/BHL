@@ -1,8 +1,6 @@
 {
   "name": "bhl",
-  "references": [
-    "bhl_msgpack"
-  ],
+  "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": true,
