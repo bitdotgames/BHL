@@ -17,8 +17,8 @@ BenchmarkDotNet.Artifacts/
 # but DO track the Unity package's .meta files (needed for stable GUIDs via UPM/OpenUPM)
 !src/*.meta
 !src/**/*.meta
-# ...except the deferred compiler plugin folder (dll + meta stay out until finalized)
-src/unity/Plugins/
+# track Unity plugin DLLs under the package (real package assets, not dotnet build output)
+!src/**/Plugins/**/*.dll
 *.sln.DotSettings.user
 util/antlr*.jar
 
