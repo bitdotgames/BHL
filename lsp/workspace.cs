@@ -58,7 +58,13 @@ public class Workspace
       NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size,
       EnableRaisingEvents = true,
     };
+    // External build tools rarely rewrite the DLL in place (which would raise Changed);
+    // they typically build to a temp file and atomically replace the destination (rename-over,
+    // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
+    // by an external process is detected the same way an in-place `touch` is.
     _bindingsWatcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
+    _bindingsWatcher.Created += (_, _) => BindingsDllChanged?.Invoke();
+    _bindingsWatcher.Renamed += (_, _) => BindingsDllChanged?.Invoke();
   }
 
   public void Shutdown()
