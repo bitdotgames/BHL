@@ -59,6 +59,12 @@ public class TypeRefIndex
       Index(v);
   }
 
+  public void Index<T>(TypeSet<T> vs) where T : class, IType
+  {
+    for(int i = 0; i < vs.Count; i++)
+      Index(vs[i]);
+  }
+
   public int FindIndex(ProxyType v)
   {
     return all.IndexOf(v);
@@ -95,11 +101,12 @@ public class TypeRefIndex
 public class TypeSet<T> : IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
-  internal List<ProxyType> list = new List<ProxyType>();
+  //NOTE: lazily allocating list memory only if it's really required
+  List<ProxyType> list;
 
   public int Count
   {
-    get { return list.Count; }
+    get { return list?.Count ?? 0; }
   }
 
   public T this[int index]
@@ -114,10 +121,6 @@ public class TypeSet<T> : IMarshallable where T : class, IType
     }
   }
 
-  public TypeSet()
-  {
-  }
-
   public bool Add(T t)
   {
     return Add(new ProxyType(t));
@@ -125,6 +128,9 @@ public class TypeSet<T> : IMarshallable where T : class, IType
 
   public bool Add(ProxyType tp)
   {
+    if(list == null)
+      list = new List<ProxyType>();
+
     if(list.IndexOf(tp) != -1)
       return false;
     list.Add(tp);
@@ -133,12 +139,19 @@ public class TypeSet<T> : IMarshallable where T : class, IType
 
   public void Clear()
   {
-    list.Clear();
+    list?.Clear();
   }
 
   public void Sync(SyncContext ctx)
   {
+    if(ctx.is_read && list == null)
+      list = new List<ProxyType>();
+
     Marshall.SyncTypeRefs(ctx, list);
+
+    //let's not occupy memory if it's not really required
+    if(ctx.is_read && list.Count == 0)
+      list = null;
   }
 }
 

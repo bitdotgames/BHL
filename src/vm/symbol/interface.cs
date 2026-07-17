@@ -122,7 +122,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    refs.Index(inherits.list);
+    refs.Index(inherits);
     refs.Index(members.list);
   }
 

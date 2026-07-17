@@ -441,7 +441,7 @@ public class ClassSymbolScript : ClassSymbol
   {
     refs.Index(_super_class);
     refs.Index(members.list);
-    refs.Index(implements.list);
+    refs.Index(implements);
   }
 
   public override void Sync(marshall.SyncContext ctx)
