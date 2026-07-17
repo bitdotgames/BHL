@@ -649,7 +649,7 @@ public class FuncSymbolNative : FuncSymbol
 }
 
 
-#if (BHL_FRONT || BHL_PARSER)
+#if (BHL_FRONT || BHL_PARSER || UNITY_EDITOR)
 //NOTE: lambda symbol is ephemeral and it exists only during compilation,
 //      maybe there should actually be one for consistency?
 public class LambdaSymbol : FuncSymbolScript

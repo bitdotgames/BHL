@@ -6,6 +6,36 @@ build:
 publish:
 	dotnet publish bhl.csproj
 
+# --- Unity package version ---------------------------------------------------
+# Mirror the version from src/vm/version.cs (source of truth) into the Unity
+# package.json as bare SemVer (leading 'v' stripped).
+.PHONY: sync-unity-version
+sync-unity-version:
+	@ver=$$(sed -nE 's/.*Name[[:space:]]*=[[:space:]]*"v?([^"]+)".*/\1/p' src/vm/version.cs); \
+	tmp=$$(mktemp); \
+	jq --arg v "$$ver" '.version = $$v' src/package.json > $$tmp && mv $$tmp src/package.json; \
+	echo "src/package.json version -> $$ver"
+
+# --- Unity package CHANGELOG -------------------------------------------------
+# Regenerate src/CHANGELOG.md from the repo's GitHub Releases (unity-v* tags).
+# Requires the `gh` CLI (authenticated) and `jq`.
+.PHONY: sync-unity-changelog
+sync-unity-changelog:
+	@tmp=$$(mktemp); \
+	gh api "repos/{owner}/{repo}/releases" --paginate \
+	  | jq -s '(add // []) | map(select(.tag_name|startswith("unity-v"))) | sort_by(.published_at) | reverse' > $$tmp; \
+	n=$$(jq 'length' < $$tmp); \
+	if [ "$$n" -eq 0 ]; then echo "No unity-v* releases found; leaving src/CHANGELOG.md unchanged."; rm -f $$tmp; exit 0; fi; \
+	{ \
+	  echo "# Changelog"; \
+	  echo; \
+	  echo "Generated from GitHub Releases (unity-v*) by 'make sync-unity-changelog' — do not edit by hand."; \
+	  echo; \
+	  jq -r '.[] | "## [\(.tag_name|ltrimstr("unity-v"))] - \(.published_at[0:10])\n\n\(.body // "" | gsub("\r";""))\n"' < $$tmp; \
+	} > src/CHANGELOG.md; \
+	rm -f $$tmp; \
+	echo "Wrote src/CHANGELOG.md ($$n release(s))."
+
 # --- self-contained, dotnet-free bhl binaries (one file per platform) --------
 DIST_DIR ?= ./build/dist
 STANDALONE_RIDS := linux-x64 linux-arm64 osx-x64 osx-arm64 win-x64

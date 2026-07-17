@@ -1,0 +1,58 @@
+name: Release Unity SDK
+
+# The Unity package version lives in src/package.json and is the single source
+# of truth. Bumping it on master (or running this manually) creates the matching
+# unity-v<version> tag and publishes the release in one job — no separate tag
+# push (a GITHUB_TOKEN-pushed tag would not trigger a second workflow anyway).
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/package.json"
+  workflow_dispatch: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version and check whether it is already released
+        id: v
+        run: |
+          ver=$(jq -r .version src/package.json)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          if git ls-remote origin "refs/tags/unity-v$ver" | grep -q .; then
+            echo "exists=1" >> "$GITHUB_OUTPUT"
+            echo "unity-v$ver already exists — nothing to release."
+          else
+            echo "exists=0" >> "$GITHUB_OUTPUT"
+            echo "New version $ver — tagging and releasing."
+          fi
+
+      - name: Create and push tag
+        if: steps.v.outputs.exists == '0'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "unity-v${{ steps.v.outputs.version }}" -m "Unity SDK ${{ steps.v.outputs.version }}"
+          git push origin "unity-v${{ steps.v.outputs.version }}"
+
+      - name: Pack UPM tarball
+        if: steps.v.outputs.exists == '0'
+        run: |
+          # exactly the committed src/ tree, under a package/ root (npm layout)
+          git archive --prefix=package/ --format=tar "HEAD:src" \
+            | gzip -n > "com.bitgames.bhl-${{ steps.v.outputs.version }}.tgz"
+
+      - name: Create GitHub release
+        if: steps.v.outputs.exists == '0'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: unity-v${{ steps.v.outputs.version }}
+          files: com.bitgames.bhl-${{ steps.v.outputs.version }}.tgz
+          generate_release_notes: true
+          prerelease: ${{ contains(steps.v.outputs.version, 'alpha') || contains(steps.v.outputs.version, 'beta') || contains(steps.v.outputs.version, 'rc') }}
