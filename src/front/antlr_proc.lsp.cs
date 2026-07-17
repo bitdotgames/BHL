@@ -23,6 +23,8 @@ public partial class ANTLR_Processor
     Property = 7,
     Operator = 8,
     Parameter = 9,
+    Namespace = 10,
+    Enum      = 11,
   }
 
   [Flags]
@@ -48,7 +50,9 @@ public partial class ANTLR_Processor
       "keyword",
       "property",
       "operator",
-      "parameter"
+      "parameter",
+      "namespace",
+      "enum"
     };
 
     public static string[] modifiers =

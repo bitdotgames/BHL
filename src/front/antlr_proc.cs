@@ -2671,6 +2671,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
 
     LSP_AddSemanticToken(ctx.ENUM(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.NAME(), SemanticToken.Enum);
 
     var enum_name = ctx.NAME().GetText();
 

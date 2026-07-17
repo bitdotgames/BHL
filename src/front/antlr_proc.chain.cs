@@ -184,6 +184,10 @@ public partial class ANTLR_Processor
       if(!(name_symb is Namespace ns) || _chain.items.Count == 0)
         return;
 
+      // Root name is itself a namespace (e.g. 'Unit' in 'Unit.Foo') — highlight it as such
+      // so it reads distinctly from a class name or a variable.
+      _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Namespace);
+
       _scope = ns;
       for(_offset = 0; _offset < _chain.items.Count; )
       {
@@ -205,7 +209,11 @@ public partial class ANTLR_Processor
         ++_offset;
 
         if(name_symb is Namespace name_ns)
+        {
+          // Intermediate segment is also a namespace (e.g. the middle part of 'a.b.Foo')
+          _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Namespace);
           _scope = name_ns;
+        }
         else
           break;
       }
@@ -425,6 +433,9 @@ public partial class ANTLR_Processor
           }
           else if(name_symb is EnumSymbol enum_symb)
           {
+            // Enum type name used as a qualifier (e.g. 'Color' in 'Color.Red') —
+            // highlight it distinctly from a namespace, a class, or a regular variable.
+            _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Enum);
             if(is_leftover)
             {
               _proc.AddError(_curr_name, $"'{nameText}' is an enum type and cannot be used as a value");
@@ -440,6 +451,9 @@ public partial class ANTLR_Processor
           }
           else if(name_symb is ClassSymbol class_symb)
           {
+            // Class name used as a value/qualifier (e.g. 'MyClass' in 'MyClass.StaticFoo()') —
+            // highlight it distinctly from a namespace or a regular variable.
+            _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Class);
             if(is_leftover)
               _proc.AddError(_curr_name, $"'{nameText}' is a class type and cannot be used as a value");
             _curr_type = class_symb;

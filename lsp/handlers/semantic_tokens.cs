@@ -41,7 +41,9 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
       SemanticTokenType.Keyword,
       SemanticTokenType.Property,
       SemanticTokenType.Operator,
-      SemanticTokenType.Parameter
+      SemanticTokenType.Parameter,
+      SemanticTokenType.Namespace,
+      SemanticTokenType.Enum
     };
 
     IEnumerable<SemanticTokenModifier> tokenModifiers = new []
