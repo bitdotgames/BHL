@@ -459,8 +459,31 @@ public class Workspace
       if(document != null)
         AddLocalVarCompletions(document, position, items, seen);
 
+      AddKeywordCompletions(items);
+
       return items;
     }
+  }
+
+  // Language keywords (grammar/bhlLexer.g) aren't symbols in any scope — e.g. 'yield' compiles
+  // down to a call of the hidden native '$yield', and 'paral'/'paral_all'/'defer' are pure
+  // syntax — so they're never offered by the symbol-based completion paths above. List them
+  // explicitly so statement/expression-position completion still suggests them.
+  static readonly string[] _keywords =
+  {
+    "if", "else", "while", "do", "for", "foreach", "in",
+    "break", "continue", "return", "yield",
+    "paral", "paral_all", "defer",
+    "as", "is", "typeof", "new",
+    "namespace", "class", "interface", "enum",
+    "virtual", "override", "static", "coro", "func", "ref",
+    "import", "null", "false", "true",
+  };
+
+  static void AddKeywordCompletions(List<CompletionItem> items)
+  {
+    foreach(var kw in _keywords)
+      items.Add(new CompletionItem { Label = kw, Kind = CompletionItemKind.Keyword });
   }
 
   public SignatureHelp GetSignatureHelp(DocumentUri uri, Position position)
@@ -1058,23 +1081,20 @@ public class Workspace
     List<CompletionItem> items, HashSet<Symbol> seen, Symbol sym, string label,
     Dictionary<string, TextEdit> import_edits = null)
   {
+    // '$'-prefixed names (e.g. '$yield', the hidden native backing the 'yield' keyword) are
+    // compiler-internal — the NAME token can't start with '$' (grammar/bhlLexer.g), so BHL
+    // source can never reference them by name. Keep them out of completions.
+    if(sym.name != null && sym.name.StartsWith("$"))
+      return;
+
     if(!seen.Add(sym))
       return;
 
-    bool is_native = sym is FuncSymbolNative || sym is ClassSymbolNative || sym is EnumSymbolNative;
-    // Strip any existing "[native] " prefix from ToString() — we'll re-append it at the end.
-    // For class/enum symbols, ToString() returns only the name; prepend the kind keyword.
-    var base_desc = sym.ToString();
-    if(base_desc.StartsWith("[native] "))
-      base_desc = base_desc.Substring("[native] ".Length);
-    if(sym is ClassSymbol)
-      base_desc = "class " + base_desc;
-    else if(sym is EnumSymbol)
-      base_desc = "enum " + base_desc;
-
+    bool is_native = sym is FuncSymbolNative || sym is ClassSymbolNative
+      || sym is EnumSymbolNative || sym is InterfaceSymbolNative;
     var module_name = GetSymbolModuleName(sym);
     var suffix = (is_native ? " [native]" : "") + (module_name != null ? $" [{module_name}]" : "");
-    var detail = suffix.Length > 0 ? base_desc + suffix : base_desc;
+    var detail = suffix.Length > 0 ? DescribeSymbolKind(sym) + suffix : DescribeSymbolKind(sym);
 
     TextEditContainer additional_edits = null;
     if(import_edits != null && module_name != null && import_edits.TryGetValue(module_name, out var import_edit))
@@ -1087,6 +1107,31 @@ public class Workspace
       Detail = detail,
       AdditionalTextEdits = additional_edits,
     });
+  }
+
+  // Human-readable description of a symbol, used in both completion item details and hover text.
+  // Symbol.ToString() only returns the bare name for class/enum/interface/namespace symbols,
+  // so this prepends the kind keyword to make the meaning unambiguous (e.g. "enum EnumUnit"
+  // rather than just "EnumUnit"). Does NOT include the "[native]"/"[module]" suffix used in
+  // completion details — that's noise in a hover tooltip for a symbol already in view.
+  public static string DescribeSymbolKind(Symbol sym)
+  {
+    // Strip any existing "[native] " prefix from ToString() — completion details re-append it.
+    var desc = sym.ToString();
+    if(desc.StartsWith("[native] "))
+      desc = desc.Substring("[native] ".Length);
+
+    if(sym is ClassSymbol)
+      return "class " + desc;
+    if(sym is EnumSymbol)
+      return "enum " + desc;
+    if(sym is InterfaceSymbol)
+      return "interface " + desc;
+    // Namespace.ToString() appends " -> N" for linked-shadow entries (an internal marker
+    // of import re-export depth) — use the bare name instead, that detail is not user-facing.
+    if(sym is Namespace)
+      return "namespace " + sym.name;
+    return desc;
   }
 
   // Walks up the scope chain to find the module name for a symbol.

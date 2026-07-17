@@ -40,7 +40,7 @@ public class TextDocumentHoverHandler : HoverHandlerBase
         new  MarkupContent()
         {
           Kind = MarkupKind.PlainText,
-          Value = symb.ToString()
+          Value = Workspace.DescribeSymbolKind(symb)
         }
       )
     };

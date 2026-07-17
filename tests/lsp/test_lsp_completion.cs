@@ -458,6 +458,40 @@ public class TestLSPCompletion : TestLSPShared, IDisposable
   }
 
   [Fact]
+  public async Task hidden_builtin_not_in_global_completions()
+  {
+    await SendInit(srv);
+
+    var result = await GetCompletions(srv, uri6);
+    var labels = result.Items.Select(i => i.Label).ToHashSet();
+
+    // '$yield' backs the 'yield' keyword but is not itself a callable/referenceable symbol
+    Assert.DoesNotContain("$yield", labels);
+    // sibling builtins registered the same way should still be offered
+    Assert.Contains("start", labels);
+    Assert.Contains("wait", labels);
+  }
+
+  [Fact]
+  public async Task control_flow_keywords_in_global_completions()
+  {
+    await SendInit(srv);
+
+    var result = await GetCompletions(srv, uri6);
+    var keyword_items = result.Items.Where(i => i.Kind == CompletionItemKind.Keyword).ToList();
+    var labels = keyword_items.Select(i => i.Label).ToHashSet();
+
+    // control structures aren't symbols in any scope, so they need to be listed explicitly
+    Assert.Contains("yield", labels);
+    Assert.Contains("paral", labels);
+    Assert.Contains("paral_all", labels);
+    Assert.Contains("defer", labels);
+    Assert.Contains("if", labels);
+    Assert.Contains("while", labels);
+    Assert.Contains("return", labels);
+  }
+
+  [Fact]
   public async Task non_imported_class_member_completions()
   {
     await SendInit(srv);

@@ -185,8 +185,11 @@ public partial class ANTLR_Processor
         return;
 
       // Root name is itself a namespace (e.g. 'Unit' in 'Unit.Foo') — highlight it as such
-      // so it reads distinctly from a class name or a variable.
+      // so it reads distinctly from a class name or a variable, and annotate it so hover/
+      // go-to-definition/find-refs work on it (WalkItem, which normally does this, is
+      // bypassed for namespace segments — they're resolved inline in this loop instead).
       _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Namespace);
+      _proc.LSP_SetSymbol(_curr_name, ns);
 
       _scope = ns;
       for(_offset = 0; _offset < _chain.items.Count; )
@@ -212,6 +215,7 @@ public partial class ANTLR_Processor
         {
           // Intermediate segment is also a namespace (e.g. the middle part of 'a.b.Foo')
           _proc.LSP_AddSemanticToken(_curr_name, SemanticToken.Namespace);
+          _proc.LSP_SetSymbol(_curr_name, name_ns);
           _scope = name_ns;
         }
         else
