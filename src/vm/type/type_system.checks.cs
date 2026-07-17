@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace bhl
 {
 
-#if (BHL_FRONT || BHL_PARSER)
+#if (BHL_FRONT || BHL_PARSER || UNITY_EDITOR)
 public partial class Types : INamedResolver, IProxyTypeCache
 {
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>()

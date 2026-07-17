@@ -1,4 +1,4 @@
-#if (BHL_FRONT || BHL_PARSER)
+#if (BHL_FRONT || BHL_PARSER || UNITY_EDITOR)
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 #endif
@@ -49,7 +49,7 @@ public struct SourceRange
     this.end = start;
   }
 
-#if (BHL_FRONT || BHL_PARSER)
+#if (BHL_FRONT || BHL_PARSER || UNITY_EDITOR)
   public SourceRange(Antlr4.Runtime.Misc.Interval interval, ITokenStream tokens)
   {
     var a = tokens.Get(interval.a);
