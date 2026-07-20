@@ -55,8 +55,10 @@ public class Workspace
       Path.GetDirectoryName(path),
       Path.GetFileName(path))
     {
-      NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size,
-      EnableRaisingEvents = true,
+      // FileName included alongside LastWrite/Size — it's part of .NET's own default
+      // NotifyFilter combination and is documented as relevant to create/rename detection.
+      NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
+        | System.IO.NotifyFilters.FileName,
     };
     // External build tools rarely rewrite the DLL in place (which would raise Changed);
     // they typically build to a temp file and atomically replace the destination (rename-over,
@@ -65,6 +67,12 @@ public class Workspace
     _bindingsWatcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
     _bindingsWatcher.Created += (_, _) => BindingsDllChanged?.Invoke();
     _bindingsWatcher.Renamed += (_, _) => BindingsDllChanged?.Invoke();
+    // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
+    // watch mask/dispatch appears to be tied to which handlers are attached at the moment
+    // raising starts, so flipping this on first (as the previous code did, via the object
+    // initializer) can silently end up not watching for anything meaningful. This ordering
+    // is also what Microsoft's own FileSystemWatcher examples use.
+    _bindingsWatcher.EnableRaisingEvents = true;
   }
 
   public void Shutdown()
