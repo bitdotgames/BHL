@@ -386,6 +386,41 @@ public class TestLSPShared : BHL_TestBase
     return result;
   }
 
+  // Reconstructs the resulting file text after applying a list of (startLine, startChar, endLine,
+  // endChar, newText) edits to the original text — lets tests assert on exact surrounding
+  // characters (e.g. that a "(" right after a renamed identifier survives) instead of just edit
+  // counts/newText, which is what let an off-by-one range bug through undetected.
+  public static string ApplyEditsToText(string text, List<(int sl, int sc, int el, int ec, string newText)> edits)
+  {
+    var lines = new List<string>(text.Replace("\r\n", "\n").Split('\n'));
+
+    int OffsetOf(int line, int col)
+    {
+      int offset = 0;
+      for(int i = 0; i < line; i++)
+        offset += lines[i].Length + 1; // +1 for the newline joining this line to the next
+      return offset + col;
+    }
+
+    var flat = string.Join("\n", lines);
+
+    var sorted = new List<(int sl, int sc, int el, int ec, string newText)>(edits);
+    // Apply from the last edit to the first so earlier offsets stay valid as the string shrinks/grows.
+    sorted.Sort((a, b) => {
+      int c = b.sl.CompareTo(a.sl);
+      if(c != 0) return c;
+      return b.sc.CompareTo(a.sc);
+    });
+
+    foreach(var e in sorted)
+    {
+      int start = OffsetOf(e.sl, e.sc);
+      int end = OffsetOf(e.el, e.ec);
+      flat = flat.Substring(0, start) + e.newText + flat.Substring(end);
+    }
+    return flat;
+  }
+
   public static async Task<LocationContainer> FindReferences(TestLSPHost srv, DocumentUri uri, string needle)
   {
     var pos = FindPos(File.ReadAllText(uri.PathNormalized()), needle);

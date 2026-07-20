@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using bhl.lsp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -105,6 +106,25 @@ public class TestLSPRename : TestLSPShared, IDisposable
     // bhl2: call "test1(24)"
     var bhl2_edits = edits.FindAll(e => e.file == uri2.PathNormalized());
     Assert.Equal(1, bhl2_edits.Count);
+
+    // Regression check: the identifier is immediately followed by "(" at every occurrence here
+    // (declaration and both calls) — a prior off-by-one bug extended each edit's range one
+    // character too far right, silently eating that "(" instead of just replacing the identifier.
+    var bhl1_result = ApplyEditsToText(bhl1, ToRanges(bhl1_edits));
+    Assert.Contains("renamed1(float k)", bhl1_result);
+    Assert.Contains("renamed1(42)", bhl1_result);
+
+    var bhl2_result = ApplyEditsToText(bhl2, ToRanges(bhl2_edits));
+    Assert.Contains("renamed1(24)", bhl2_result);
+  }
+
+  private static List<(int sl, int sc, int el, int ec, string newText)> ToRanges(
+    List<(string file, int sl, int sc, int el, int ec, string newText)> edits)
+  {
+    var result = new List<(int sl, int sc, int el, int ec, string newText)>();
+    foreach(var e in edits)
+      result.Add((e.sl, e.sc, e.el, e.ec, e.newText));
+    return result;
   }
 
   [Fact]

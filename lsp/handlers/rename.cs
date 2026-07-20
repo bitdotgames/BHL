@@ -63,9 +63,9 @@ public class TextDocumentRenameHandler : RenameHandlerBase
         by_uri[uri_key] = entry;
         uri_order.Add(uri_key);
       }
-      // FindRefs stores inclusive end positions (ANTLR convention); LSP needs exclusive end.
-      var range = new Range(loc.Range.Start, new Position(loc.Range.End.Line, loc.Range.End.Character + 1));
-      entry.Edits.Add(new TextEdit { Range = range, NewText = new_name });
+      // loc.Range already went through FromAntlr2LspRange() inside FindRefs, which converts
+      // ANTLR's inclusive end-column to LSP's exclusive end (+1) — using it as-is here.
+      entry.Edits.Add(new TextEdit { Range = loc.Range, NewText = new_name });
     }
 
     var document_changes = uri_order.Select(k => (WorkspaceEditDocumentChange)new TextDocumentEdit
