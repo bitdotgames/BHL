@@ -16,65 +16,91 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--debug-info]");
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--debug-info] " +
+      "[--bindings-only] [--postproc-only]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
 
   [Task]
-  public static ThreadTask compile(Taskman tm, string[] args)
+  public static async ThreadTask compile(Taskman tm, string[] args)
   {
+    bool bindings_only = false;
+    bool postproc_only = false;
+
+    var flags = new OptionSet()
+    {
+      {
+        "bindings-only", "only prebuild bindings_dll from bindings_sources (C# or .bhl), then exit",
+        v => bindings_only = v != null
+      },
+      {
+        "postproc-only", "only prebuild postproc_dll from postproc_sources, then exit",
+        v => postproc_only = v != null
+      }
+    };
+    args = flags.Parse(args).ToArray();
+
     string proj_file;
     var runtime_args = GetProjectArg(args, out proj_file);
 
-    var proj = new ProjectConfShort();
+    var proj = new ProjectConf();
     if(!string.IsNullOrEmpty(proj_file))
-      proj = ProjectConfShort.ReadFromFile(proj_file);
+      proj = ProjectConf.ReadFromFile(proj_file);
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
-    var bindings_sources = proj.bindings_sources.Where(f => f.EndsWith(".cs")).ToList();
-    if(bindings_sources.Count > 0)
-    {
-      if(string.IsNullOrEmpty(proj.bindings_dll))
-        throw new Exception("Resulting 'bindings_dll' is not set");
-
-      if(!proj.bindings_dll.EndsWith(".dll"))
-        throw new Exception("Resulting 'bindings_dll' invalid extension: " + proj.bindings_dll);
-
-      bindings_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
-      string bindings_dll_path = DotnetBuildLibrary(
-        tm,
-        force_rebuild,
-        bindings_sources.ToArray(),
-        proj.bindings_dll,
-        new List<string>() { "BHL_FRONT" }
-      );
+    string bindings_dll_path = BuildBindingsDll(tm, force_rebuild, proj);
+    if(bindings_dll_path != null)
       runtime_args.Add($"--bindings-dll={bindings_dll_path}");
-    }
 
-    var postproc_sources = proj.postproc_sources;
-    if(postproc_sources.Count > 0)
-    {
-      if(string.IsNullOrEmpty(proj.postproc_dll))
-        throw new Exception("Resulting 'postproc_dll' is not set");
-
-      if(!proj.postproc_dll.EndsWith(".dll"))
-        throw new Exception("Resulting 'postproc_dll' invalid extension: " + proj.postproc_dll);
-
-      postproc_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
-      postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
-      string postproc_dll_path = DotnetBuildLibrary(
-        tm,
-        force_rebuild,
-        postproc_sources.ToArray(),
-        proj.postproc_dll,
-        new List<string>() { "BHL_FRONT" }
-      );
+    string postproc_dll_path = BuildPostprocDll(tm, force_rebuild, proj);
+    if(postproc_dll_path != null)
       runtime_args.Add($"--postproc-dll={postproc_dll_path}");
+
+    if(bindings_only || postproc_only)
+    {
+      if(bindings_only)
+      {
+        //NOTE: unlike C# bindings_sources (built above via BuildBindingsDll), .bhl
+        //      bindings_sources are normally compiled lazily as a side effect of the
+        //      regular compile pipeline (ScriptedBindings.Register()); here we trigger
+        //      that same compile-and-cache step explicitly, without a host project to compile
+        if(bindings_dll_path == null)
+          bindings_dll_path = await BuildScriptedBindingsBytecode(proj);
+
+        Console.WriteLine(bindings_dll_path ?? $"No bindings_sources found in '{proj_file}', nothing to build");
+      }
+
+      if(postproc_only)
+        Console.WriteLine(postproc_dll_path ?? $"No postproc_sources found in '{proj_file}', nothing to build");
+
+      return;
     }
 
-    return _compile(runtime_args.ToArray(), force_rebuild);
+    await _compile(runtime_args.ToArray(), force_rebuild);
+  }
+
+  //NOTE: returns null if proj has no .bhl bindings_sources or proj.bindings_dll
+  //      isn't a .bhc bytecode path
+  static async System.Threading.Tasks.Task<string> BuildScriptedBindingsBytecode(ProjectConf proj)
+  {
+    var bhl_scripts = new List<string>();
+    foreach(var s in proj.bindings_sources.Where(f => f.EndsWith(".bhl")))
+      bhl_scripts.AddRange(BuildUtils.Glob(s));
+
+    if(bhl_scripts.Count == 0 || !proj.bindings_dll.EndsWith(".bhc"))
+      return null;
+
+    var vm = await CompilationExecutor.CompileAndLoadVM(
+      bhl_scripts,
+      use_cache: proj.use_cache,
+      bytecode_result_file: proj.bindings_dll
+    );
+    if(vm == null)
+      Environment.Exit(ERROR_EXIT_CODE);
+
+    return proj.bindings_dll;
   }
 
   static async ThreadTask _compile(string[] args, bool force_rebuild)

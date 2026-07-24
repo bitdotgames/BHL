@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using ThreadTask = System.Threading.Tasks.Task;
 
@@ -125,8 +126,12 @@ public static partial class Tasks
     if(!File.Exists(csproj_file) || File.ReadAllText(csproj_file) != csproj)
       BuildUtils.Write(csproj_file, csproj);
 
-    //let's add bhl binary as a dependency
-    deps.Add(BuildUtils.GetSelfFile());
+    //NOTE: using version.cs rather than the bhl binary itself as a dependency:
+    //      the binary's mtime changes on every rebuild regardless of whether its
+    //      actual compiled content changed, which would otherwise mark every
+    //      previously-built bindings/postproc dll stale after any bhl rebuild;
+    //      version.cs's mtime only changes when the version is deliberately bumped
+    deps.Add($"{BHL_ROOT}/src/vm/version.cs");
     //let's generated csproj as a dependency
     deps.Add(csproj_file);
 
@@ -152,6 +157,55 @@ public static partial class Tasks
     }
 
     return result_dll;
+  }
+
+  //NOTE: returns null if proj has no C# bindings_sources, in which case
+  //      proj.bindings_dll (if any) is assumed to already be a prebuilt dll
+  public static string BuildBindingsDll(Taskman tm, bool force_rebuild, ProjectConfShort proj)
+  {
+    var bindings_sources = proj.bindings_sources.Where(f => f.EndsWith(".cs")).ToList();
+    if(bindings_sources.Count == 0)
+      return null;
+
+    if(string.IsNullOrEmpty(proj.bindings_dll))
+      throw new Exception("Resulting 'bindings_dll' is not set");
+
+    if(!proj.bindings_dll.EndsWith(".dll"))
+      throw new Exception("Resulting 'bindings_dll' invalid extension: " + proj.bindings_dll);
+
+    bindings_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
+    return DotnetBuildLibrary(
+      tm,
+      force_rebuild,
+      bindings_sources.ToArray(),
+      proj.bindings_dll,
+      new List<string>() { "BHL_FRONT" }
+    );
+  }
+
+  //NOTE: returns null if proj has no C# postproc_sources, in which case
+  //      proj.postproc_dll (if any) is assumed to already be a prebuilt dll
+  public static string BuildPostprocDll(Taskman tm, bool force_rebuild, ProjectConfShort proj)
+  {
+    var postproc_sources = proj.postproc_sources.Where(f => f.EndsWith(".cs")).ToList();
+    if(postproc_sources.Count == 0)
+      return null;
+
+    if(string.IsNullOrEmpty(proj.postproc_dll))
+      throw new Exception("Resulting 'postproc_dll' is not set");
+
+    if(!proj.postproc_dll.EndsWith(".dll"))
+      throw new Exception("Resulting 'postproc_dll' invalid extension: " + proj.postproc_dll);
+
+    postproc_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
+    postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
+    return DotnetBuildLibrary(
+      tm,
+      force_rebuild,
+      postproc_sources.ToArray(),
+      proj.postproc_dll,
+      new List<string>() { "BHL_FRONT" }
+    );
   }
 
   public static string MakeLibraryCSProj(

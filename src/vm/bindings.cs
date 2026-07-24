@@ -42,7 +42,11 @@ public class DllBindings : IUserBindings
     }
 
     if(userbindings_class == null)
-      throw new Exception($"IUserBindings instance not found in '{dll_path}'");
+      throw new Exception(
+        $"IUserBindings instance not found in '{dll_path}'. " +
+        "Make sure it was built against the same bhl_front.dll used by this tool " +
+        "(e.g. not against bhl_runtime.dll, which defines its own distinct IUserBindings type)."
+      );
 
     try
     {
