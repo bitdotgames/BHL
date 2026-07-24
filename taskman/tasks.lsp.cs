@@ -61,7 +61,8 @@ public static partial class Tasks
       .Enrich.FromLogContext()
       .MinimumLevel.Verbose();
 
-    var silent = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_SILENT"));
+    var bhl_silent = Environment.GetEnvironmentVariable("BHL_SILENT");
+    var silent = !string.IsNullOrEmpty(bhl_silent) && bhl_silent != "0";
 
     if(!string.IsNullOrEmpty(log_file_path))
       logger_conf = logger_conf.WriteTo.File(log_file_path /*, rollingInterval: RollingInterval.Day*/);

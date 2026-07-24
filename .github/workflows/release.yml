@@ -71,7 +71,8 @@ jobs:
       # bundles the bhl/bhl.bat launcher scripts + prebuilt bhl.dll (and deps)
       # so `unzip && ./bhl <args>` (or bhl.bat on Windows) works with just the
       # .NET runtime installed, plus the src/ tree (same content as the Unity
-      # UPM package) so the DLLs can be swapped for source when embedding in Unity.
+      # UPM package) so the DLLs can be swapped for source when embedding in
+      # Unity, plus all other repo-root files (README, LICENSE, etc.).
       - name: Publish (framework-dependent)
         run: dotnet publish bhl.csproj -c Release
 
@@ -81,16 +82,18 @@ jobs:
           out="$stage/build/bhl/Release/net8.0"
           mkdir -p "$out" "$stage/src"
 
-          cp -r build/bhl/Release/net8.0/publish/. "$out/"
-          cp bhl "$stage/bhl"
+          for f in $(git ls-tree --name-only HEAD); do
+            [ -f "$f" ] && cp "$f" "$stage/$f"
+          done
           chmod +x "$stage/bhl"
-          cp bhl.bat "$stage/bhl.bat"
+
+          cp -r build/bhl/Release/net8.0/publish/. "$out/"
 
           git archive HEAD:src | tar -x -C "$stage/src"
 
           # keep bhl.dll's mtime newest so the launcher's staleness check
           # (BHL_DLL -ot VERSION_FILE) doesn't try to rebuild from a zip
-          # that has no bhl.csproj/SDK available
+          # that has no full source tree / SDK available
           touch "$out/bhl.dll"
 
       - name: Zip (framework-dependent)

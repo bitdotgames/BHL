@@ -6,8 +6,8 @@ set "PROJECT=%DIR%bhl.csproj"
 set "BHL_DLL=%DIR%build\bhl\Release\net8.0\bhl.dll"
 set "VERS=%DIR%src\vm\version.cs"
 
-set "VERBOSITY="
-IF DEFINED BHL_SILENT set "VERBOSITY=--verbosity q -nologo"
+set "VERBOSITY=--verbosity q -nologo"
+IF "%BHL_SILENT%"=="0" set "VERBOSITY="
 
 IF DEFINED BHL_REBUILD GOTO :BUILD
 IF NOT EXIST "%BHL_DLL%" GOTO :BUILD

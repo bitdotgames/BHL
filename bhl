@@ -21,9 +21,9 @@ elif [[ -n "${BHL_REBUILD:-}" ]]; then
   needs_rebuild=true
 fi
 
-VERBOSITY=""
-if [[ -n "${BHL_SILENT:-}" ]]; then
-  VERBOSITY="--verbosity q -nologo"
+VERBOSITY="--verbosity q -nologo"
+if [[ "${BHL_SILENT:-}" == "0" ]]; then
+  VERBOSITY=""
 fi
 
 if [[ "$needs_rebuild" == true ]]; then
