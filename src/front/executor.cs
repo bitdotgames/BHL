@@ -53,7 +53,8 @@ public class CompilationExecutor
     List<string> files,
     bool use_cache = false,
     string bytecode_result_file = null,
-    bool add_debug_info = false
+    bool add_debug_info = false,
+    string tmp_dir = null
   )
   {
     var proj = new ProjectConf();
@@ -67,7 +68,11 @@ public class CompilationExecutor
         proj.src_dirs.Add(dir);
     }
     proj.result_file = bytecode_result_file ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".bhc");
-    proj.tmp_dir = Path.GetTempPath();
+    //NOTE: falls back to the OS temp dir for callers with no project context of their
+    //      own (e.g. standalone 'bhl run <script.bhl>'); callers compiling on behalf of
+    //      a bhl.proj should pass its tmp_dir so per-file/import caches actually persist
+    //      across invocations instead of living in an OS-swept temp directory
+    proj.tmp_dir = string.IsNullOrEmpty(tmp_dir) ? Path.GetTempPath() : tmp_dir;
     proj.verbosity = 0;
     proj.Setup();
 

@@ -78,9 +78,13 @@ public static partial class Tasks
     bool force,
     string[] srcs,
     string result,
-    List<string> defines
+    List<string> defines,
+    string tmp_dir
   )
   {
+    if(string.IsNullOrEmpty(tmp_dir))
+      throw new Exception("'tmp_dir' is not set");
+
     var files = new List<string>();
     foreach(var s in srcs)
       files.AddRange(BuildUtils.Glob(s));
@@ -120,8 +124,10 @@ public static partial class Tasks
 
     string result_dll = result + "/" + Path.GetFileName(result);
 
-    //TODO: use system temporary directory for that?
-    var csproj_file = result + ".csproj";
+    //NOTE: kept in tmp_dir (rather than alongside 'result') so the generated
+    //      csproj and its 'obj' dir don't clutter a dist/release folder that's
+    //      meant to hold only the final built dll
+    var csproj_file = tmp_dir + "/" + Path.GetFileName(result) + ".csproj";
     Directory.CreateDirectory(Path.GetDirectoryName(csproj_file));
     if(!File.Exists(csproj_file) || File.ReadAllText(csproj_file) != csproj)
       BuildUtils.Write(csproj_file, csproj);
@@ -132,7 +138,7 @@ public static partial class Tasks
     //      previously-built bindings/postproc dll stale after any bhl rebuild;
     //      version.cs's mtime only changes when the version is deliberately bumped
     deps.Add($"{BHL_ROOT}/src/vm/version.cs");
-    //let's generated csproj as a dependency
+    //let's add generated csproj as a dependency
     deps.Add(csproj_file);
 
     if(force ||
@@ -161,7 +167,7 @@ public static partial class Tasks
 
   //NOTE: returns null if proj has no C# bindings_sources, in which case
   //      proj.bindings_dll (if any) is assumed to already be a prebuilt dll
-  public static string BuildBindingsDll(Taskman tm, bool force_rebuild, ProjectConfShort proj)
+  public static string BuildBindingsDll(Taskman tm, bool force_rebuild, ProjectConf proj)
   {
     var bindings_sources = proj.bindings_sources.Where(f => f.EndsWith(".cs")).ToList();
     if(bindings_sources.Count == 0)
@@ -179,13 +185,14 @@ public static partial class Tasks
       force_rebuild,
       bindings_sources.ToArray(),
       proj.bindings_dll,
-      new List<string>() { "BHL_FRONT" }
+      new List<string>() { "BHL_FRONT" },
+      proj.tmp_dir
     );
   }
 
   //NOTE: returns null if proj has no C# postproc_sources, in which case
   //      proj.postproc_dll (if any) is assumed to already be a prebuilt dll
-  public static string BuildPostprocDll(Taskman tm, bool force_rebuild, ProjectConfShort proj)
+  public static string BuildPostprocDll(Taskman tm, bool force_rebuild, ProjectConf proj)
   {
     var postproc_sources = proj.postproc_sources.Where(f => f.EndsWith(".cs")).ToList();
     if(postproc_sources.Count == 0)
@@ -204,7 +211,8 @@ public static partial class Tasks
       force_rebuild,
       postproc_sources.ToArray(),
       proj.postproc_dll,
-      new List<string>() { "BHL_FRONT" }
+      new List<string>() { "BHL_FRONT" },
+      proj.tmp_dir
     );
   }
 

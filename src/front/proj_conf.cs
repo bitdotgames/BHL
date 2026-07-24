@@ -31,12 +31,22 @@ public class ProjectConfShort
   //         (e.g. bindings.dll/bindings.dll)
   public string bindings_dll = "";
 
+  //NOTE: if true, bindings_dll is never auto-rebuilt from bindings_sources during a normal
+  //      compile - only an explicit '--bindings-only' (or BHL_REBUILD) rebuilds it. Useful
+  //      when bindings_dll is a prebuilt artifact committed to the repo: bindings_sources can
+  //      still be listed for documentation/manual rebuilds without risking an unwanted rebuild
+  //      of the committed dll (e.g. on a fresh checkout where tmp_dir's cache doesn't exist yet)
+  public bool bindings_manual_build = false;
+
   //NOTE: list of .cs sources which are built into posproc_dll
   public List<string> postproc_sources = new List<string>();
 
   //NOTE: this can be a directory path as well containing an actual dll
   //      (posproc.dll/postproc.dll)
   public string postproc_dll = "";
+
+  //NOTE: same as bindings_manual_build, but for postproc_dll/postproc_sources
+  public bool postproc_manual_build = false;
 
   public void Setup()
   {
@@ -154,7 +164,7 @@ public class ProjectConf : ProjectConfShort
       return new DllBindings(bindings_dll);
 
     if(TryGetScriptedBindings(out var bindings_scripts, out string func_name, out var bindings_bytecode_file))
-      return new ScriptedBindings(bindings_scripts, func_name, use_cache, bindings_bytecode_file);
+      return new ScriptedBindings(bindings_scripts, func_name, use_cache, bindings_bytecode_file, tmp_dir);
 
     return new EmptyUserBindings();
   }

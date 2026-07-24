@@ -75,18 +75,21 @@ public class ScriptedBindings : IUserBindings
   string func_name;
   bool use_cache;
   string bytecode_file;
+  string tmp_dir;
 
   public ScriptedBindings(
     List<string> script_paths,
     string func_name,
     bool use_cache = false,
-    string bytecode_file = null
+    string bytecode_file = null,
+    string tmp_dir = null
   )
   {
     this.script_paths = script_paths;
     this.func_name = func_name;
     this.use_cache = use_cache;
     this.bytecode_file = bytecode_file;
+    this.tmp_dir = tmp_dir;
   }
 
   public void Register(Types ts)
@@ -96,7 +99,8 @@ public class ScriptedBindings : IUserBindings
     var vm = CompilationExecutor.CompileAndLoadVM(
       script_paths,
       use_cache: use_cache,
-      bytecode_result_file: bytecode_file
+      bytecode_result_file: bytecode_file,
+      tmp_dir: tmp_dir
     ).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("Failed to initialize scripted bindings");

@@ -50,11 +50,20 @@ public static partial class Tasks
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
-    string bindings_dll_path = BuildBindingsDll(tm, force_rebuild, proj);
+    //NOTE: *_manual_build opts a prebuilt/committed dll out of the normal auto-rebuild
+    //      check - bindings_sources/postproc_sources can still be listed for documentation
+    //      and manual rebuilds (--bindings-only/--postproc-only), without an unwanted
+    //      rebuild firing during a plain compile (e.g. on a fresh checkout where tmp_dir's
+    //      cache doesn't exist yet, which would otherwise make the committed dll look stale)
+    string bindings_dll_path = null;
+    if(!proj.bindings_manual_build || bindings_only || force_rebuild)
+      bindings_dll_path = BuildBindingsDll(tm, force_rebuild, proj);
     if(bindings_dll_path != null)
       runtime_args.Add($"--bindings-dll={bindings_dll_path}");
 
-    string postproc_dll_path = BuildPostprocDll(tm, force_rebuild, proj);
+    string postproc_dll_path = null;
+    if(!proj.postproc_manual_build || postproc_only || force_rebuild)
+      postproc_dll_path = BuildPostprocDll(tm, force_rebuild, proj);
     if(postproc_dll_path != null)
       runtime_args.Add($"--postproc-dll={postproc_dll_path}");
 
@@ -95,7 +104,8 @@ public static partial class Tasks
     var vm = await CompilationExecutor.CompileAndLoadVM(
       bhl_scripts,
       use_cache: proj.use_cache,
-      bytecode_result_file: proj.bindings_dll
+      bytecode_result_file: proj.bindings_dll,
+      tmp_dir: proj.tmp_dir
     );
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);

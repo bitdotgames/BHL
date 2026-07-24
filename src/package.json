@@ -1,7 +1,7 @@
 {
   "name": "com.bitgames.bhl",
   "displayName": "BHL Runtime",
-  "version": "3.0.0-alpha92",
+  "version": "3.0.0-alpha93",
   "description": "BHL is a strictly typed programming language tailored for gameplay logic scripting, combining pseudo-parallel execution primitives with a familiar imperative coding style. This package embeds the BHL runtime (and optional in-editor compiler) into Unity.",
   "unity": "2021.3",
   "license": "MIT",
