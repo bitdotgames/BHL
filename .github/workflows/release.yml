@@ -91,11 +91,6 @@ jobs:
 
           git archive HEAD:src | tar -x -C "$stage/src"
 
-          # keep bhl.dll's mtime newest so the launcher's staleness check
-          # (BHL_DLL -ot VERSION_FILE) doesn't try to rebuild from a zip
-          # that has no full source tree / SDK available
-          touch "$out/bhl.dll"
-
       - name: Zip (framework-dependent)
         run: |
           cd "$RUNNER_TEMP/bhl-bundle"

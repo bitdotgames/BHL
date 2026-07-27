@@ -8,14 +8,11 @@ SCRIPT_DIR="$(
 )"
 
 PROJECT_FILE="$SCRIPT_DIR/bhl.csproj"
-VERSION_FILE="$SCRIPT_DIR/src/vm/version.cs"
 BHL_DLL="$SCRIPT_DIR/build/bhl/Release/net8.0/bhl.dll"
 
 needs_rebuild=false
 
 if [[ ! -f "$BHL_DLL" ]]; then
-  needs_rebuild=true
-elif [[ "$BHL_DLL" -ot "$VERSION_FILE" ]]; then
   needs_rebuild=true
 elif [[ -n "${BHL_REBUILD:-}" ]]; then
   needs_rebuild=true
@@ -35,9 +32,6 @@ if [[ "$needs_rebuild" == true ]]; then
 
     dotnet publish "$PROJECT_FILE" $VERBOSITY
   )
-
-  # Refresh timestamp if the publish created the DLL.
-  [[ -f "$BHL_DLL" ]] && touch "$BHL_DLL"
 fi
 
 exec dotnet "$BHL_DLL" "$@"
