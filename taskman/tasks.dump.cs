@@ -2,7 +2,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Mono.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -117,16 +116,6 @@ public static partial class Tasks
         mod["name"] = name;
         mod["format"] = mod_fmt.ToString();
         mod["size"] = blob_len;
-
-        //NOTE: FMT_FILE_REF entries store a file path instead of the module bytes,
-        //      let's resolve it to report the actual referenced file size
-        if(mod_fmt == ModuleBinaryFormat.FMT_FILE_REF)
-        {
-          string file_ref = Encoding.UTF8.GetString(blob, 0, blob_len);
-          mod["file_ref"] = file_ref;
-          if(File.Exists(file_ref))
-            mod["file_ref_size"] = new FileInfo(file_ref).Length;
-        }
 
         ArrayPool<byte>.Shared.Return(blob);
 

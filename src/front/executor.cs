@@ -24,6 +24,13 @@ public class CompileConf
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public int max_errors_num = 100;
   public bool add_debug_info = true;
+
+  //NOTE: populated internally at the start of Exec(); a single consolidated
+  //      cache file (instead of two files per source file) to avoid Windows'
+  //      per-file I/O overhead (AV scanning, NTFS metadata churn) on projects
+  //      with many source files
+  public CompileCacheBlob cache_blob;
+  public long run_ticks;
 }
 
 public class CompilationResult
@@ -46,6 +53,9 @@ public class CompilationExecutor
   public int cache_hits { get; private set; }
   public int cache_miss { get; private set; }
   public int cache_errs { get; private set; }
+
+  List<(string file, long write_ticks, byte[] bytes)> pending_maybe_imports_entries =
+    new List<(string file, long write_ticks, byte[] bytes)>();
 
   //NOTE: compiles all files *but loads the module from the file at index 0*,
   //      returns null in case of compilation errors
@@ -186,6 +196,13 @@ public class CompilationExecutor
       return;
     }
 
+    //NOTE: loaded regardless of use_cache so that a run with caching disabled
+    //      (e.g. a forced rebuild) doesn't wipe out entries a later cached run
+    //      could still reuse; use_cache only gates whether we *read* from it
+    conf.cache_blob = CompileCacheBlob.Load(GetCacheBlobFile(conf.proj.tmp_dir));
+    conf.run_ticks = DateTime.Now.Ticks;
+    pending_maybe_imports_entries.Clear();
+
     if(conf.ts == null)
       conf.ts = new Types();
 
@@ -254,6 +271,13 @@ public class CompilationExecutor
           {
             await Task.Run(worker.Phase2_WriteByteCode, token);
             return worker;
+          })
+        .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
+          "BHL cache blob write",
+          (workers) =>
+          {
+            WriteCacheBlob(conf, workers);
+            return workers;
           })
         .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
           "BHL compile finalize",
@@ -450,6 +474,8 @@ public class CompilationExecutor
       cache_miss += pw.cache_miss;
       cache_errs += pw.cache_errs;
 
+      pending_maybe_imports_entries.AddRange(pw.maybe_imports_cache_entries);
+
       errors.AddRange(pw.errors);
     }
 
@@ -576,20 +602,18 @@ public class CompilationExecutor
         {
           if(file_idx >= cw.start && file_idx < cw.start + cw.count)
           {
-            var path = cw.file2interim[file].module_path;
-            var compiled_file = cw.file2interim[file].compiled_file;
+            var interim = cw.file2interim[file];
+            var path = interim.module_path;
 
             mwriter.Write((byte)conf.proj.module_fmt);
             mwriter.Write(path.name);
 
             if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_BIN)
-              mwriter.Write(File.ReadAllBytes(compiled_file));
+              mwriter.Write(interim.compiled_bytes);
 #if BHL_LZ4
             else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4)
-              mwriter.Write(EncodeToLZ4(File.ReadAllBytes(compiled_file)));
+              mwriter.Write(EncodeToLZ4(interim.compiled_bytes));
 #endif
-            else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
-              mwriter.Write(compiled_file);
             else
               throw new Exception("Unsupported format: " + conf.proj.module_fmt);
 
@@ -598,6 +622,50 @@ public class CompilationExecutor
         }
       }
     }
+  }
+
+  void WriteCacheBlob(CompileConf conf, List<ProcAndCompileWorker> workers)
+  {
+    var maybe_imports_fresh = new Dictionary<string, (long ticks, byte[] bytes)>();
+    foreach(var e in pending_maybe_imports_entries)
+      maybe_imports_fresh[e.file] = (e.write_ticks, e.bytes);
+
+    var compiled_fresh = new Dictionary<string, (long ticks, byte[] bytes)>();
+    if(workers.Count > 0)
+    {
+      var file2interim = workers[0].file2interim;
+      foreach(var file in conf.files)
+      {
+        if(file2interim.TryGetValue(file, out var interim) && interim.compiled_bytes != null)
+          compiled_fresh[file] = (interim.compiled_write_ticks, interim.compiled_bytes);
+      }
+    }
+
+    var writer = new CompileCacheBlob.Writer();
+
+    //NOTE: for whichever files this run didn't (re)write, fall back to
+    //      whatever was already in the blob rather than dropping it -
+    //      e.g. use_cache=false only forces a fresh compile, it shouldn't
+    //      also throw away a previously cached imports scan
+    foreach(var file in conf.files)
+    {
+      if(maybe_imports_fresh.TryGetValue(file, out var fresh_maybe_imports))
+        writer.AddMaybeImports(file, fresh_maybe_imports.ticks, fresh_maybe_imports.bytes);
+      else if(conf.cache_blob.TryGetMaybeImports(file, out var old_bytes, out var old_ticks))
+        writer.AddMaybeImports(file, old_ticks, old_bytes);
+
+      if(compiled_fresh.TryGetValue(file, out var fresh_compiled))
+        writer.AddCompiled(file, fresh_compiled.ticks, fresh_compiled.bytes);
+      else if(conf.cache_blob.TryGetCompiled(file, out var old_cbytes, out var old_cticks))
+        writer.AddCompiled(file, old_cticks, old_cbytes);
+    }
+
+    writer.Save(GetCacheBlobFile(conf.proj.tmp_dir));
+  }
+
+  public static string GetCacheBlobFile(string tmp_dir)
+  {
+    return tmp_dir + "/cache.blob";
   }
 
   static bool CheckArgsSignatureFile(CompileConf conf)
@@ -648,6 +716,8 @@ public class CompilationExecutor
     public int cache_hits;
     public int cache_miss;
     public int cache_errs;
+    public List<(string file, long write_ticks, byte[] bytes)> maybe_imports_cache_entries =
+      new List<(string file, long write_ticks, byte[] bytes)>();
     string current_file;
 
     public void Parse()
@@ -683,21 +753,22 @@ public class CompilationExecutor
         if(conf.self_file.Length > 0)
           deps.Add(conf.self_file);
 
-        var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, current_file);
-
         var interim = new ProjectCompilationStateBundle.InterimParseResult();
         interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
         interim.imports_maybe = imports_maybe;
-        interim.compiled_file = compiled_file;
 
-        bool use_cache = conf.proj.use_cache && !BuildUtils.NeedToRegen(compiled_file, deps);
+        bool use_cache;
 
-        if(use_cache)
+        if(conf.proj.use_cache &&
+           conf.cache_blob.TryGetCompiled(current_file, out var cached_bytes, out var write_ticks) &&
+           !CompileCacheBlob.IsStale(write_ticks, deps))
         {
           try
           {
-            interim.cached = ModuleDeclared.FromFile(compiled_file, conf.ts);
-            ++cache_hits;
+            interim.cached = ModuleDeclared.FromStream(conf.ts, new MemoryStream(cached_bytes));
+            interim.compiled_bytes = cached_bytes;
+            interim.compiled_write_ticks = write_ticks;
+            use_cache = true;
           }
           catch(Exception)
           {
@@ -705,8 +776,16 @@ public class CompilationExecutor
             ++cache_errs;
           }
         }
+        else
+        {
+          use_cache = false;
+        }
 
-        if(!use_cache)
+        if(use_cache)
+        {
+          ++cache_hits;
+        }
+        else
         {
           //for parsing time debug
           //var sw = Stopwatch.StartNew();
@@ -730,43 +809,36 @@ public class CompilationExecutor
 
     FileImports GetMaybeImports(string file, FileStream fsf)
     {
-      var imports = TryReadImportsCache(file);
-      if(imports == null)
+      if(conf.proj.use_cache &&
+         conf.cache_blob.TryGetMaybeImports(file, out var cached_bytes, out var write_ticks) &&
+         !CompileCacheBlob.IsStale(write_ticks, file))
       {
-        imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
-        TryWriteImportsCache(file, imports);
+        try
+        {
+          var cached = Marshall.Stream2Obj<FileImports>(new MemoryStream(cached_bytes));
+          maybe_imports_cache_entries.Add((file, write_ticks, cached_bytes));
+          return cached;
+        }
+        catch
+        {
+          //NOTE: fall through and reparse below
+        }
+      }
+
+      var imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
+
+      if(conf.proj.use_cache)
+      {
+        byte[] bytes;
+        using(var ms = new MemoryStream())
+        {
+          Marshall.Obj2Stream(imports, ms);
+          bytes = ms.ToArray();
+        }
+        maybe_imports_cache_entries.Add((file, conf.run_ticks, bytes));
       }
 
       return imports;
-    }
-
-    FileImports TryReadImportsCache(string file)
-    {
-      var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
-
-      if(!conf.proj.use_cache || BuildUtils.NeedToRegen(cache_imports_file, file))
-        return null;
-
-      try
-      {
-        return Marshall.File2Obj<FileImports>(cache_imports_file);
-      }
-      catch
-      {
-        return null;
-      }
-    }
-
-    void WriteImportsCache(string file, FileImports imports)
-    {
-      var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
-      Marshall.Obj2File(imports, cache_imports_file);
-    }
-
-    void TryWriteImportsCache(string file, FileImports imports)
-    {
-      if(conf.proj.use_cache)
-        WriteImportsCache(file, imports);
     }
 
     //TODO: this one doesn't take into account commented imports!
@@ -903,7 +975,14 @@ public class CompilationExecutor
         if(file2compiler.TryGetValue(current_file, out var c))
         {
           var module = c.Compile_Finish();
-          module.ToFile(interim.compiled_file);
+
+          using(var ms = new MemoryStream())
+          {
+            module.ToStream(ms, leave_open: true);
+            interim.compiled_bytes = ms.ToArray();
+          }
+          interim.compiled_write_ticks = conf.run_ticks;
+
           file2module.Add(current_file, module);
         }
       }
@@ -939,16 +1018,6 @@ public class CompilationExecutor
 
       return false;
     }
-  }
-
-  public static string GetCompiledCacheFile(string cache_dir, string file)
-  {
-    return cache_dir + "/" + Path.GetFileName(file) + "_" + Hash.CRC32(file) + ".compile.cache";
-  }
-
-  public static string GetImportsCacheFile(string cache_dir, string file)
-  {
-    return cache_dir + "/" + Hash.CRC32(file) + ".imports.cache";
   }
 
   public static bool TestFile(string file)

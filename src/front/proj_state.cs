@@ -12,13 +12,19 @@ public class ProjectCompilationStateBundle
   public class InterimParseResult
   {
     public ModulePath module_path;
-    public string compiled_file;
     public FileImports imports_maybe;
 
     public ANTLR_Parsed parsed;
 
     //NOTE: if not null, it's a compiled module cached result
     public ModuleDeclared cached;
+
+    //NOTE: raw serialized bytes of the compiled module (either read from a
+    //      cache hit or freshly compiled), used to persist into the cache
+    //      blob and to build the final result file without a standalone
+    //      per-file bytecode file
+    public byte[] compiled_bytes;
+    public long compiled_write_ticks;
   }
 
   public Types types;

@@ -10,7 +10,6 @@ public enum ModuleBinaryFormat
 {
   FMT_BIN      = 0,
   FMT_LZ4      = 1,
-  FMT_FILE_REF = 2,
 }
 
 public interface IModuleLoader
@@ -145,21 +144,6 @@ public class ModuleLoader : IModuleLoader
 
       ArrayPool<byte>.Shared.Return(lz_buf);
       ArrayPool<byte>.Shared.Return(dst_buf);
-    }
-    else if(ent.format == ModuleBinaryFormat.FMT_FILE_REF)
-    {
-      int tmp_buf_len = 0;
-      reader.SetPos(ent.stream_pos);
-      reader.ReadRawBegin(ref tmp_buf_len);
-      var tmp_buf = ArrayPool<byte>.Shared.Rent(tmp_buf_len);
-      reader.ReadRawEnd(tmp_buf);
-      string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
-      var file_bytes = File.ReadAllBytes(file_path);
-      bytes = file_bytes;
-      bytes_len = file_bytes.Length;
-      return_to_pool = false;
-
-      ArrayPool<byte>.Shared.Return(tmp_buf);
     }
     else
       throw new Exception("Unknown format: " + ent.format);

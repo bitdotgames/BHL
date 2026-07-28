@@ -132,13 +132,6 @@ public class Workspace
     return Task.CompletedTask;
   }
 
-  string GetCompiledCacheFile(string file)
-  {
-    if(string.IsNullOrEmpty(ProjConf.tmp_dir))
-      return null;
-    return CompilationExecutor.GetCompiledCacheFile(ProjConf.tmp_dir, file);
-  }
-
   ProjectCompilationStateBundle BuildBundle()
     => new (Types, Path2Proc);
 
