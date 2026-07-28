@@ -590,6 +590,16 @@ public class CompilationExecutor
       mwriter.Write(ModuleLoader.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
+      if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4_CHUNKED)
+      {
+#if BHL_LZ4
+        WriteChunkedModules(conf, compiler_workers, mwriter);
+#else
+        throw new Exception("Unsupported format: " + conf.proj.module_fmt);
+#endif
+        return;
+      }
+
       int total_modules = conf.files.Count;
       mwriter.Write(total_modules);
 
@@ -623,6 +633,80 @@ public class CompilationExecutor
       }
     }
   }
+
+#if BHL_LZ4
+  //NOTE: modules are grouped into chunks (never splitting a single module
+  //      across two chunks) and each chunk is LZ4-compressed as a whole,
+  //      since compressing many small modules together compacts noticeably
+  //      better than LZ4-ing each one individually
+  void WriteChunkedModules(CompileConf conf, List<ProcAndCompileWorker> compiler_workers, MsgPack.MsgPackWriter mwriter)
+  {
+    var module_names = new string[conf.files.Count];
+    var module_bytes = new byte[conf.files.Count][];
+
+    //NOTE: chunk boundaries depend on the cumulative size across the whole
+    //      file list, not on any single worker's own slice, so we need
+    //      every module's bytes gathered up-front before we can chunk them
+    for(int file_idx = 0; file_idx < conf.files.Count; ++file_idx)
+    {
+      var file = conf.files[file_idx];
+
+      foreach(var cw in compiler_workers)
+      {
+        if(file_idx >= cw.start && file_idx < cw.start + cw.count)
+        {
+          var interim = cw.file2interim[file];
+          module_names[file_idx] = interim.module_path.name;
+          module_bytes[file_idx] = interim.compiled_bytes;
+          break;
+        }
+      }
+    }
+
+    var locators = new (int chunk_index, int offset, int length)[module_bytes.Length];
+    var chunks = new List<byte[]>();
+
+    var chunk_buffer = new MemoryStream();
+    for(int i = 0; i < module_bytes.Length; ++i)
+    {
+      var bytes = module_bytes[i];
+      locators[i] = (chunks.Count, (int)chunk_buffer.Position, bytes.Length);
+      chunk_buffer.Write(bytes, 0, bytes.Length);
+
+      bool last = i == module_bytes.Length - 1;
+      if(chunk_buffer.Position >= conf.proj.lz4_chunk_size || last)
+      {
+        chunks.Add(EncodeToLZ4(chunk_buffer.ToArray()));
+        chunk_buffer = new MemoryStream();
+      }
+    }
+
+    mwriter.Write(module_bytes.Length + chunks.Count);
+
+    for(int i = 0; i < module_bytes.Length; ++i)
+    {
+      mwriter.Write((byte)ModuleBinaryFormat.FMT_LZ4_CHUNKED);
+      mwriter.Write(module_names[i]);
+      mwriter.Write(EncodeChunkLocator(locators[i]));
+    }
+
+    for(int i = 0; i < chunks.Count; ++i)
+    {
+      mwriter.Write((byte)ModuleBinaryFormat.FMT_LZ4_CHUNKED);
+      mwriter.Write(ModuleLoader.CHUNK_ENTRY_NAME_PREFIX + i);
+      mwriter.Write(chunks[i]);
+    }
+  }
+
+  static byte[] EncodeChunkLocator((int chunk_index, int offset, int length) loc)
+  {
+    var bytes = new byte[12];
+    Buffer.BlockCopy(BitConverter.GetBytes(loc.chunk_index), 0, bytes, 0, 4);
+    Buffer.BlockCopy(BitConverter.GetBytes(loc.offset), 0, bytes, 4, 4);
+    Buffer.BlockCopy(BitConverter.GetBytes(loc.length), 0, bytes, 8, 4);
+    return bytes;
+  }
+#endif
 
   void WriteCacheBlob(CompileConf conf, List<ProcAndCompileWorker> workers)
   {

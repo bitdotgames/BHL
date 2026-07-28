@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>] [--debug-info] " +
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
       "[--bindings-only] [--postproc-only]");
     Console.WriteLine(msg);
     Environment.Exit(1);

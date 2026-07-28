@@ -97,6 +97,10 @@ public class ProjectConf : ProjectConfShort
   }
 
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
+  //NOTE: only used when module_fmt is FMT_LZ4_CHUNKED - modules are
+  //      accumulated into a chunk up to roughly this many bytes before
+  //      it's LZ4-compressed as a whole and a new chunk is started
+  public int lz4_chunk_size = 128 * 1024;
 
   public List<string> inc_dirs = new List<string>();
   [JsonIgnore] public IncludePath inc_path = new IncludePath();

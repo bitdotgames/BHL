@@ -1856,4 +1856,89 @@ public class TestModule : BHL_TestBase
     Assert.Equal(3, loader.Misses);
     Assert.Equal(3, loader.Count);
   }
+
+  [Fact]
+  public async Task TestChunkedModuleFormatSingleChunk()
+  {
+    string file_a = @"
+      func int A() { return 111 }
+    ";
+    string file_b = @"
+      func int B() { return 222 }
+    ";
+    string file_c = @"
+      func int C() { return 333 }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("a.bhl", file_a, ref files);
+    NewTestFile("b.bhl", file_b, ref files);
+    NewTestFile("c.bhl", file_c, ref files);
+
+    var conf = MakeCompileConf(files, max_threads: 1);
+    conf.proj.module_fmt = ModuleBinaryFormat.FMT_LZ4_CHUNKED;
+    //NOTE: huge threshold - forces all 3 modules into a single shared chunk
+    conf.proj.lz4_chunk_size = 10 * 1024 * 1024;
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, await CompileFiles(conf));
+
+    var vm = new VM(ts, loader);
+
+    //NOTE: loading out of declared order on purpose, to exercise the
+    //      decompressed-chunk cache being reused across modules that
+    //      share the same chunk
+    vm.LoadModule("c");
+    Assert.Equal(333, Execute(vm, "C").Stack.Pop().num);
+
+    vm.LoadModule("a");
+    Assert.Equal(111, Execute(vm, "A").Stack.Pop().num);
+
+    vm.LoadModule("b");
+    Assert.Equal(222, Execute(vm, "B").Stack.Pop().num);
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public async Task TestChunkedModuleFormatManyChunks()
+  {
+    string file_a = @"
+      func int A() { return 111 }
+    ";
+    string file_b = @"
+      func int B() { return 222 }
+    ";
+    string file_c = @"
+      func int C() { return 333 }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("a.bhl", file_a, ref files);
+    NewTestFile("b.bhl", file_b, ref files);
+    NewTestFile("c.bhl", file_c, ref files);
+
+    var conf = MakeCompileConf(files, max_threads: 1);
+    conf.proj.module_fmt = ModuleBinaryFormat.FMT_LZ4_CHUNKED;
+    //NOTE: tiny threshold - forces every module into its own chunk
+    conf.proj.lz4_chunk_size = 1;
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, await CompileFiles(conf));
+
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("a");
+    Assert.Equal(111, Execute(vm, "A").Stack.Pop().num);
+
+    vm.LoadModule("b");
+    Assert.Equal(222, Execute(vm, "B").Stack.Pop().num);
+
+    vm.LoadModule("c");
+    Assert.Equal(333, Execute(vm, "C").Stack.Pop().num);
+
+    CommonChecks(vm);
+  }
 }

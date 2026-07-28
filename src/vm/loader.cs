@@ -8,8 +8,13 @@ namespace bhl
 
 public enum ModuleBinaryFormat
 {
-  FMT_BIN      = 0,
-  FMT_LZ4      = 1,
+  FMT_BIN         = 0,
+  FMT_LZ4         = 1,
+  //NOTE: same idea as FMT_LZ4, but modules are grouped into chunks and each
+  //      chunk is LZ4-compressed as a whole (rather than each module on its
+  //      own) - compressing many small modules together achieves better
+  //      compaction than compressing each one individually
+  FMT_LZ4_CHUNKED = 2,
 }
 
 public interface IModuleLoader
@@ -20,6 +25,11 @@ public interface IModuleLoader
 public class ModuleLoader : IModuleLoader
 {
   public const byte COMPILE_FMT = 2;
+
+  //NOTE: reserved module-name prefix (a NUL can never appear in a real
+  //      file-path-derived module name) marking an entry as a FMT_LZ4_CHUNKED
+  //      compressed chunk rather than a loadable module
+  public const string CHUNK_ENTRY_NAME_PREFIX = "\0chunk";
 
   Types types;
   Stream source;
@@ -37,6 +47,13 @@ public class ModuleLoader : IModuleLoader
 
   Dictionary<string, Entry> name2entry = new Dictionary<string, Entry>();
 
+  //NOTE: chunk index -> stream position of its (still compressed) raw blob
+  Dictionary<int, long> chunk_stream_pos = new Dictionary<int, long>();
+  //NOTE: chunk index -> decompressed bytes, populated lazily and kept for
+  //      the lifetime of this loader so that N modules sharing a chunk only
+  //      pay for decompressing it once
+  Dictionary<int, byte[]> chunk_cache = new Dictionary<int, byte[]>();
+
   public ModuleLoader(Types types, Stream source)
   {
     this.types = types;
@@ -46,6 +63,8 @@ public class ModuleLoader : IModuleLoader
   void Init(Stream source_)
   {
     name2entry.Clear();
+    chunk_stream_pos.Clear();
+    chunk_cache.Clear();
 
     source = source_;
     source.Position = 0;
@@ -74,12 +93,20 @@ public class ModuleLoader : IModuleLoader
       string name = "";
       reader.ReadString(ref name);
 
-      var ent = new Entry();
-      ent.format = (ModuleBinaryFormat)format;
-      ent.stream_pos = source.Position;
-      if(name2entry.ContainsKey(name))
-        throw new Exception("Key already exists: " + name);
-      name2entry.Add(name, ent);
+      if(name.StartsWith(CHUNK_ENTRY_NAME_PREFIX))
+      {
+        int chunk_index = int.Parse(name.Substring(CHUNK_ENTRY_NAME_PREFIX.Length));
+        chunk_stream_pos[chunk_index] = source.Position;
+      }
+      else
+      {
+        var ent = new Entry();
+        ent.format = (ModuleBinaryFormat)format;
+        ent.stream_pos = source.Position;
+        if(name2entry.ContainsKey(name))
+          throw new Exception("Key already exists: " + name);
+        name2entry.Add(name, ent);
+      }
 
       //skipping binary blob
       int tmp_buf_len = 0;
@@ -145,8 +172,60 @@ public class ModuleLoader : IModuleLoader
       ArrayPool<byte>.Shared.Return(lz_buf);
       ArrayPool<byte>.Shared.Return(dst_buf);
     }
+    else if(ent.format == ModuleBinaryFormat.FMT_LZ4_CHUNKED)
+    {
+      reader.SetPos(ent.stream_pos);
+      int loc_len = 0;
+      reader.ReadRawBegin(ref loc_len);
+      var loc_buf = ArrayPool<byte>.Shared.Rent(loc_len);
+      reader.ReadRawEnd(loc_buf);
+
+      int chunk_index = BitConverter.ToInt32(loc_buf, 0);
+      int chunk_offset = BitConverter.ToInt32(loc_buf, 4);
+      int module_len = BitConverter.ToInt32(loc_buf, 8);
+      ArrayPool<byte>.Shared.Return(loc_buf);
+
+      var chunk_buf = GetDecompressedChunk(chunk_index);
+
+      var module_buf = new byte[module_len];
+      Array.Copy(chunk_buf, chunk_offset, module_buf, 0, module_len);
+
+      bytes = module_buf;
+      bytes_len = module_len;
+      return_to_pool = false;
+    }
     else
       throw new Exception("Unknown format: " + ent.format);
+  }
+
+  byte[] GetDecompressedChunk(int chunk_index)
+  {
+    if(chunk_cache.TryGetValue(chunk_index, out var cached))
+      return cached;
+
+    reader.SetPos(chunk_stream_pos[chunk_index]);
+    int lz_buf_len = 0;
+    reader.ReadRawBegin(ref lz_buf_len);
+    var lz_buf = ArrayPool<byte>.Shared.Rent(lz_buf_len);
+    reader.ReadRawEnd(lz_buf);
+
+    var lz_size = (int)BitConverter.ToUInt32(lz_buf, 0);
+    //NOTE: unlike the single-module FMT_LZ4 path, this buffer is cached for
+    //      the loader's lifetime, so it must be its own dedicated array
+    //      rather than a pooled/shared one
+    var dst_buf = new byte[lz_size];
+
+    using(var dst_stream = new MemoryStream(dst_buf, 0, dst_buf.Length, true))
+    {
+      lz_stream.SetData(lz_buf, 0, lz_buf_len);
+      decoder.Reset(lz_stream);
+      decoder.CopyTo(dst_stream);
+    }
+
+    ArrayPool<byte>.Shared.Return(lz_buf);
+
+    chunk_cache[chunk_index] = dst_buf;
+    return dst_buf;
   }
 }
 
