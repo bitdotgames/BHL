@@ -594,10 +594,10 @@ public class CompilationExecutor
       {
 #if BHL_LZ4
         WriteChunkedModules(conf, compiler_workers, mwriter);
+        return;
 #else
         throw new Exception("Unsupported format: " + conf.proj.module_fmt);
 #endif
-        return;
       }
 
       int total_modules = conf.files.Count;
