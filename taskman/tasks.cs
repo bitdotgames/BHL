@@ -60,19 +60,6 @@ public static partial class Tasks
     return ThreadTask.CompletedTask;
   }
 
-  [Task]
-  public static ThreadTask clean(Taskman tm, string[] args)
-  {
-    //touching version file which is used for detection of bhl dll
-    //'staleness' in top level scripts
-    BuildUtils.Touch($"{BHL_ROOT}/src/vm/version.cs", DateTime.Now);
-
-    //invoking dotnet clean to remove all build products
-    tm.TryShell("dotnet", $"clean {BHL_ROOT}/bhl.csproj");
-
-    return ThreadTask.CompletedTask;
-  }
-
   public static string DotnetBuildLibrary(
     Taskman tm,
     bool force,
