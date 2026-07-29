@@ -10,26 +10,17 @@ SCRIPT_DIR="$(
 PROJECT_FILE="$SCRIPT_DIR/bhl.csproj"
 BHL_DLL="$SCRIPT_DIR/build/bhl/Release/net8.0/bhl.dll"
 
-needs_rebuild=false
-
-if [[ ! -f "$BHL_DLL" ]]; then
-  needs_rebuild=true
-elif [[ -n "${BHL_REBUILD:-}" ]]; then
-  needs_rebuild=true
-fi
-
-VERBOSITY="--verbosity q -nologo"
-if [[ "${BHL_SILENT:-}" == "0" ]]; then
-  VERBOSITY=""
-fi
-
-if [[ "$needs_rebuild" == true ]]; then
+if [[ -n "${BHL_REBUILD:-}" ]]; then
   (
+    VERBOSITY="--verbosity q -nologo"
+    if [[ "${BHL_SILENT:-}" == "0" ]]; then
+      VERBOSITY=""
+    fi
+
     cd "$SCRIPT_DIR"
 
     # Best-effort clean; do not fail the whole script if clean fails.
     dotnet clean "$PROJECT_FILE" $VERBOSITY || true
-
     dotnet publish "$PROJECT_FILE" $VERBOSITY
   )
 fi
