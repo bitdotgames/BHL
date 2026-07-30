@@ -1,4 +1,4 @@
-#if (BHL_FRONT || BHL_PARSER || UNITY_EDITOR)
+#if (BHL_PARSER || UNITY_EDITOR)
 
 using System;
 using System.Collections.Generic;
