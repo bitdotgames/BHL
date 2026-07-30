@@ -6,6 +6,7 @@ set "PROJECT=%DIR%bhl.csproj"
 set "BHL_DLL=%DIR%build\bhl\Release\net8.0\bhl.dll"
 
 IF DEFINED BHL_REBUILD GOTO :BUILD
+IF NOT EXIST "%BHL_DLL%" GOTO :BUILD
 GOTO :RUN
 
 :BUILD

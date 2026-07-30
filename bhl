@@ -10,7 +10,15 @@ SCRIPT_DIR="$(
 PROJECT_FILE="$SCRIPT_DIR/bhl.csproj"
 BHL_DLL="$SCRIPT_DIR/build/bhl/Release/net8.0/bhl.dll"
 
+needs_rebuild=false
+
 if [[ -n "${BHL_REBUILD:-}" ]]; then
+  needs_rebuild=true
+elif [[ ! -f "$BHL_DLL" ]]; then
+  needs_rebuild=true
+fi
+
+if [[ "$needs_rebuild" == true ]]; then
   (
     VERBOSITY="--verbosity q -nologo"
     if [[ "${BHL_SILENT:-}" == "0" ]]; then
