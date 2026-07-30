@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>bhl</RootNamespace>
-        <DefineConstants>BHL_FRONT</DefineConstants>
         <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
