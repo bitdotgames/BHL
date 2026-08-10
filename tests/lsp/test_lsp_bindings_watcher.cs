@@ -50,9 +50,40 @@ public class TestLSPBindingsWatcher : IDisposable
     return tcs.Task;
   }
 
+  // Some sandboxed/containerized shells run without access to the OS's file-change
+  // notification service (e.g. no Mach IPC to fseventsd on macOS), so a plain
+  // FileSystemWatcher never fires - through no fault of Workspace's watcher setup.
+  // Probe for that with a throwaway file before trusting a negative result below,
+  // so environments that genuinely can't deliver notifications skip instead of
+  // falsely failing, while a real regression still fails wherever notifications work
+  // (in particular the ubuntu-latest/windows-latest CI legs this suite targets).
+  async Task<bool> EnvironmentSupportsFileWatchingAsync()
+  {
+    var probe_path = Path.Combine(dir, "__canary__");
+    File.WriteAllText(probe_path, "0");
+
+    using var watcher = new FileSystemWatcher(dir, Path.GetFileName(probe_path))
+    {
+      NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+    };
+    var tcs = new TaskCompletionSource<bool>();
+    FileSystemEventHandler handler = (_, _) => tcs.TrySetResult(true);
+    watcher.Changed += handler;
+    watcher.Created += handler;
+    watcher.EnableRaisingEvents = true;
+
+    File.WriteAllText(probe_path, "1");
+
+    var winner = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(1)));
+    return winner == tcs.Task;
+  }
+
   [Fact]
   public async Task fires_on_in_place_rewrite()
   {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
     var conf = new ProjectConf { bindings_dll = dll_path };
     workspace.Init(new Types(), conf);
 
@@ -65,6 +96,9 @@ public class TestLSPBindingsWatcher : IDisposable
   [Fact]
   public async Task fires_on_atomic_replace_via_rename()
   {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
     var conf = new ProjectConf { bindings_dll = dll_path };
     workspace.Init(new Types(), conf);
 
