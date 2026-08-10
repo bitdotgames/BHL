@@ -9,73 +9,11 @@ using Newtonsoft.Json;
 namespace bhl
 {
 
-//NOTE: representing only part of the original ProjectConf
-public class ProjectConfShort
-{
-  public static ProjectConfShort ReadFromFile(string file_path)
-  {
-    var proj = JsonConvert.DeserializeObject<ProjectConfShort>(File.ReadAllText(file_path));
-    proj.proj_file = file_path;
-    proj.Setup();
-    return proj;
-  }
-
-  [JsonIgnore] public string proj_file = "";
-
-  //NOTE: 1) if there are .bhl scripts they will be built into a bindings_dll (if it's present)
-  //      2) if there are .cs sources they will be built into a bindings_dll
-  public List<string> bindings_sources = new List<string>();
-
-  //NOTE: 1) in case of .bhl bindings it's assumed to have a .bhc extension
-  //      2) in case of .cs sources this can be a directory path as well containing an actual dll
-  //         (e.g. bindings.dll/bindings.dll)
-  public string bindings_dll = "";
-
-  //NOTE: if true, bindings_dll is never auto-rebuilt from bindings_sources during a normal
-  //      compile - only an explicit '--bindings-only' (or BHL_REBUILD) rebuilds it. Useful
-  //      when bindings_dll is a prebuilt artifact committed to the repo: bindings_sources can
-  //      still be listed for documentation/manual rebuilds without risking an unwanted rebuild
-  //      of the committed dll (e.g. on a fresh checkout where tmp_dir's cache doesn't exist yet)
-  public bool bindings_manual_build = false;
-
-  //NOTE: list of .cs sources which are built into posproc_dll
-  public List<string> postproc_sources = new List<string>();
-
-  //NOTE: this can be a directory path as well containing an actual dll
-  //      (posproc.dll/postproc.dll)
-  public string postproc_dll = "";
-
-  //NOTE: same as bindings_manual_build, but for postproc_dll/postproc_sources
-  public bool postproc_manual_build = false;
-
-  public void Setup()
-  {
-    for (int i = 0; i < bindings_sources.Count; ++i)
-      bindings_sources[i] = NormalizePath(proj_file, bindings_sources[i]);
-    bindings_dll = NormalizePath(proj_file, bindings_dll);
-
-    for (int i = 0; i < postproc_sources.Count; ++i)
-      postproc_sources[i] = NormalizePath(proj_file, postproc_sources[i]);
-    postproc_dll = NormalizePath(proj_file, postproc_dll);
-  }
-
-  public static string NormalizePath(string proj_file, string file_path)
-  {
-    if(Path.IsPathRooted(file_path))
-      return BuildUtils.NormalizeFilePath(file_path);
-
-    if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
-      return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
-
-    return file_path;
-  }
-}
-
-public class ProjectConf : ProjectConfShort
+public class ProjectConf
 {
   const string FILE_NAME = "bhl.proj";
 
-  public new static ProjectConf ReadFromFile(string file_path)
+  public static ProjectConf ReadFromFile(string file_path)
   {
     var proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(file_path));
     proj.proj_file = file_path;
@@ -119,9 +57,43 @@ public class ProjectConf : ProjectConfShort
 
   public const string DefaultBindingsScriptName = "RegisterBindings";
 
-  public new void Setup()
+  [JsonIgnore] public string proj_file = "";
+
+  //NOTE: 1) if there are .bhl scripts they will be built into a bindings_dll (if it's present)
+  //      2) if there are .cs sources they will be built into a bindings_dll
+  public List<string> bindings_sources = new List<string>();
+
+  //NOTE: 1) in case of .bhl bindings it's assumed to have a .bhc extension
+  //      2) in case of .cs sources this can be a directory path as well containing an actual dll
+  //         (e.g. bindings.dll/bindings.dll)
+  public string bindings_dll = "";
+
+  //NOTE: if true, bindings_dll is never auto-rebuilt from bindings_sources during a normal
+  //      compile - only an explicit '--bindings-only' (or BHL_REBUILD) rebuilds it. Useful
+  //      when bindings_dll is a prebuilt artifact committed to the repo: bindings_sources can
+  //      still be listed for documentation/manual rebuilds without risking an unwanted rebuild
+  //      of the committed dll (e.g. on a fresh checkout where tmp_dir's cache doesn't exist yet)
+  public bool bindings_manual_build = false;
+
+  //NOTE: list of .cs sources which are built into posproc_dll
+  public List<string> postproc_sources = new List<string>();
+
+  //NOTE: this can be a directory path as well containing an actual dll
+  //      (posproc.dll/postproc.dll)
+  public string postproc_dll = "";
+
+  //NOTE: same as bindings_manual_build, but for postproc_dll/postproc_sources
+  public bool postproc_manual_build = false;
+
+  public void Setup()
   {
-    base.Setup();
+    for (int i = 0; i < bindings_sources.Count; ++i)
+      bindings_sources[i] = NormalizePath(proj_file, bindings_sources[i]);
+    bindings_dll = NormalizePath(proj_file, bindings_dll);
+
+    for (int i = 0; i < postproc_sources.Count; ++i)
+      postproc_sources[i] = NormalizePath(proj_file, postproc_sources[i]);
+    postproc_dll = NormalizePath(proj_file, postproc_dll);
 
     for(int i = 0; i < inc_dirs.Count; ++i)
     {
@@ -139,6 +111,17 @@ public class ProjectConf : ProjectConfShort
     result_file = NormalizePath(proj_file, result_file);
     tmp_dir = NormalizePath(proj_file, tmp_dir);
     error_file = NormalizePath(proj_file, error_file);
+  }
+
+  public static string NormalizePath(string proj_file, string file_path)
+  {
+    if(Path.IsPathRooted(file_path))
+      return BuildUtils.NormalizeFilePath(file_path);
+
+    if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
+      return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
+
+    return file_path;
   }
 
   bool TryGetScriptedBindings(
