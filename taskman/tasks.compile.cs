@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<module>=<dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<name>=<dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
       "[--bindings-only] [--postproc-only]");
     Console.WriteLine(msg);
     Environment.Exit(1);
@@ -31,7 +31,7 @@ public static partial class Tasks
     var flags = new OptionSet()
     {
       {
-        "bindings-only", "only prebuild each bindings module's dll from its sources (C# or .bhl), then exit",
+        "bindings-only", "only prebuild each bindings entry's dll from its sources (C# or .bhl), then exit",
         v => bindings_only = v != null
       },
       {
@@ -51,7 +51,7 @@ public static partial class Tasks
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
     //NOTE: manual_build opts a prebuilt/committed dll out of the normal auto-rebuild
-    //      check - a module's sources can still be listed for documentation and manual
+    //      check - an entry's sources can still be listed for documentation and manual
     //      rebuilds (--bindings-only/--postproc-only), without an unwanted rebuild firing
     //      during a plain compile (e.g. on a fresh checkout where tmp_dir's cache doesn't
     //      exist yet, which would otherwise make the committed dll look stale)
@@ -80,7 +80,7 @@ public static partial class Tasks
 
           //NOTE: unlike C# sources (built above via BuildBindingsDlls), .bhl sources are
           //      normally compiled lazily as a side effect of the regular compile pipeline
-          //      (ScriptedBindings.DeclareTypes()); here we trigger that same compile-and-cache
+          //      (ScriptedBindings.Register()); here we trigger that same compile-and-cache
           //      step explicitly, without a host project to compile
           var path = await BuildScriptedBindingsBytecode(proj, kv.Value);
           if(path != null)
@@ -103,8 +103,8 @@ public static partial class Tasks
     await _compile(runtime_args.ToArray(), force_rebuild);
   }
 
-  //NOTE: returns null if the module has no .bhl sources or its 'dll' isn't a .bhc bytecode path
-  static async System.Threading.Tasks.Task<string> BuildScriptedBindingsBytecode(ProjectConf proj, BindingsModuleConf b)
+  //NOTE: returns null if the entry has no .bhl sources or its 'dll' isn't a .bhc bytecode path
+  static async System.Threading.Tasks.Task<string> BuildScriptedBindingsBytecode(ProjectConf proj, BindingsEntryConf b)
   {
     var bhl_scripts = new List<string>();
     foreach(var s in b.sources.Where(f => f.EndsWith(".bhl")))
@@ -159,19 +159,19 @@ public static partial class Tasks
         v => proj.use_cache = v == null
       },
       {
-        "bindings-dll=", "bindings module dll file path, as <module>=<path> (repeatable)",
+        "bindings-dll=", "bindings entry dll file path, as <name>=<path> (repeatable)",
         v =>
         {
           int idx = v.IndexOf('=');
           if(idx < 0)
-            throw new OptionException("Expected --bindings-dll=<module>=<path>", "bindings-dll");
+            throw new OptionException("Expected --bindings-dll=<name>=<path>", "bindings-dll");
 
           string key = v.Substring(0, idx);
           string path = v.Substring(idx + 1);
 
           if(!proj.bindings.TryGetValue(key, out var b))
           {
-            b = new BindingsModuleConf();
+            b = new BindingsEntryConf();
             proj.bindings[key] = b;
           }
           b.dll = path;
@@ -238,9 +238,10 @@ public static partial class Tasks
       compile_usage("Tmp dir not set");
 
     IUserBindings bindings = null;
+    List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
     try
     {
-      bindings = proj.LoadBindings();
+      bindings = proj.LoadBindings(out required_bindings);
     }
     catch(Exception e)
     {
@@ -284,6 +285,7 @@ public static partial class Tasks
     conf.bindings = bindings;
     conf.postproc = postproc;
     conf.add_debug_info = add_debug_info;
+    conf.required_bindings = required_bindings;
 
     var executor = new CompilationExecutor();
     var result = await executor.Exec(conf);

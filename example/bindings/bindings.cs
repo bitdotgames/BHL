@@ -4,11 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace bhl {
 
-//NOTE: plain IUserBindings for simplicity here - see IUserBindingsExtended if you want
-//      to split declare-only (LSP-safe) from native attachment
 public class MyBindings : IUserBindings
 {
-  //NOTE: "example" matches this module's key in bhl.proj's `bindings` dict
+  //NOTE: "example" matches this entry's key in bhl.proj's `bindings` dict
   [ModuleInitializer]
   internal static void Init()
   {

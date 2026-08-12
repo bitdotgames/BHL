@@ -84,7 +84,7 @@ public static class ServerFactory
 
           proj ??= new ProjectConf();
 
-          proj.LoadBindings().DeclareTypes(types);
+          proj.LoadBindings().Register(types);
 
           workspace.Init(types, proj, logger);
         })

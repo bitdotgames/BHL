@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -118,6 +119,18 @@ public partial class VM : INamedResolver
       m.Setup(null);
       RegisterModule(m);
     }
+  }
+
+  //NOTE: the runtime-only counterpart to CompilationExecutor.CompileAndLoadVM - no compiler
+  //      frontend involved, just a compiled bundle's raw bytes. Registers whatever native
+  //      bindings the bundle declares as required (see BindingsRegistry.RegisterRequiredBindings)
+  //      before constructing the VM, since VM's own ctor snapshots types.modules as-is
+  public static VM FromBytecode(Stream bytecode, Types types = null)
+  {
+    types ??= new Types();
+    var loader = new ModuleLoader(types, bytecode);
+    BindingsRegistry.RegisterRequiredBindings(types, loader);
+    return new VM(types, loader);
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)

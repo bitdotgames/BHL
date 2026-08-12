@@ -11,32 +11,50 @@ public interface IUserBindings
   void Register(Types ts);
 }
 
-//NOTE: optional extension - implement IN ADDITION to IUserBindings to split registration
-//      into a declare-only phase (safe for LSP, no native dependency) and a phase that
-//      attaches the real implementation (FuncSymbolNative.cb, ClassSymbolNative.AttachNative()).
-//      Register()'s default body needs Unity's API Compatibility Level at .NET Standard
-//      2.1 (2021.2+) for default interface methods; on older targets just implement
-//      Register() yourself instead of relying on the default
-public interface IUserBindingsExtended : IUserBindings
+public class EmptyUserBindings : IUserBindings
 {
-  void DeclareTypes(Types ts);
-  void AttachDelegates(Types ts);
-
-  void IUserBindings.Register(Types ts)
+  public void Register(Types ts)
   {
-    DeclareTypes(ts);
-    AttachDelegates(ts);
   }
 }
 
-public class EmptyUserBindings : IUserBindingsExtended
+//NOTE: fingerprints the symbol shape an IUserBindings declares - lets a compiled .bhc
+//      detect at load time that the bindings it was compiled against have drifted
+//      (see BindingsRegistry.RegisterRequiredBindings)
+public static class BindingsHash
 {
-  public void DeclareTypes(Types ts)
+  //NOTE: a single XOR-folded CRC32, not a set - baseline signatures always appear
+  //      exactly once in any Types(), so XOR-ing it out below cancels them cleanly
+  static readonly uint baseline_crc = ComputeCrc(new Types().ns);
+
+  public static string Compute(IUserBindings bindings)
   {
+    var ts = new Types();
+    bindings.Register(ts);
+    return (ComputeCrc(ts.ns) ^ baseline_crc).ToString("x8");
   }
 
-  public void AttachDelegates(Types ts)
+  //NOTE: XOR-folding each symbol's own CRC32 is order-independent, so the walk below
+  //      needs no sorting or intermediate collection to combine them deterministically
+  static uint ComputeCrc(Symbol root)
   {
+    uint crc = 0;
+    Collect(root, ref crc);
+    return crc;
+  }
+
+  //NOTE: recurses into any nested scope (Namespace, ClassSymbol, ...) so class
+  //      methods/fields are fingerprinted too, not just top-level declarations
+  static void Collect(Symbol root, ref uint crc)
+  {
+    if(root is not IEnumerable<Symbol> scope)
+      return;
+
+    foreach(var m in scope)
+    {
+      crc ^= Hash.CRC32(root.GetName() + "::" + m);
+      Collect(m, ref crc);
+    }
   }
 }
 
@@ -51,7 +69,7 @@ public static class BindingsRegistry
   public static void Register(string name, Type type)
   {
     if(string.IsNullOrEmpty(name))
-      throw new Exception("Bindings module name must not be empty");
+      throw new Exception("Bindings entry name must not be empty");
     if(!typeof(IUserBindings).IsAssignableFrom(type))
       throw new Exception($"{type} does not implement {nameof(IUserBindings)}");
 
@@ -77,11 +95,40 @@ public static class BindingsRegistry
         if(e.name == name)
           yield return e.type;
   }
+
+  //NOTE: reads loader.RequiredBindings and registers matches into `ts`, so a caller with
+  //      just a .bhc doesn't need a ProjectConf/bhl.proj to know its dependencies. Both a
+  //      missing binding and a hash mismatch (see BindingsHash) are hard failures here,
+  //      right where the name is known - letting either pass silently just relocates the
+  //      failure to a much more confusing spot later (or, if nothing loaded happens to
+  //      reference it, no failure at all despite the binding being silently missing)
+  public static void RegisterRequiredBindings(Types ts, ModuleLoader loader)
+  {
+    foreach(var (name, expected_hash) in loader.RequiredBindings)
+    {
+      var type = GetByNames(new[] { name }).FirstOrDefault();
+      if(type == null)
+        throw new Exception(
+          $"Required bindings '{name}' not found - no IUserBindings self-registered " +
+          $"under that name (renamed? assembly not loaded?)"
+        );
+
+      var instance = (IUserBindings)Activator.CreateInstance(type);
+
+      var actual_hash = BindingsHash.Compute(instance);
+      if(actual_hash != expected_hash)
+        throw new Exception(
+          $"Bindings '{name}' hash mismatch: compiled against a different shape " +
+          $"than what's registered now (expected {expected_hash}, got {actual_hash})"
+        );
+
+      instance.Register(ts);
+    }
+  }
 }
 
-//NOTE: fans out to N bindings, mixing plain IUserBindings (AttachDelegates() is a no-op
-//      for those - Register() already did everything in DeclareTypes()) and IUserBindingsExtended
-public class CombinedUserBindings : IUserBindingsExtended
+//NOTE: fans out to N bindings, each Register()'d in the given order
+public class CombinedUserBindings : IUserBindings
 {
   //List instead of Enumerable to preserve the specified order
   readonly IList<IUserBindings> _bindings;
@@ -91,45 +138,27 @@ public class CombinedUserBindings : IUserBindingsExtended
     _bindings = bindings;
   }
 
-  public void DeclareTypes(Types ts)
+  public void Register(Types ts)
   {
     for(int i = 0; i < _bindings.Count; i++)
-    {
-      if(_bindings[i] is IUserBindingsExtended split)
-        split.DeclareTypes(ts);
-      else
-        _bindings[i].Register(ts);
-    }
-  }
-
-  public void AttachDelegates(Types ts)
-  {
-    for(int i = 0; i < _bindings.Count; i++)
-      if(_bindings[i] is IUserBindingsExtended split)
-        split.AttachDelegates(ts);
+      _bindings[i].Register(ts);
   }
 }
 
-public class DllBindings : IUserBindingsExtended
+public class DllBindings : IUserBindings
 {
   string dll_path;
-  IUserBindingsExtended loaded;
+  IUserBindings loaded;
 
   public DllBindings(string dll_path)
   {
     this.dll_path = dll_path;
   }
 
-  public void DeclareTypes(Types ts)
+  public void Register(Types ts)
   {
     EnsureLoaded();
-    loaded.DeclareTypes(ts);
-  }
-
-  public void AttachDelegates(Types ts)
-  {
-    EnsureLoaded();
-    loaded.AttachDelegates(ts);
+    loaded.Register(ts);
   }
 
   void EnsureLoaded()
@@ -184,7 +213,7 @@ public class DllBindings : IUserBindingsExtended
   }
 }
 
-public class ScriptedBindings : IUserBindingsExtended
+public class ScriptedBindings : IUserBindings
 {
   List<string> script_paths;
   string func_name;
@@ -207,7 +236,7 @@ public class ScriptedBindings : IUserBindingsExtended
     this.tmp_dir = tmp_dir;
   }
 
-  public void DeclareTypes(Types ts)
+  public void Register(Types ts)
   {
 #if (BHL_PARSER || UNITY_EDITOR)
     //var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -237,12 +266,6 @@ public class ScriptedBindings : IUserBindingsExtended
 #else
     throw new NotImplementedException();
 #endif
-  }
-
-  public void AttachDelegates(Types ts)
-  {
-    //NOTE: .bhl bindings are pure script — they can only declare types/functions,
-    //      never attach a native implementation
   }
 }
 

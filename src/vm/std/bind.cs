@@ -82,6 +82,32 @@ public static partial class std
       bind.Define(proxy_type);
       proxy_type.Setup();
 
+      var module_type = new ClassSymbolNative(new Origin(), "ModuleDeclared", typeof(bhl.ModuleDeclared));
+      bind.Define(module_type);
+      module_type.Define(new FieldSymbol(new Origin(), "ns", ns_type,
+        (VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) =>
+        {
+          var self = (bhl.ModuleDeclared)ctx.obj;
+          v.SetObj(self.ns, fld.GetIType());
+        },
+        null
+        )
+      );
+      module_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewModuleDeclared", module_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            string name = exec.stack.Pop();
+            exec.stack.Push(Val.NewObj(new bhl.ModuleDeclared(name), module_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String)
+        );
+        bind.Define(fn);
+      }
+
       {
         var cl = new ClassSymbolNative(
           new Origin(),
@@ -209,6 +235,24 @@ public static partial class std
               return null;
             },
             new FuncArgSymbol("name", Types.String)
+          );
+          cl.Define(fn);
+        }
+
+        {
+          var fn = new FuncSymbolNative(new Origin(), "RegisterModule", Types.Void,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
+              var module = (bhl.ModuleDeclared)exec.stack.Pop().obj;
+              exec.stack.Pop(); //for self
+
+              types.RegisterModule(module);
+
+              return null;
+            },
+            new FuncArgSymbol("module", module_type)
           );
           cl.Define(fn);
         }

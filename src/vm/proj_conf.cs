@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace bhl
 {
 
-public class BindingsModuleConf
+public class BindingsEntryConf
 {
   //NOTE: 1) if there are .bhl scripts they will be built into `dll` (if it's present)
   //      2) if there are .cs sources they will be built into `dll`
@@ -79,10 +79,9 @@ public partial class ProjectConf
 
   [JsonIgnore] public string proj_file = "";
 
-  //NOTE: every entry is an independent binding module, used unconditionally - no
-  //      per-entry "enabled" flag. At runtime (LoadRuntimeBindings()) only the keys
-  //      matter, matched by name against BindingsRegistry
-  public Dictionary<string, BindingsModuleConf> bindings = new Dictionary<string, BindingsModuleConf>();
+  //NOTE: every entry is used unconditionally - no per-entry "enabled" flag. At runtime
+  //      (LoadRuntimeBindings()) only the keys matter, matched by name against BindingsRegistry
+  public Dictionary<string, BindingsEntryConf> bindings = new Dictionary<string, BindingsEntryConf>();
 
   //NOTE: legacy fields, kept for BC with older bhl.proj files - folded into `bindings`
   //      (under LegacyBindingsKey) during Setup()
@@ -98,7 +97,7 @@ public partial class ProjectConf
     {
       if(!bindings.TryGetValue(LegacyBindingsKey, out var legacy))
       {
-        legacy = new BindingsModuleConf();
+        legacy = new BindingsEntryConf();
         bindings[LegacyBindingsKey] = legacy;
       }
       legacy.sources.AddRange(bindings_sources);
@@ -157,7 +156,7 @@ public partial class ProjectConf
   }
 
   bool TryGetScriptedBindings(
-      BindingsModuleConf b,
+      BindingsEntryConf b,
       out List<string> bindings_scripts,
       out string func_name,
       out string bindings_bytecode_file
@@ -178,7 +177,7 @@ public partial class ProjectConf
     return bindings_scripts.Count > 0 || !string.IsNullOrEmpty(bindings_bytecode_file);
   }
 
-  IUserBindingsExtended LoadBindingsModule(BindingsModuleConf b)
+  IUserBindings LoadBindingsEntry(BindingsEntryConf b)
   {
     if(!string.IsNullOrEmpty(b.dll) && b.dll.EndsWith(".dll"))
       return new DllBindings(b.dll);
@@ -192,12 +191,23 @@ public partial class ProjectConf
   //NOTE: build/LSP-time loading, via dll loading and/or the compiler frontend - see
   //      LoadRuntimeBindings() for the shipped-runtime counterpart. Entries run in
   //      ordinal-key order for determinism
-  public IUserBindingsExtended LoadBindings()
+  public IUserBindings LoadBindings()
   {
-    var loaded = bindings.Keys
-      .OrderBy(k => k, StringComparer.Ordinal)
-      .Select(k => LoadBindingsModule(bindings[k]))
-      .ToList();
+    return LoadBindings(out _);
+  }
+
+  //NOTE: `hashes` fingerprints each entry's declared shape (see BindingsHash) for
+  //      embedding into the compiled .bhc, so a mismatch against the real bindings
+  //      resolved at load time (see BindingsRegistry.RegisterRequiredBindings) is
+  //      caught instead of surfacing as a confusing symbol-resolution failure
+  public IUserBindings LoadBindings(out List<(string name, string hash)> hashes)
+  {
+    var names = bindings.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
+    var loaded = names.Select(k => LoadBindingsEntry(bindings[k])).ToList();
+
+    hashes = new List<(string name, string hash)>();
+    for(int i = 0; i < names.Count; ++i)
+      hashes.Add((names[i], BindingsHash.Compute(loaded[i])));
 
     if(loaded.Count == 0)
       return new EmptyUserBindings();
@@ -206,18 +216,18 @@ public partial class ProjectConf
     return new CombinedUserBindings(loaded.Cast<IUserBindings>().ToList());
   }
 
-  //NOTE: declares a bindings module name with no sources/dll - for LoadRuntimeBindings()
+  //NOTE: declares a bindings entry name with no sources/dll - for LoadRuntimeBindings()
   //      callers that don't ship/parse bhl.proj itself
-  public void DeclareBindingsModule(string name)
+  public void DeclareBindingsEntry(string name)
   {
     if(!bindings.ContainsKey(name))
-      bindings[name] = new BindingsModuleConf();
+      bindings[name] = new BindingsEntryConf();
   }
 
   //NOTE: runtime counterpart to LoadBindings() - no dynamic dll loading or compiler
   //      frontend available on a shipped binary, so this matches `bindings`' keys by
   //      name against BindingsRegistry instead. Unmatched names are skipped, not errors
-  public IUserBindingsExtended LoadRuntimeBindings()
+  public IUserBindings LoadRuntimeBindings()
   {
     var names = bindings.Keys.OrderBy(k => k, StringComparer.Ordinal);
     return new CombinedUserBindings(

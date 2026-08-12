@@ -115,7 +115,26 @@ public class ModuleLoader : IModuleLoader
       reader.ReadRawEnd(tmp_buf);
       ArrayPool<byte>.Shared.Return(tmp_buf);
     }
+
+    required_bindings.Clear();
+    //NOTE: trailing/optional - absent in bundles written before this section existed
+    if(source.Position < source.Length)
+    {
+      int required_bindings_len = 0;
+      reader.ReadI32(ref required_bindings_len);
+      for(int i = 0; i < required_bindings_len; ++i)
+      {
+        string name = "";
+        reader.ReadString(ref name);
+        string hash = "";
+        reader.ReadString(ref hash);
+        required_bindings.Add((name, hash));
+      }
+    }
   }
+
+  List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
+  public IEnumerable<(string name, string hash)> RequiredBindings => required_bindings;
 
   public ModuleDeclared Load(string module_name, INamedResolver resolver)
   {

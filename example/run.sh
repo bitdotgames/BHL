@@ -9,3 +9,4 @@ export BHL_SILENT=0
 
 cd $DIR/hello && ./run.sh
 cd $DIR/bindings && ./run.sh
+cd $DIR/unity && ./run.sh

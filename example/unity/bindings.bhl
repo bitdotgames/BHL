@@ -1,0 +1,46 @@
+import "std/bind"
+
+func RegisterBindings(std.bind.Types types) {
+
+    var m = std.bind.NewModuleDeclared("unity")
+    var ns = m.ns.Nest("unity")
+
+    {
+      var cl = std.bind.NewClassSymbolNative("Vector3", null, true)
+      ns.Define(cl)
+
+      cl.Define(std.bind.NewFieldSymbol("x", types.T("float"), true, true))
+      cl.Define(std.bind.NewFieldSymbol("y", types.T("float"), true, true))
+      cl.Define(std.bind.NewFieldSymbol("z", types.T("float"), true, true))
+
+      cl.Setup()
+    }
+
+    {
+      var mathf = ns.Nest("Mathf")
+      var fn = std.bind.NewFuncSymbolNative("Floor", types.T("float"),
+        [
+          std.bind.NewFuncArgSymbol("f", types.T("float"))
+        ]
+      )
+      mathf.Define(fn)
+    }
+
+    {
+      var fn = std.bind.NewFuncSymbolNative("Trace", types.T("void"),
+       [
+        std.bind.NewFuncArgSymbol("str", types.T("string"))
+       ]
+      )
+      ns.Define(fn)
+    }
+
+    {
+      var fn = std.bind.NewFuncSymbolNative("Rand", types.T("float"),
+      []
+      )
+      ns.Define(fn)
+    }
+
+    types.RegisterModule(m)
+}

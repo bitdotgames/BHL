@@ -95,7 +95,7 @@ public class Workspace
   public async Task ReloadAsync(ProjectConf proj, CancellationToken ct = default)
   {
     var new_types = new Types();
-    proj.LoadBindings().DeclareTypes(new_types);
+    proj.LoadBindings().Register(new_types);
     Init(new_types, proj, _logger);
     await IndexFilesAsync(ct);
   }

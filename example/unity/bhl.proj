@@ -1,0 +1,11 @@
+{
+  "src_dirs" : ["./"],
+  "bindings" : {
+    "unity" : {
+      "sources" : ["./bindings.bhl"]
+    }
+  },
+  "result_file" : "./tmp/bhl.bytes",
+  "use_cache" : false,
+  "tmp_dir" : "./tmp"
+}

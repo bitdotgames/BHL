@@ -25,6 +25,9 @@ public class CompileConf
   public int max_errors_num = 100;
   public bool add_debug_info = true;
 
+  //NOTE: written once into the resulting bundle, see WriteCompilationResultToFile/ModuleLoader.RequiredBindings
+  public List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
+
   //NOTE: populated internally at the start of Exec(); a single consolidated
   //      cache file (instead of two files per source file) to avoid Windows'
   //      per-file I/O overhead (AV scanning, NTFS metadata churn) on projects
@@ -594,6 +597,7 @@ public class CompilationExecutor
       {
 #if BHL_LZ4
         WriteChunkedModules(conf, compiler_workers, mwriter);
+        WriteRequiredBindings(conf, mwriter);
         return;
 #else
         throw new Exception("Unsupported format: " + conf.proj.module_fmt);
@@ -631,6 +635,21 @@ public class CompilationExecutor
           }
         }
       }
+
+      WriteRequiredBindings(conf, mwriter);
+    }
+  }
+
+  //NOTE: trailing/optional, appended after all module entries - old readers (which stop
+  //      once they've read the declared entry count) simply never reach these bytes, so
+  //      no COMPILE_FMT/FILE_VERSION bump is needed
+  static void WriteRequiredBindings(CompileConf conf, MsgPack.MsgPackWriter mwriter)
+  {
+    mwriter.Write(conf.required_bindings.Count);
+    foreach(var rb in conf.required_bindings)
+    {
+      mwriter.Write(rb.name);
+      mwriter.Write(rb.hash);
     }
   }
 

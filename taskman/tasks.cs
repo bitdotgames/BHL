@@ -154,19 +154,19 @@ public static partial class Tasks
     return result_dll;
   }
 
-  //NOTE: returns null if the module has no C# sources, in which case
+  //NOTE: returns null if the entry has no C# sources, in which case
   //      b.dll (if any) is assumed to already be a prebuilt dll
-  public static string BuildBindingsDllForModule(Taskman tm, bool force_rebuild, ProjectConf proj, BindingsModuleConf b)
+  public static string BuildBindingsDllForEntry(Taskman tm, bool force_rebuild, ProjectConf proj, BindingsEntryConf b)
   {
     var cs_sources = b.sources.Where(f => f.EndsWith(".cs")).ToList();
     if(cs_sources.Count == 0)
       return null;
 
     if(string.IsNullOrEmpty(b.dll))
-      throw new Exception("Resulting bindings module 'dll' is not set");
+      throw new Exception("Resulting bindings entry 'dll' is not set");
 
     if(!b.dll.EndsWith(".dll"))
-      throw new Exception("Resulting bindings module 'dll' invalid extension: " + b.dll);
+      throw new Exception("Resulting bindings entry 'dll' invalid extension: " + b.dll);
 
     cs_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
     return DotnetBuildLibrary(
@@ -179,9 +179,9 @@ public static partial class Tasks
     );
   }
 
-  //NOTE: builds every bindings module with C# sources that isn't opted out via
+  //NOTE: builds every bindings entry with C# sources that isn't opted out via
   //      manual_build (unless force_rebuild/bindings_only overrides that); returns
-  //      only the entries that were actually (re)built, keyed by module name
+  //      only the entries that were actually (re)built, keyed by entry name
   public static Dictionary<string, string> BuildBindingsDlls(
     Taskman tm, bool force_rebuild, ProjectConf proj, bool bindings_only
   )
@@ -192,7 +192,7 @@ public static partial class Tasks
       if(kv.Value.manual_build && !bindings_only && !force_rebuild)
         continue;
 
-      var path = BuildBindingsDllForModule(tm, force_rebuild, proj, kv.Value);
+      var path = BuildBindingsDllForEntry(tm, force_rebuild, proj, kv.Value);
       if(path != null)
         built[kv.Key] = path;
     }

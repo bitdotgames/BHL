@@ -1,5 +1,7 @@
 #if (BHL_PARSER || UNITY_EDITOR)
 
+using System.Collections.Generic;
+
 namespace bhl
 {
 
@@ -9,13 +11,13 @@ namespace bhl
 public partial class ProjectConf
 {
   //NOTE: list of .cs sources which are built into posproc_dll
-  public System.Collections.Generic.List<string> postproc_sources = new System.Collections.Generic.List<string>();
+  public List<string> postproc_sources = new List<string>();
 
   //NOTE: this can be a directory path as well containing an actual dll
   //      (posproc.dll/postproc.dll)
   public string postproc_dll = "";
 
-  //NOTE: same as BindingsModuleConf.manual_build, but for postproc_dll/postproc_sources
+  //NOTE: same as BindingsEntryConf.manual_build, but for postproc_dll/postproc_sources
   public bool postproc_manual_build = false;
 
   partial void SetupPostproc()
