@@ -96,6 +96,17 @@ public static class BindingsRegistry
           yield return e.type;
   }
 
+  //NOTE: instantiates and fans out to everything currently self-registered - for a driver
+  //      with no compile-time knowledge of which bindings classes exist (e.g. a generic
+  //      Unity Editor integration), as opposed to RegisterRequiredBindings' name-filtered,
+  //      hash-checked counterpart used on the Player/runtime side
+  public static IUserBindings CreateCombined()
+  {
+    return new CombinedUserBindings(
+      GetAll().Select(t => (IUserBindings)Activator.CreateInstance(t)).ToList()
+    );
+  }
+
   //NOTE: reads loader.RequiredBindings and registers matches into `ts`, so a caller with
   //      just a .bhc doesn't need a ProjectConf/bhl.proj to know its dependencies. Both a
   //      missing binding and a hash mismatch (see BindingsHash) are hard failures here,

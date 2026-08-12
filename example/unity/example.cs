@@ -6,7 +6,7 @@ public class Example
 {
   public static void Main(string[] args)
   {
-    Console.WriteLine("Example started");
+    Console.WriteLine("Unity alike bindings example started");
 
     var vm = VM.FromBytecode(new MemoryStream(File.ReadAllBytes(args[0])));
     vm.LoadModule("example");

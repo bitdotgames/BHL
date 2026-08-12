@@ -8,5 +8,6 @@ export BHL_REBUILD=1
 export BHL_SILENT=0
 
 cd $DIR/hello && ./run.sh
-cd $DIR/bindings && ./run.sh
 cd $DIR/unity && ./run.sh
+cd $DIR/editor && ./run.sh
+cd $DIR/bindings && ./run.sh

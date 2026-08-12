@@ -1,0 +1,17 @@
+import "unity"
+
+func Main() {
+  unity.Vector3 v = new unity.Vector3{
+    x: unity.Rand() * 10,
+    y: unity.Rand() * 10,
+    z: unity.Rand() * 10
+  }
+
+  unity.Trace("Vector3(" + (string)v.x + ", " + (string)v.y + ", " + (string)v.z + ")")
+  unity.Trace(
+    "Floored: (" +
+    (string)unity.Mathf.Floor(v.x) + ", " +
+    (string)unity.Mathf.Floor(v.y) + ", " +
+    (string)unity.Mathf.Floor(v.z) + ")"
+  )
+}

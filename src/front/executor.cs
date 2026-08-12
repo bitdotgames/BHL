@@ -67,7 +67,9 @@ public class CompilationExecutor
     bool use_cache = false,
     string bytecode_result_file = null,
     bool add_debug_info = false,
-    string tmp_dir = null
+    string tmp_dir = null,
+    IUserBindings bindings = null,
+    int verbosity = -1
   )
   {
     var proj = new ProjectConf();
@@ -90,12 +92,12 @@ public class CompilationExecutor
     proj.Setup();
 
     var conf = new CompileConf();
-    conf.logger = new Logger(-1/*let's make it silent*/, new ConsoleLogger());
+    conf.logger = new Logger(verbosity, new ConsoleLogger());
     conf.proj = proj;
     conf.ts = new Types();
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
-    conf.bindings = new EmptyUserBindings();
+    conf.bindings = bindings ?? new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
     conf.add_debug_info = add_debug_info;
 
