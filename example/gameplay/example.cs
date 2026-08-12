@@ -7,7 +7,7 @@ public class Example
 {
   public static void Main(string[] args)
   {
-    Console.WriteLine("Bindings Unit example started");
+    Console.WriteLine("Bindings gameplay example started");
 
     var vm = VM.FromBytecode(new MemoryStream(File.ReadAllBytes(args[0])));
     vm.LoadModule("example");
