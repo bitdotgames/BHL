@@ -22,7 +22,7 @@ When you save a file, the server scans for unresolved symbol errors and automati
 
 The server watches `bhl.proj` for changes. If you edit the project file (add source directories, change defines, update the bindings path) the server reloads the entire workspace automatically — no manual restart needed.
 
-The server also watches the `bindings_dll` path declared in `bhl.proj`. If the bindings DLL is rebuilt on disk the server reloads automatically so the new C# types and functions are immediately visible.
+The server also watches every module's `dll` path declared under `bindings` in `bhl.proj`. If any bindings DLL is rebuilt on disk the server reloads automatically so the new C# types and functions are immediately visible.
 
 ### Diagnostics and compilation timing
 

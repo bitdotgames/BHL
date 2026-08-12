@@ -1,6 +1,10 @@
 {
   "src_dirs" : ["./"],
-  "bindings_sources" : ["./bindings.bhl"],
+  "bindings" : {
+    "example" : {
+      "sources" : ["./bindings.bhl"]
+    }
+  },
   "result_file" : "./tmp/bhl.bytes",
   "use_cache" : false,
   "tmp_dir" : "./tmp"

@@ -19,6 +19,18 @@ public class FieldSymbol : VariableSymbol
 
   public delegate void FieldRef(VM.ExecState exec, Val v, out Val res, FieldSymbol fld);
 
+  //NOTE: for split-style bindings (declare types now, attach native delegates later):
+  //      assign these to `getter`/`setter` in the declare phase for a field meant to be
+  //      readable/writable, so the front-end's compile-time checks (getter==null /
+  //      setter==null for VAR/VARW access on a ClassSymbolNative field, see
+  //      antlr_proc.chain.cs) pass as today. They throw if ever actually invoked, which
+  //      means the real getter/setter was never attached for this field
+  public static readonly FieldGetter PendingGetter = (VM.ExecState exec, Val v, ref Val res, FieldSymbol fld) =>
+    throw new Exception($"Getter not bound: real getter was never attached for field '{fld.name}'");
+
+  public static readonly FieldSetter PendingSetter = (VM.ExecState exec, ref Val v, Val nv, FieldSymbol fld) =>
+    throw new Exception($"Setter not bound: real setter was never attached for field '{fld.name}'");
+
   public FieldGetter getter;
   public FieldSetter setter;
   public FieldRef getref;

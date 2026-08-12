@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Antlr4.Runtime.Tree;
 using System.IO;
 using System.Text;
@@ -33,52 +34,59 @@ public class Workspace
 
   public event System.Action BindingsDllChanged;
 
-  System.IO.FileSystemWatcher _bindingsWatcher;
+  List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
 
   public void Init(Types ts, ProjectConf conf, ILogger logger = null)
   {
     Types = ts;
     ProjConf = conf;
     _logger = logger;
-    WatchBindingsDll(conf.bindings_dll);
+    WatchBindingsDlls(conf.bindings.Values.Select(b => b.dll));
   }
 
-  void WatchBindingsDll(string path)
+  void WatchBindingsDlls(IEnumerable<string> paths)
   {
-    _bindingsWatcher?.Dispose();
-    _bindingsWatcher = null;
+    foreach(var w in _bindingsWatchers)
+      w.Dispose();
+    _bindingsWatchers.Clear();
 
-    if(string.IsNullOrEmpty(path) || !File.Exists(path))
-      return;
-
-    _bindingsWatcher = new System.IO.FileSystemWatcher(
-      Path.GetDirectoryName(path),
-      Path.GetFileName(path))
+    foreach(var path in paths)
     {
-      // FileName included alongside LastWrite/Size — it's part of .NET's own default
-      // NotifyFilter combination and is documented as relevant to create/rename detection.
-      NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
-        | System.IO.NotifyFilters.FileName,
-    };
-    // External build tools rarely rewrite the DLL in place (which would raise Changed);
-    // they typically build to a temp file and atomically replace the destination (rename-over,
-    // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
-    // by an external process is detected the same way an in-place `touch` is.
-    _bindingsWatcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
-    _bindingsWatcher.Created += (_, _) => BindingsDllChanged?.Invoke();
-    _bindingsWatcher.Renamed += (_, _) => BindingsDllChanged?.Invoke();
-    // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
-    // watch mask/dispatch appears to be tied to which handlers are attached at the moment
-    // raising starts, so flipping this on first (as the previous code did, via the object
-    // initializer) can silently end up not watching for anything meaningful. This ordering
-    // is also what Microsoft's own FileSystemWatcher examples use.
-    _bindingsWatcher.EnableRaisingEvents = true;
+      if(string.IsNullOrEmpty(path) || !File.Exists(path))
+        continue;
+
+      var watcher = new System.IO.FileSystemWatcher(
+        Path.GetDirectoryName(path),
+        Path.GetFileName(path))
+      {
+        // FileName included alongside LastWrite/Size — it's part of .NET's own default
+        // NotifyFilter combination and is documented as relevant to create/rename detection.
+        NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
+          | System.IO.NotifyFilters.FileName,
+      };
+      // External build tools rarely rewrite the DLL in place (which would raise Changed);
+      // they typically build to a temp file and atomically replace the destination (rename-over,
+      // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
+      // by an external process is detected the same way an in-place `touch` is.
+      watcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
+      watcher.Created += (_, _) => BindingsDllChanged?.Invoke();
+      watcher.Renamed += (_, _) => BindingsDllChanged?.Invoke();
+      // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
+      // watch mask/dispatch appears to be tied to which handlers are attached at the moment
+      // raising starts, so flipping this on first (as the previous code did, via the object
+      // initializer) can silently end up not watching for anything meaningful. This ordering
+      // is also what Microsoft's own FileSystemWatcher examples use.
+      watcher.EnableRaisingEvents = true;
+
+      _bindingsWatchers.Add(watcher);
+    }
   }
 
   public void Shutdown()
   {
-    _bindingsWatcher?.Dispose();
-    _bindingsWatcher = null;
+    foreach(var w in _bindingsWatchers)
+      w.Dispose();
+    _bindingsWatchers.Clear();
   }
 
   public Task ReloadAsync(CancellationToken ct = default)
@@ -87,7 +95,7 @@ public class Workspace
   public async Task ReloadAsync(ProjectConf proj, CancellationToken ct = default)
   {
     var new_types = new Types();
-    proj.LoadBindings().Register(new_types);
+    proj.LoadBindings().DeclareTypes(new_types);
     Init(new_types, proj, _logger);
     await IndexFilesAsync(ct);
   }

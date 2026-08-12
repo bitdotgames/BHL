@@ -9,9 +9,15 @@ public class Example
   {
     Console.WriteLine("Example started");
 
+    //NOTE: mirrors bhl.proj's `bindings` dict (see that file) just enough to demonstrate
+    //      the pattern - a real Unity player build wouldn't need to ship/parse bhl.proj
+    //      itself at runtime, just declare the same module names it uses elsewhere.
+    //      "example" is what ties this to MyBindings' self-registration under that same name
+    var proj = new ProjectConf();
+    proj.DeclareBindingsModule("example");
+
     var types = new Types();
-    var bnd = new MyBindings();
-    bnd.Register(types);
+    proj.LoadRuntimeBindings().Register(types);
 
     var bytes = new MemoryStream(File.ReadAllBytes(args[0]));
 

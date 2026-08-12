@@ -455,6 +455,14 @@ public class ClassSymbolScript : ClassSymbol
 
 public class ClassSymbolNative : ClassSymbol, INativeType
 {
+  //NOTE: for split-style bindings (declare types now, attach native implementation
+  //      later via AttachNative()): assign this to `creator` in the declare phase for
+  //      any class meant to be constructible from .bhl, so front-end compile-time checks
+  //      (e.g. `creator == null` for `new X()`/`{...}`) pass as today; it throws if ever
+  //      actually invoked, which means AttachNative() was never called for this class
+  public static readonly VM.ClassCreator PendingCreator = (VM.ExecState exec, ref Val res, IType type) =>
+    throw new Exception("Creator not bound: AttachNative() was not called for this class");
+
   //NOTE: during Setup() routine will be resolved
   ProxyType tmp_super_class;
   IList<ProxyType> tmp_implements;
@@ -573,6 +581,27 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public IEqualityComparer<Val> GetNativeComparer()
   {
     return native_comparer;
+  }
+
+  //NOTE: for split-style bindings: attaches the real native implementation onto an
+  //      already-declared class symbol. Only non-null arguments are applied, so callers
+  //      can attach one piece at a time if needed. Must not be relied upon before the
+  //      class has been declared (see PendingCreator for the `creator` case)
+  public void AttachNative(
+    VM.ClassCreator creator = null,
+    System.Type native_type = null,
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
+  )
+  {
+    if(creator != null)
+      this.creator = creator;
+    if(native_type != null)
+      this.native_type = native_type;
+    if(native_object_getter != null)
+      this.native_object_getter = native_object_getter;
+    if(native_comparer != null)
+      this.native_comparer = native_comparer;
   }
 
   public override void Setup()

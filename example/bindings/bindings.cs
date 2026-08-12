@@ -1,11 +1,20 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
-//NOTE: this class must be first in the assembly
+//NOTE: plain IUserBindings for simplicity here - see IUserBindingsExtended if you want
+//      to split declare-only (LSP-safe) from native attachment
 public class MyBindings : IUserBindings
 {
+  //NOTE: "example" matches this module's key in bhl.proj's `bindings` dict
+  [ModuleInitializer]
+  internal static void Init()
+  {
+    BindingsRegistry.Register("example", typeof(MyBindings));
+  }
+
   //must be present due to loading class instance from dll requirements
   public MyBindings()
   {}

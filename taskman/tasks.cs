@@ -154,29 +154,49 @@ public static partial class Tasks
     return result_dll;
   }
 
-  //NOTE: returns null if proj has no C# bindings_sources, in which case
-  //      proj.bindings_dll (if any) is assumed to already be a prebuilt dll
-  public static string BuildBindingsDll(Taskman tm, bool force_rebuild, ProjectConf proj)
+  //NOTE: returns null if the module has no C# sources, in which case
+  //      b.dll (if any) is assumed to already be a prebuilt dll
+  public static string BuildBindingsDllForModule(Taskman tm, bool force_rebuild, ProjectConf proj, BindingsModuleConf b)
   {
-    var bindings_sources = proj.bindings_sources.Where(f => f.EndsWith(".cs")).ToList();
-    if(bindings_sources.Count == 0)
+    var cs_sources = b.sources.Where(f => f.EndsWith(".cs")).ToList();
+    if(cs_sources.Count == 0)
       return null;
 
-    if(string.IsNullOrEmpty(proj.bindings_dll))
-      throw new Exception("Resulting 'bindings_dll' is not set");
+    if(string.IsNullOrEmpty(b.dll))
+      throw new Exception("Resulting bindings module 'dll' is not set");
 
-    if(!proj.bindings_dll.EndsWith(".dll"))
-      throw new Exception("Resulting 'bindings_dll' invalid extension: " + proj.bindings_dll);
+    if(!b.dll.EndsWith(".dll"))
+      throw new Exception("Resulting bindings module 'dll' invalid extension: " + b.dll);
 
-    bindings_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
+    cs_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
     return DotnetBuildLibrary(
       tm,
       force_rebuild,
-      bindings_sources.ToArray(),
-      proj.bindings_dll,
+      cs_sources.ToArray(),
+      b.dll,
       new List<string>() { "BHL_FRONT" },
       proj.tmp_dir
     );
+  }
+
+  //NOTE: builds every bindings module with C# sources that isn't opted out via
+  //      manual_build (unless force_rebuild/bindings_only overrides that); returns
+  //      only the entries that were actually (re)built, keyed by module name
+  public static Dictionary<string, string> BuildBindingsDlls(
+    Taskman tm, bool force_rebuild, ProjectConf proj, bool bindings_only
+  )
+  {
+    var built = new Dictionary<string, string>();
+    foreach(var kv in proj.bindings)
+    {
+      if(kv.Value.manual_build && !bindings_only && !force_rebuild)
+        continue;
+
+      var path = BuildBindingsDllForModule(tm, force_rebuild, proj, kv.Value);
+      if(path != null)
+        built[kv.Key] = path;
+    }
+    return built;
   }
 
   //NOTE: returns null if proj has no C# postproc_sources, in which case

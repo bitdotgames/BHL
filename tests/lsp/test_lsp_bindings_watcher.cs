@@ -84,7 +84,7 @@ public class TestLSPBindingsWatcher : IDisposable
     if(!await EnvironmentSupportsFileWatchingAsync())
       return;
 
-    var conf = new ProjectConf { bindings_dll = dll_path };
+    var conf = new ProjectConf { bindings = new() { ["test"] = new BindingsModuleConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
@@ -99,7 +99,7 @@ public class TestLSPBindingsWatcher : IDisposable
     if(!await EnvironmentSupportsFileWatchingAsync())
       return;
 
-    var conf = new ProjectConf { bindings_dll = dll_path };
+    var conf = new ProjectConf { bindings = new() { ["test"] = new BindingsModuleConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));

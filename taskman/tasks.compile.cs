@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<module>=<dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
       "[--bindings-only] [--postproc-only]");
     Console.WriteLine(msg);
     Environment.Exit(1);
@@ -31,7 +31,7 @@ public static partial class Tasks
     var flags = new OptionSet()
     {
       {
-        "bindings-only", "only prebuild bindings_dll from bindings_sources (C# or .bhl), then exit",
+        "bindings-only", "only prebuild each bindings module's dll from its sources (C# or .bhl), then exit",
         v => bindings_only = v != null
       },
       {
@@ -50,16 +50,14 @@ public static partial class Tasks
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
-    //NOTE: *_manual_build opts a prebuilt/committed dll out of the normal auto-rebuild
-    //      check - bindings_sources/postproc_sources can still be listed for documentation
-    //      and manual rebuilds (--bindings-only/--postproc-only), without an unwanted
-    //      rebuild firing during a plain compile (e.g. on a fresh checkout where tmp_dir's
-    //      cache doesn't exist yet, which would otherwise make the committed dll look stale)
-    string bindings_dll_path = null;
-    if(!proj.bindings_manual_build || bindings_only || force_rebuild)
-      bindings_dll_path = BuildBindingsDll(tm, force_rebuild, proj);
-    if(bindings_dll_path != null)
-      runtime_args.Add($"--bindings-dll={bindings_dll_path}");
+    //NOTE: manual_build opts a prebuilt/committed dll out of the normal auto-rebuild
+    //      check - a module's sources can still be listed for documentation and manual
+    //      rebuilds (--bindings-only/--postproc-only), without an unwanted rebuild firing
+    //      during a plain compile (e.g. on a fresh checkout where tmp_dir's cache doesn't
+    //      exist yet, which would otherwise make the committed dll look stale)
+    var built_bindings_dlls = BuildBindingsDlls(tm, force_rebuild, proj, bindings_only);
+    foreach(var kv in built_bindings_dlls)
+      runtime_args.Add($"--bindings-dll={kv.Key}={kv.Value}");
 
     string postproc_dll_path = null;
     if(!proj.postproc_manual_build || postproc_only || force_rebuild)
@@ -71,14 +69,29 @@ public static partial class Tasks
     {
       if(bindings_only)
       {
-        //NOTE: unlike C# bindings_sources (built above via BuildBindingsDll), .bhl
-        //      bindings_sources are normally compiled lazily as a side effect of the
-        //      regular compile pipeline (ScriptedBindings.Register()); here we trigger
-        //      that same compile-and-cache step explicitly, without a host project to compile
-        if(bindings_dll_path == null)
-          bindings_dll_path = await BuildScriptedBindingsBytecode(proj);
+        bool any = built_bindings_dlls.Count > 0;
+        foreach(var kv in built_bindings_dlls)
+          Console.WriteLine($"{kv.Key}: {kv.Value}");
 
-        Console.WriteLine(bindings_dll_path ?? $"No bindings_sources found in '{proj_file}', nothing to build");
+        foreach(var kv in proj.bindings)
+        {
+          if(built_bindings_dlls.ContainsKey(kv.Key))
+            continue;
+
+          //NOTE: unlike C# sources (built above via BuildBindingsDlls), .bhl sources are
+          //      normally compiled lazily as a side effect of the regular compile pipeline
+          //      (ScriptedBindings.DeclareTypes()); here we trigger that same compile-and-cache
+          //      step explicitly, without a host project to compile
+          var path = await BuildScriptedBindingsBytecode(proj, kv.Value);
+          if(path != null)
+          {
+            Console.WriteLine($"{kv.Key}: {path}");
+            any = true;
+          }
+        }
+
+        if(!any)
+          Console.WriteLine($"No bindings sources found in '{proj_file}', nothing to build");
       }
 
       if(postproc_only)
@@ -90,27 +103,26 @@ public static partial class Tasks
     await _compile(runtime_args.ToArray(), force_rebuild);
   }
 
-  //NOTE: returns null if proj has no .bhl bindings_sources or proj.bindings_dll
-  //      isn't a .bhc bytecode path
-  static async System.Threading.Tasks.Task<string> BuildScriptedBindingsBytecode(ProjectConf proj)
+  //NOTE: returns null if the module has no .bhl sources or its 'dll' isn't a .bhc bytecode path
+  static async System.Threading.Tasks.Task<string> BuildScriptedBindingsBytecode(ProjectConf proj, BindingsModuleConf b)
   {
     var bhl_scripts = new List<string>();
-    foreach(var s in proj.bindings_sources.Where(f => f.EndsWith(".bhl")))
+    foreach(var s in b.sources.Where(f => f.EndsWith(".bhl")))
       bhl_scripts.AddRange(BuildUtils.Glob(s));
 
-    if(bhl_scripts.Count == 0 || !proj.bindings_dll.EndsWith(".bhc"))
+    if(bhl_scripts.Count == 0 || string.IsNullOrEmpty(b.dll) || !b.dll.EndsWith(".bhc"))
       return null;
 
     var vm = await CompilationExecutor.CompileAndLoadVM(
       bhl_scripts,
       use_cache: proj.use_cache,
-      bytecode_result_file: proj.bindings_dll,
+      bytecode_result_file: b.dll,
       tmp_dir: proj.tmp_dir
     );
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);
 
-    return proj.bindings_dll;
+    return b.dll;
   }
 
   static async ThreadTask _compile(string[] args, bool force_rebuild)
@@ -147,8 +159,23 @@ public static partial class Tasks
         v => proj.use_cache = v == null
       },
       {
-        "bindings-dll=", "bindings dll file path",
-        v => proj.bindings_dll = v
+        "bindings-dll=", "bindings module dll file path, as <module>=<path> (repeatable)",
+        v =>
+        {
+          int idx = v.IndexOf('=');
+          if(idx < 0)
+            throw new OptionException("Expected --bindings-dll=<module>=<path>", "bindings-dll");
+
+          string key = v.Substring(0, idx);
+          string path = v.Substring(idx + 1);
+
+          if(!proj.bindings.TryGetValue(key, out var b))
+          {
+            b = new BindingsModuleConf();
+            proj.bindings[key] = b;
+          }
+          b.dll = path;
+        }
       },
       {
         "postproc-dll=", "postprocess dll file path",
@@ -217,7 +244,7 @@ public static partial class Tasks
     }
     catch(Exception e)
     {
-      compile_usage($"Could not load bindings({proj.bindings_dll}): " + e);
+      compile_usage($"Could not load bindings: " + e);
     }
 
     IFrontPostProcessor postproc = null;
@@ -251,8 +278,9 @@ public static partial class Tasks
     conf.args_signature = string.Join(";", args) + ";sv=" + ModuleDeclared.STREAM_VERSION;
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
-    if(File.Exists(proj.bindings_dll))
-      conf.global_file_deps.Add(proj.bindings_dll);
+    foreach(var b in proj.bindings.Values)
+      if(File.Exists(b.dll))
+        conf.global_file_deps.Add(b.dll);
     conf.bindings = bindings;
     conf.postproc = postproc;
     conf.add_debug_info = add_debug_info;
