@@ -111,6 +111,7 @@ public partial class Types : INamedResolver, IProxyTypeCache
 
 //NOTE: the built-in std/std.io/std.bind modules, unified under BindingsRegistry like any
 //      other binding so Types() bootstraps through the same RegisterForType() path
+[BhlBinding(BindingsRegistry.PreludeName, "1.0.0")]
 public class PreludeBindings : IUserBindings
 {
   //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
@@ -121,14 +122,10 @@ public class PreludeBindings : IUserBindings
   [UnityEditor.InitializeOnLoadMethod]
 #endif
   [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-  internal static void Init()
 #else
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Init()
 #endif
-  {
-    BindingsRegistry.Register(BindingsRegistry.PreludeName, typeof(PreludeBindings), "1.0.0");
-  }
+  internal static void Init() => BindingsRegistry.Register<PreludeBindings>();
 
   public void Register(Types ts)
   {

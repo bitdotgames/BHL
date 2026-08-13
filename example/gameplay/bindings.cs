@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace bhl {
 
+[BhlBinding("example", "1.0.0")]
 public class MyBindings : IUserBindings
 {
   //NOTE: "example" matches this entry's key in bhl.proj's `bindings` dict. Module
@@ -15,14 +16,10 @@ public class MyBindings : IUserBindings
   [UnityEditor.InitializeOnLoadMethod]
 #endif
   [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-  internal static void Init()
 #else
   [ModuleInitializer]
-  internal static void Init()
 #endif
-  {
-    BindingsRegistry.Register("example", typeof(MyBindings), "1.0.0");
-  }
+  internal static void Init() => BindingsRegistry.Register<MyBindings>();
 
   //must be present due to loading class instance from dll requirements
   public MyBindings()

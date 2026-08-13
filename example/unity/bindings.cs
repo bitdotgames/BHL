@@ -6,6 +6,7 @@ namespace bhl {
 //NOTE: registers a real "unity" module (via Types.RegisterModule) instead of writing
 //      straight into the global namespace - see example/bindings for that flat style.
 //      Scripts need `import "unity"` to reach unity.Vector3/unity.Mathf.Floor/etc
+[BhlBinding("unity", "1.0.0")]
 public class UnityBindings : IUserBindings
 {
   public class Vector3
@@ -21,14 +22,10 @@ public class UnityBindings : IUserBindings
   [UnityEditor.InitializeOnLoadMethod]
 #endif
   [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-  internal static void Init()
 #else
   [ModuleInitializer]
-  internal static void Init()
 #endif
-  {
-    BindingsRegistry.Register("unity", typeof(UnityBindings), "1.0.0");
-  }
+  internal static void Init() => BindingsRegistry.Register<UnityBindings>();
 
   //must be present due to loading class instance from dll requirements
   public UnityBindings()

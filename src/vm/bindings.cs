@@ -11,6 +11,22 @@ public interface IUserBindings
   void Register(Types ts);
 }
 
+//NOTE: carries the (name, version) a self-registering IUserBindings class would otherwise
+//      repeat as loose Register(...) arguments inside its own Init() hook - see
+//      BindingsRegistry.Register<T>()
+[AttributeUsage(AttributeTargets.Class)]
+public class BhlBindingAttribute : Attribute
+{
+  public readonly string Name;
+  public readonly string Version;
+
+  public BhlBindingAttribute(string name, string version)
+  {
+    Name = name;
+    Version = version;
+  }
+}
+
 public class EmptyUserBindings : IUserBindings
 {
   public void Register(Types ts)
@@ -54,6 +70,17 @@ public static class BindingsRegistry
       );
 
     all[name] = (type, version);
+  }
+
+  //NOTE: reads (name, version) off T's [BhlBinding] attribute instead of having the
+  //      caller repeat them as loose arguments - keeps each Init() hook to one line
+  public static void Register<T>() where T : IUserBindings
+  {
+    var type = typeof(T);
+    var attr = (BhlBindingAttribute)Attribute.GetCustomAttribute(type, typeof(BhlBindingAttribute));
+    if(attr == null)
+      throw new Exception($"{type} must have a [BhlBinding(name, version)] attribute to use Register<T>()");
+    Register(attr.Name, type, attr.Version);
   }
 
   public static IEnumerable<Type> GetAll()

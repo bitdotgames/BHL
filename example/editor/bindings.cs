@@ -9,6 +9,7 @@ namespace bhl {
 //      game-specific bindings classes. No required_bindings/hash-check embedding needed
 //      though, since there's no separate consumer here to protect against drift from -
 //      the process that compiles it is the one running it
+[BhlBinding("unity", "1.0.0")]
 public class UnityBindings : IUserBindings
 {
   //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
@@ -19,14 +20,10 @@ public class UnityBindings : IUserBindings
   [UnityEditor.InitializeOnLoadMethod]
 #endif
   [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-  internal static void Init()
 #else
   [ModuleInitializer]
-  internal static void Init()
 #endif
-  {
-    BindingsRegistry.Register("unity", typeof(UnityBindings), "1.0.0");
-  }
+  internal static void Init() => BindingsRegistry.Register<UnityBindings>();
 
   public class Vector3
   {
