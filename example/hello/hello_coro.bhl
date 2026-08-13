@@ -1,0 +1,14 @@
+import "std/io"
+
+coro func main([]string argv) {
+  paral {
+    {
+      yield()
+      std.io.WriteLine("World! (from coroutine)")
+    }
+    {
+      std.io.Write("Hello ")
+      yield suspend()
+    }
+  }
+}

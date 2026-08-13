@@ -1,14 +1,7 @@
 import "std/io"
 
-coro func main([]string argv) {
-  paral {
-    {
-      yield()
-      std.io.WriteLine("World!")
-    }
-    {
-      std.io.Write("Hello ")
-      yield suspend()
-    }
-  }
+func main([]string argv) {
+
+  std.io.WriteLine("Hello World!")
+
 }

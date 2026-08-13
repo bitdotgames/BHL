@@ -18,7 +18,7 @@ public static partial class Tasks
     Environment.Exit(1);
   }
 
-  [Task]
+  [Task(verbose: false)]
   public static async ThreadTask run(Taskman tm, string[] args)
   {
     var files = new List<string>();
