@@ -34,6 +34,11 @@ public class CompileConf
   //      with many source files
   public CompileCacheBlob cache_blob;
   public long run_ticks;
+
+  //NOTE: populated internally at the start of Exec(); true if add_debug_info changed
+  //      since the last run - it's baked into compiled_bytes with no mtime dep of its
+  //      own, so a change must bust every file's compiled cache entry this run
+  public bool debug_info_changed;
 }
 
 public class CompilationResult
@@ -191,10 +196,20 @@ public class CompilationExecutor
     Directory.CreateDirectory(conf.proj.tmp_dir);
 
     var args_changed = CheckArgsSignatureFile(conf);
+    conf.debug_info_changed = CheckDebugInfoSignatureFile(conf);
+
+    //NOTE: bhl.proj/self binary can also silently change compiled content
+    var global_deps = new List<string>(conf.global_file_deps);
+    if(!string.IsNullOrEmpty(conf.proj.proj_file))
+      global_deps.Add(conf.proj.proj_file);
+    if(!string.IsNullOrEmpty(conf.self_file))
+      global_deps.Add(conf.self_file);
 
     if(conf.proj.use_cache &&
        !args_changed &&
-       !BuildUtils.NeedToRegen(conf.proj.result_file, conf.files)
+       !conf.debug_info_changed &&
+       !BuildUtils.NeedToRegen(conf.proj.result_file, conf.files) &&
+       !BuildUtils.NeedToRegen(conf.proj.result_file, global_deps)
       )
     {
       conf.logger.Log(1, "BHL no stale files detected");
@@ -783,6 +798,19 @@ public class CompilationExecutor
     return changed;
   }
 
+  //NOTE: kept separate from args_signature so this doesn't force a full rebuild on
+  //      unrelated CLI noise (-d, --error=, etc.)
+  static bool CheckDebugInfoSignatureFile(CompileConf conf)
+  {
+    var tmp_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".debuginfo";
+    string signature = conf.add_debug_info.ToString();
+    bool changed = !File.Exists(tmp_file) ||
+                   (File.Exists(tmp_file) && File.ReadAllText(tmp_file) != signature);
+    if(changed)
+      File.WriteAllText(tmp_file, signature);
+    return changed;
+  }
+
 #if BHL_LZ4
   static byte[] EncodeToLZ4(byte[] bytes)
   {
@@ -865,6 +893,7 @@ public class CompilationExecutor
         bool use_cache;
 
         if(conf.proj.use_cache &&
+           !conf.debug_info_changed &&
            conf.cache_blob.TryGetCompiled(current_file, out var cached_bytes, out var write_ticks) &&
            !CompileCacheBlob.IsStale(write_ticks, deps))
         {

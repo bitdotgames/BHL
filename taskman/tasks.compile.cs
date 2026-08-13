@@ -282,6 +282,10 @@ public static partial class Tasks
     foreach(var b in proj.bindings.Values)
       if(File.Exists(b.dll))
         conf.global_file_deps.Add(b.dll);
+    //NOTE: bhl.proj-only settings (e.g. defines) have no cache-invalidation signal
+    //      otherwise, so track the proj file itself as a dep
+    if(!string.IsNullOrEmpty(proj.proj_file) && File.Exists(proj.proj_file))
+      conf.global_file_deps.Add(proj.proj_file);
     conf.bindings = bindings;
     conf.postproc = postproc;
     conf.add_debug_info = add_debug_info;
