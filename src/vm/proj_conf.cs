@@ -208,6 +208,13 @@ public partial class ProjectConf
     versions = new List<(string name, string version)>();
     for(int i = 0; i < names.Count; ++i)
     {
+      //NOTE: "$legacy" is a synthetic key Setup() invents for old flat bindings_sources/
+      //      bindings_dll fields (see LegacyBindingsKey) - the underlying code was never
+      //      told that name, so it never declares a version under it. Skip rather than
+      //      forcing pre-versioning bhl.proj files to fail compilation entirely
+      if(names[i] == LegacyBindingsKey)
+        continue;
+
       if(!BindingsRegistry.TryGetVersion(names[i], loaded[i], out var version))
         throw new Exception($"Bindings entry '{names[i]}' does not declare a version");
       versions.Add((names[i], version));
