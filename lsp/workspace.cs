@@ -340,13 +340,15 @@ public class Workspace
       if(!Path2Proc.TryGetValue(path, out var proc) || proc.result == null)
         return null;
 
-      // Collect unique symbol names from "symbol 'X' not resolved" errors
-      var missing = new HashSet<string>();
+      // Collect unique symbol names from "symbol 'X' not resolved" errors, keyed to the
+      // position of the first such error - used below to disambiguate ties via the
+      // member-access chain actually written at that spot (e.g. '.io' after 'std').
+      var missing = new Dictionary<string, SourcePos>();
       foreach(var err in proc.result.errors)
       {
         var m = _not_resolved_re.Match(err.text);
-        if(m.Success)
-          missing.Add(m.Groups[1].Value);
+        if(m.Success && !missing.ContainsKey(m.Groups[1].Value))
+          missing[m.Groups[1].Value] = err.range.start;
       }
 
       if(missing.Count == 0)
@@ -360,20 +362,70 @@ public class Workspace
       var edits = new List<TextEdit>();
       var added = new HashSet<string>();
 
-      foreach(var sym_name in missing)
+      foreach(var kv0 in missing)
       {
+        var sym_name = kv0.Key;
+
+        // (mod_name, owned symbol) for every module that genuinely declares sym_name at its
+        // top level - both user-authored modules and native ones (std, std.io, etc., which
+        // aren't tracked in Path2Proc so need their own pass).
+        var candidates = new List<(string mod_name, Symbol sym)>();
+
         foreach(var kv in Path2Proc)
         {
           var mod_name = kv.Value.module.name;
-          if(!import_map.TryGetValue(mod_name, out var edit) || added.Contains(mod_name))
+          if(added.Contains(mod_name))
             continue;
+          var sym = OwnSymbol(kv.Value.module.ns, sym_name);
+          if(sym != null)
+            candidates.Add((mod_name, sym));
+        }
 
-          if(kv.Value.module.ns.members.Find(sym_name) != null)
+        foreach(var m in Types.GetModules())
+        {
+          if(added.Contains(m.name))
+            continue;
+          var sym = OwnSymbol(m.ns, sym_name);
+          if(sym != null)
+            candidates.Add((m.name, sym));
+        }
+
+        string found_mod_name = null;
+        if(candidates.Count == 1)
+        {
+          found_mod_name = candidates[0].mod_name;
+        }
+        else if(candidates.Count > 1)
+        {
+          // The same root name is fragmented across several modules (e.g. 'std' is split
+          // across std/std.io/std.bind, each nesting its own 'std' namespace piece) - root
+          // name alone can't tell them apart. Disambiguate using the member-access chain
+          // that actually follows the unresolved identifier in the source, preferring
+          // whichever candidate resolves the deepest prefix of it.
+          var chain = GetIdentifierChainAt(document, kv0.Value, sym_name);
+
+          int best_depth = 0;
+          bool tie = false;
+          foreach(var (mod_name, sym) in candidates)
           {
-            edits.Add(edit);
-            added.Add(mod_name);
-            break;
+            int depth = MatchedChainDepth(sym, chain);
+            if(depth > best_depth)
+            {
+              best_depth = depth;
+              found_mod_name = mod_name;
+              tie = false;
+            }
+            else if(depth == best_depth)
+              tie = true;
           }
+          if(tie)
+            found_mod_name = null;
+        }
+
+        if(found_mod_name != null && import_map.TryGetValue(found_mod_name, out var edit))
+        {
+          edits.Add(edit);
+          added.Add(found_mod_name);
         }
       }
 
@@ -381,12 +433,75 @@ public class Workspace
     }
   }
 
+  // Returns the symbol genuinely declared as sym_name directly in 'ns', or null if 'ns' only
+  // re-exports it via one of its own imports (an import-link shadow member) or doesn't have it.
+  static Symbol OwnSymbol(Namespace ns, string sym_name)
+  {
+    var sym = ns.members.Find(sym_name);
+    if(sym == null)
+      return null;
+    if(sym is Namespace ns_sym && ns_sym.IsLinkedShadow)
+      return null;
+    return sym;
+  }
+
+  // Reads off the '.member.member...' chain starting at the NAME token located at 'pos'
+  // (the position of an unresolved root identifier), e.g. for "std.io.WriteLine(...)" with
+  // pos pointing at 'std' this returns ["std", "io", "WriteLine"].
+  static List<string> GetIdentifierChainAt(BHLDocument document, SourcePos pos, string first_name)
+  {
+    var chain = new List<string> { first_name };
+    var nodes = document.TermNodes;
+
+    int start_idx = -1;
+    for(int i = 0; i < nodes.Count; i++)
+    {
+      var t = nodes[i];
+      if(t.Symbol.Type == bhlLexer.NAME && t.Symbol.Line == pos.line && t.Symbol.Column == pos.column)
+      {
+        start_idx = i;
+        break;
+      }
+    }
+    if(start_idx == -1)
+      return chain;
+
+    int idx = start_idx + 1;
+    while(idx + 1 < nodes.Count && nodes[idx].Symbol.Type == bhlLexer.DOT &&
+          nodes[idx + 1].Symbol.Type == bhlLexer.NAME)
+    {
+      chain.Add(nodes[idx + 1].GetText());
+      idx += 2;
+    }
+
+    return chain;
+  }
+
+  // How many leading segments of 'chain' resolve as nested namespace members starting from
+  // root_sym (which already satisfies chain[0] by construction).
+  static int MatchedChainDepth(Symbol root_sym, List<string> chain)
+  {
+    int depth = 1;
+    Symbol cur = root_sym;
+    for(int i = 1; i < chain.Count; i++)
+    {
+      if(cur is not Namespace ns)
+        break;
+      var next = ns.members.Find(chain[i]);
+      if(next == null)
+        break;
+      depth++;
+      cur = next;
+    }
+    return depth;
+  }
+
   public List<TextEdit> GetUnusedImportEdits(DocumentUri uri)
   {
     lock(_syncRoot)
     {
       var path = uri.PathNormalized();
-      if(!Path2Proc.TryGetValue(path, out var proc))
+      if(!Path2Proc.TryGetValue(path, out var proc) || proc.result == null)
         return null;
 
       var edits = new List<TextEdit>();

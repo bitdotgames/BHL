@@ -152,4 +152,61 @@ public class TestLSPMissingImports : TestLSPShared, System.IDisposable
     // insertion must be after the existing import line
     Assert.True(edits[0].Range.Start.Line > 0);
   }
+
+  [Fact]
+  public async Task AddsCorrectImportForNativeModuleSymbol()
+  {
+    // std.io is a native module (registered in Types, not tracked in Path2Proc like
+    // user .bhl files) - the fix has to consult it explicitly.
+    string bhl1 = "func void bar() { std.io.WriteLine(\"hi\") }";
+    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+
+    await TriggerWorkspaceSetup(uri1);
+
+    var edits = ws.GetMissingImportEdits(uri1);
+
+    Assert.NotNull(edits);
+    Assert.Single(edits);
+    Assert.Equal("import \"std/io\"\n", edits[0].NewText);
+  }
+
+  [Fact]
+  public async Task DisambiguatesNamespaceFragmentedAcrossNativeModules()
+  {
+    // 'std' itself is nested separately by the std, std/io and std/bind native modules -
+    // GetType() belongs to the plain "std" module, not "std/io" or "std/bind", and only
+    // the member-access chain following 'std' can tell them apart.
+    string bhl1 = "func void bar() { std.GetType(1) }";
+    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+
+    await TriggerWorkspaceSetup(uri1);
+
+    var edits = ws.GetMissingImportEdits(uri1);
+
+    Assert.NotNull(edits);
+    Assert.Single(edits);
+    Assert.Equal("import \"std\"\n", edits[0].NewText);
+  }
+
+  [Fact]
+  public async Task DoesNotSuggestUnrelatedFileThatOnlyReExportsTheSymbol()
+  {
+    // hello.bhl imports std/io for its own use; hello_func.bhl also calls std.io.WriteLine
+    // but has no import of its own. The missing 'std' must resolve to the native "std/io"
+    // module, not to "hello" just because hello.bhl happens to re-export 'std' via its own
+    // import (a link-shadow member, not a genuine declaration).
+    string hello = "import \"std/io\"\nfunc void main() { std.io.WriteLine(\"Hello World!\") }";
+    string hello_func = "func void other() { std.io.WriteLine(\"hi\") }";
+
+    MakeTestDocument("hello.bhl", hello);
+    var uri2 = MakeTestDocument("hello_func.bhl", hello_func);
+
+    await TriggerWorkspaceSetup(uri2);
+
+    var edits = ws.GetMissingImportEdits(uri2);
+
+    Assert.NotNull(edits);
+    Assert.Single(edits);
+    Assert.Equal("import \"std/io\"\n", edits[0].NewText);
+  }
 }
