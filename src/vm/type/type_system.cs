@@ -7,6 +7,10 @@ namespace bhl
 
 public partial class Types : INamedResolver, IProxyTypeCache
 {
+  //NOTE: keyed by bindings entry name, since several distinct bindings can register
+  //      into the same Types - see BindingsRegistry.TryGetVersion
+  Dictionary<string, string> bindings_versions = new Dictionary<string, string>();
+
   //global module
   public ModuleDeclared module;
 
@@ -54,9 +58,7 @@ public partial class Types : INamedResolver, IProxyTypeCache
 
     CopyFromStaticModule();
 
-    RegisterModule(std.MakeModule(this));
-    RegisterModule(std.io.MakeModule(this));
-    RegisterModule(std.bind.MakeModule(this));
+    BindingsRegistry.RegisterForType(this, BindingsRegistry.PreludeName);
   }
 
   public bool IsImported(ModuleDeclared d)
@@ -91,9 +93,48 @@ public partial class Types : INamedResolver, IProxyTypeCache
     return m;
   }
 
+  public void RegisterBindingsVersion(string name, string version)
+  {
+    bindings_versions.Add(name, version);
+  }
+
+  public bool TryGetBindingsVersion(string name, out string version)
+  {
+    return bindings_versions.TryGetValue(name, out version);
+  }
+
   public INamed ResolveNamedByPath(NamePath path)
   {
     return ns.ResolveSymbolByPath(path);
+  }
+}
+
+//NOTE: the built-in std/std.io/std.bind modules, unified under BindingsRegistry like any
+//      other binding so Types() bootstraps through the same RegisterForType() path
+public class PreludeBindings : IUserBindings
+{
+  //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
+  //      own reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
+  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
+#if UNITY_5_3_OR_NEWER
+#if UNITY_EDITOR
+  [UnityEditor.InitializeOnLoadMethod]
+#endif
+  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+  internal static void Init()
+#else
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Init()
+#endif
+  {
+    BindingsRegistry.Register(BindingsRegistry.PreludeName, typeof(PreludeBindings), "1.0.0");
+  }
+
+  public void Register(Types ts)
+  {
+    ts.RegisterModule(std.MakeModule(ts));
+    ts.RegisterModule(std.io.MakeModule(ts));
+    ts.RegisterModule(std.bind.MakeModule(ts));
   }
 }
 

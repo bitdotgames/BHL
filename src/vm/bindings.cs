@@ -18,123 +18,161 @@ public class EmptyUserBindings : IUserBindings
   }
 }
 
-//NOTE: fingerprints the symbol shape an IUserBindings declares - lets a compiled .bhc
-//      detect at load time that the bindings it was compiled against have drifted
-//      (see BindingsRegistry.RegisterRequiredBindings)
-public static class BindingsHash
-{
-  //NOTE: a single XOR-folded CRC32, not a set - baseline signatures always appear
-  //      exactly once in any Types(), so XOR-ing it out below cancels them cleanly
-  static readonly uint baseline_crc = ComputeCrc(new Types().ns);
-
-  public static string Compute(IUserBindings bindings)
-  {
-    var ts = new Types();
-    bindings.Register(ts);
-    return (ComputeCrc(ts.ns) ^ baseline_crc).ToString("x8");
-  }
-
-  //NOTE: XOR-folding each symbol's own CRC32 is order-independent, so the walk below
-  //      needs no sorting or intermediate collection to combine them deterministically
-  static uint ComputeCrc(Symbol root)
-  {
-    uint crc = 0;
-    Collect(root, ref crc);
-    return crc;
-  }
-
-  //NOTE: recurses into any nested scope (Namespace, ClassSymbol, ...) so class
-  //      methods/fields are fingerprinted too, not just top-level declarations
-  static void Collect(Symbol root, ref uint crc)
-  {
-    if(root is not IEnumerable<Symbol> scope)
-      return;
-
-    foreach(var m in scope)
-    {
-      crc ^= Hash.CRC32(root.GetName() + "::" + m);
-      Collect(m, ref crc);
-    }
-  }
-}
-
 //NOTE: implementations self-register here (typically via a [ModuleInitializer] calling
-//      Register("name", typeof(X))) instead of being found via assembly-wide reflection,
-//      which Unity/IL2CPP's stripper tends to break. `name` matches bhl.proj's `bindings`
-//      dict key, letting ProjectConf.LoadRuntimeBindings() find it at runtime
+//      Register("name", typeof(X), "X.Y.Z")) instead of being found via assembly-wide
+//      reflection, which Unity/IL2CPP's stripper tends to break. `version` is
+//      human-maintained and is the single source of truth for it - checked for semver
+//      compatibility (see RegisterRequiredBindings) and injected into Types right before
+//      a binding's own Register() runs
 public static class BindingsRegistry
 {
-  static readonly List<(string name, Type type)> all = new List<(string name, Type type)>();
+  //NOTE: Types()'s own constructor always attaches this one directly (see PreludeBindings)
+  //      so it must be excluded from "attach everything" helpers like CreateCombined()
+  public const string PreludeName = "prelude";
 
-  public static void Register(string name, Type type)
+  static readonly Dictionary<string, (Type type, string version)> all = new Dictionary<string, (Type type, string version)>();
+
+  public static void Register(string name, Type type, string version)
   {
     if(string.IsNullOrEmpty(name))
       throw new Exception("Bindings entry name must not be empty");
     if(!typeof(IUserBindings).IsAssignableFrom(type))
       throw new Exception($"{type} does not implement {nameof(IUserBindings)}");
+    if(!System.Version.TryParse(VersionCore(version), out _))
+      throw new Exception($"Bindings '{name}' version '{version}' is not a valid version (expected 'X.Y.Z' or 'X.Y.Z-tag')");
 
-    if(!all.Contains((name, type)))
-      all.Add((name, type));
+    //NOTE: compares by FullName, not Type reference equality - a Unity script recompile
+    //      without a full domain reload (e.g. Enter Play Mode Options with Domain Reload
+    //      off) re-fires this with a *different* Type object for the same class, so a
+    //      stale entry for it needs replacing rather than piling up as a duplicate. A
+    //      different class claiming an already-used name is a real collision, not a
+    //      recompile, so that's a hard failure instead of a silent overwrite
+    if(all.TryGetValue(name, out var existing) && existing.type.FullName != type.FullName)
+      throw new Exception(
+        $"Bindings '{name}' already registered by {existing.type.FullName}, " +
+        $"cannot also register {type.FullName} under the same name"
+      );
+
+    all[name] = (type, version);
   }
 
   public static IEnumerable<Type> GetAll()
   {
-    return all.Select(e => e.type);
+    return all.Values.Select(e => e.type);
   }
 
   public static IEnumerable<Type> GetForAssembly(System.Reflection.Assembly assembly)
   {
-    return all.Where(e => e.type.Assembly == assembly).Select(e => e.type);
+    return all.Values.Where(e => e.type.Assembly == assembly).Select(e => e.type);
   }
 
   //NOTE: a name with nothing registered under it is skipped, not an error
   public static IEnumerable<Type> GetByNames(IEnumerable<string> names)
   {
     foreach(var name in names)
-      foreach(var e in all)
-        if(e.name == name)
-          yield return e.type;
+      if(all.TryGetValue(name, out var e))
+        yield return e.type;
   }
 
-  //NOTE: instantiates and fans out to everything currently self-registered - for a driver
-  //      with no compile-time knowledge of which bindings classes exist (e.g. a generic
-  //      Unity Editor integration), as opposed to RegisterRequiredBindings' name-filtered,
-  //      hash-checked counterpart used on the Player/runtime side
+  //NOTE: instantiates and fans out to everything self-registered - for a driver with no
+  //      compile-time knowledge of which bindings classes exist (e.g. a Unity Editor
+  //      integration), unlike RegisterRequiredBindings' name-filtered lookup. Excludes
+  //      prelude, since every Types() already attaches that one itself
   public static IUserBindings CreateCombined()
   {
     return new CombinedUserBindings(
-      GetAll().Select(t => (IUserBindings)Activator.CreateInstance(t)).ToList()
+      all.Where(kv => kv.Key != PreludeName)
+        .Select(kv => (IUserBindings)Activator.CreateInstance(kv.Value.type))
+        .ToList()
     );
   }
 
-  //NOTE: reads loader.RequiredBindings and registers matches into `ts`, so a caller with
-  //      just a .bhc doesn't need a ProjectConf/bhl.proj to know its dependencies. Both a
-  //      missing binding and a hash mismatch (see BindingsHash) are hard failures here,
-  //      right where the name is known - letting either pass silently just relocates the
-  //      failure to a much more confusing spot later (or, if nothing loaded happens to
-  //      reference it, no failure at all despite the binding being silently missing)
+  //NOTE: falls back to running Register() on a scratch Types() only for entries with no
+  //      registry entry (e.g. a .bhl-scripted stub, which self-declares its own version
+  //      via ts.RegisterBindingsVersion instead of self-registering here)
+  public static bool TryGetVersion(string name, IUserBindings bindings, out string version)
+  {
+    if(all.TryGetValue(name, out var match))
+    {
+      version = match.version;
+      return true;
+    }
+
+    var scratch = new Types();
+    bindings.Register(scratch);
+
+    if(all.TryGetValue(name, out match))
+    {
+      version = match.version;
+      return true;
+    }
+
+    return scratch.TryGetBindingsVersion(name, out version);
+  }
+
+  //NOTE: registers matches for loader.RequiredBindings into `ts` - a missing binding or
+  //      an incompatible version is a hard failure here, not a silent skip
   public static void RegisterRequiredBindings(Types ts, ModuleLoader loader)
   {
-    foreach(var (name, expected_hash) in loader.RequiredBindings)
+    foreach(var (name, required_version) in loader.RequiredBindings)
     {
-      var type = GetByNames(new[] { name }).FirstOrDefault();
-      if(type == null)
+      if(!all.TryGetValue(name, out var match))
         throw new Exception(
           $"Required bindings '{name}' not found - no IUserBindings self-registered " +
           $"under that name (renamed? assembly not loaded?)"
         );
 
-      var instance = (IUserBindings)Activator.CreateInstance(type);
-
-      var actual_hash = BindingsHash.Compute(instance);
-      if(actual_hash != expected_hash)
+      if(!IsVersionCompatible(match.version, required_version))
         throw new Exception(
-          $"Bindings '{name}' hash mismatch: compiled against a different shape " +
-          $"than what's registered now (expected {expected_hash}, got {actual_hash})"
+          $"Bindings '{name}' version incompatible: required {required_version}, " +
+          $"but {match.version} is registered"
         );
 
-      instance.Register(ts);
+      RegisterForType(ts, name);
     }
+  }
+
+  //NOTE: instantiates a self-registered entry, injects its version into `ts`, and runs
+  //      its Register() - no version-compatibility check, unlike RegisterRequiredBindings.
+  //      For entries that are unconditionally needed (e.g. Types()'s own prelude) rather
+  //      than checked against a compiled .bhc's required version
+  public static void RegisterForType(Types ts, string name)
+  {
+    if(!all.TryGetValue(name, out var match))
+      throw new Exception($"Bindings '{name}' not found - no IUserBindings self-registered under that name");
+
+    var instance = (IUserBindings)Activator.CreateInstance(match.type);
+    ts.RegisterBindingsVersion(name, match.version);
+    instance.Register(ts);
+  }
+
+  //NOTE: a pre-release tag (the "-beta1" in "3.1.0-beta1") opts out of semver ranges -
+  //      it must match the required string exactly, since pre-releases carry no
+  //      compatibility guarantee even against themselves. Only plain "X.Y.Z" versions
+  //      get the usual "same major, registered >= required" check
+  static bool IsVersionCompatible(string available, string required)
+  {
+    if(HasPrereleaseTag(available) || HasPrereleaseTag(required))
+      return available == required;
+
+    var a = System.Version.Parse(available);
+    var r = System.Version.Parse(required);
+    if(a.Major != r.Major)
+      return false;
+    if(a.Minor != r.Minor)
+      return a.Minor > r.Minor;
+    return a.Build >= r.Build;
+  }
+
+  static bool HasPrereleaseTag(string version)
+  {
+    return version.Contains('-');
+  }
+
+  static string VersionCore(string version)
+  {
+    int dash = version.IndexOf('-');
+    return dash < 0 ? version : version.Substring(0, dash);
   }
 }
 

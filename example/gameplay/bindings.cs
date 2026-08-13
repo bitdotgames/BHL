@@ -6,11 +6,22 @@ namespace bhl {
 
 public class MyBindings : IUserBindings
 {
-  //NOTE: "example" matches this entry's key in bhl.proj's `bindings` dict
+  //NOTE: "example" matches this entry's key in bhl.proj's `bindings` dict. Module
+  //      initializers aren't guaranteed to fire under IL2CPP, so Unity gets its own
+  //      reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
+  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
+#if UNITY_5_3_OR_NEWER
+#if UNITY_EDITOR
+  [UnityEditor.InitializeOnLoadMethod]
+#endif
+  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+  internal static void Init()
+#else
   [ModuleInitializer]
   internal static void Init()
+#endif
   {
-    BindingsRegistry.Register("example", typeof(MyBindings));
+    BindingsRegistry.Register("example", typeof(MyBindings), "1.0.0");
   }
 
   //must be present due to loading class instance from dll requirements

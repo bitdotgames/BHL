@@ -2,6 +2,8 @@ import "std/bind"
 
 func RegisterBindings(std.bind.Types types) {
 
+    types.RegisterVersion("unity", "1.0.0")
+
     var m = std.bind.NewModuleDeclared("unity")
     var ns = m.ns.Nest("unity")
 

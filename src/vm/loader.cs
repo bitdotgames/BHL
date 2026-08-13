@@ -126,15 +126,15 @@ public class ModuleLoader : IModuleLoader
       {
         string name = "";
         reader.ReadString(ref name);
-        string hash = "";
-        reader.ReadString(ref hash);
-        required_bindings.Add((name, hash));
+        string version = "";
+        reader.ReadString(ref version);
+        required_bindings.Add((name, version));
       }
     }
   }
 
-  List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
-  public IEnumerable<(string name, string hash)> RequiredBindings => required_bindings;
+  List<(string name, string version)> required_bindings = new List<(string name, string version)>();
+  public IEnumerable<(string name, string version)> RequiredBindings => required_bindings;
 
   public ModuleDeclared Load(string module_name, INamedResolver resolver)
   {

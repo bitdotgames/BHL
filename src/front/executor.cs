@@ -26,7 +26,7 @@ public class CompileConf
   public bool add_debug_info = true;
 
   //NOTE: written once into the resulting bundle, see WriteCompilationResultToFile/ModuleLoader.RequiredBindings
-  public List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
+  public List<(string name, string version)> required_bindings = new List<(string name, string version)>();
 
   //NOTE: populated internally at the start of Exec(); a single consolidated
   //      cache file (instead of two files per source file) to avoid Windows'
@@ -651,7 +651,7 @@ public class CompilationExecutor
     foreach(var rb in conf.required_bindings)
     {
       mwriter.Write(rb.name);
-      mwriter.Write(rb.hash);
+      mwriter.Write(rb.version);
     }
   }
 

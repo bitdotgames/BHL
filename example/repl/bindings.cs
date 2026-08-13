@@ -11,10 +11,21 @@ namespace bhl {
 //      the process that compiles it is the one running it
 public class UnityBindings : IUserBindings
 {
+  //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
+  //      own reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
+  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
+#if UNITY_5_3_OR_NEWER
+#if UNITY_EDITOR
+  [UnityEditor.InitializeOnLoadMethod]
+#endif
+  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+  internal static void Init()
+#else
   [ModuleInitializer]
   internal static void Init()
+#endif
   {
-    BindingsRegistry.Register("unity", typeof(UnityBindings));
+    BindingsRegistry.Register("unity", typeof(UnityBindings), "1.0.0");
   }
 
   public class Vector3

@@ -238,7 +238,7 @@ public static partial class Tasks
       compile_usage("Tmp dir not set");
 
     IUserBindings bindings = null;
-    List<(string name, string hash)> required_bindings = new List<(string name, string hash)>();
+    List<(string name, string version)> required_bindings = new List<(string name, string version)>();
     try
     {
       bindings = proj.LoadBindings(out required_bindings);

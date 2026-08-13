@@ -196,18 +196,22 @@ public partial class ProjectConf
     return LoadBindings(out _);
   }
 
-  //NOTE: `hashes` fingerprints each entry's declared shape (see BindingsHash) for
-  //      embedding into the compiled .bhc, so a mismatch against the real bindings
-  //      resolved at load time (see BindingsRegistry.RegisterRequiredBindings) is
-  //      caught instead of surfacing as a confusing symbol-resolution failure
-  public IUserBindings LoadBindings(out List<(string name, string hash)> hashes)
+  //NOTE: `versions` is each entry's own declared version (see BindingsRegistry.
+  //      TryGetVersion), embedded into the compiled .bhc so an incompatible version at
+  //      load time (see BindingsRegistry.RegisterRequiredBindings) is a clear failure
+  //      instead of a confusing symbol-resolution one
+  public IUserBindings LoadBindings(out List<(string name, string version)> versions)
   {
     var names = bindings.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
     var loaded = names.Select(k => LoadBindingsEntry(bindings[k])).ToList();
 
-    hashes = new List<(string name, string hash)>();
+    versions = new List<(string name, string version)>();
     for(int i = 0; i < names.Count; ++i)
-      hashes.Add((names[i], BindingsHash.Compute(loaded[i])));
+    {
+      if(!BindingsRegistry.TryGetVersion(names[i], loaded[i], out var version))
+        throw new Exception($"Bindings entry '{names[i]}' does not declare a version");
+      versions.Add((names[i], version));
+    }
 
     if(loaded.Count == 0)
       return new EmptyUserBindings();
