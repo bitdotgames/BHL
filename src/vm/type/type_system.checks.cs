@@ -58,6 +58,12 @@ public partial class Types : INamedResolver, IProxyTypeCache
     if(rhs == null || lhs == null)
       return false;
 
+    //NOTE: void carries no value, so it's not assignable anywhere - not even to
+    //      'any' - which would otherwise silently accept it here and leave a
+    //      caller expecting a return value with nothing actually produced
+    if(rhs == Void)
+      return lhs == Void;
+
     return rhs == lhs ||
            lhs == Any ||
            (lhs == Types.Int && rhs is EnumSymbol) ||

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Mono.Options;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
+#pragma warning disable VSTHRD103
 
 namespace bhl.taskman;
 
@@ -12,8 +14,46 @@ public static partial class Tasks
   [Task(verbose: false)]
   public static ThreadTask repl(Taskman tm, string[] args)
   {
+    bool eval_mode = false;
+
+    var p = new OptionSet()
+    {
+      {
+        "e|eval", "evaluate the rest of the command line as an expression, print the result, then exit",
+        v => eval_mode = v != null
+      }
+    };
+
+    List<string> extra;
+    try
+    {
+      extra = p.Parse(args);
+    }
+    catch(OptionException e)
+    {
+      Console.WriteLine("error: " + e.Message);
+      Environment.Exit(ERROR_EXIT_CODE);
+      return ThreadTask.CompletedTask;
+    }
+
     var vm = new VM(new Types());
     var session = new ReplSession(vm);
+
+    if(eval_mode)
+    {
+      try
+      {
+        string expr = extra.Count > 0 ? string.Join(" ", extra) : Console.In.ReadToEnd();
+        PrintResult(session.Eval(expr));
+      }
+      catch(Exception e)
+      {
+        Console.WriteLine("error: " + e.Message);
+        Environment.Exit(ERROR_EXIT_CODE);
+      }
+      return ThreadTask.CompletedTask;
+    }
+
     var history = new List<string>();
 
     Console.WriteLine("BHL REPL " + Version.Name + " (Ctrl+D or Ctrl+C to exit)");
@@ -33,20 +73,7 @@ public static partial class Tasks
 
       try
       {
-        var result = session.Eval(input);
-        if(result.Length == 1)
-          Console.WriteLine(ValToString(result[0]));
-        else if(result.Length > 1)
-        {
-          var sb = new StringBuilder("(");
-          for(int i = 0; i < result.Length; ++i)
-          {
-            if(i > 0) sb.Append(", ");
-            sb.Append(ValToString(result[i]));
-          }
-          sb.Append(")");
-          Console.WriteLine(sb.ToString());
-        }
+        PrintResult(session.Eval(input));
       }
       catch(Exception e)
       {
@@ -55,6 +82,23 @@ public static partial class Tasks
     }
 
     return ThreadTask.CompletedTask;
+  }
+
+  static void PrintResult(Val[] result)
+  {
+    if(result.Length == 1)
+      Console.WriteLine(ValToString(result[0]));
+    else if(result.Length > 1)
+    {
+      var sb = new StringBuilder("(");
+      for(int i = 0; i < result.Length; ++i)
+      {
+        if(i > 0) sb.Append(", ");
+        sb.Append(ValToString(result[i]));
+      }
+      sb.Append(")");
+      Console.WriteLine(sb.ToString());
+    }
   }
 
   // Collects one logical input block, spanning multiple lines when braces are open.
