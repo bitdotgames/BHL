@@ -1,6 +1,6 @@
 import "std/io"
 
-func main([]string argv) {
+func main() {
 
   std.io.WriteLine("Hello World!")
 

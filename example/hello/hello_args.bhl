@@ -1,0 +1,7 @@
+import "std/io"
+
+func main([]string args) {
+
+  std.io.WriteLine("Hello, " + args[0] + "!")
+
+}

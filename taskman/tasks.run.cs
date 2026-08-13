@@ -13,7 +13,7 @@ public static partial class Tasks
   static void run_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run <script.bhl>");
+    Console.WriteLine("bhl run <script.bhl> [args...] [--func=<name>] [--tick-ms=<n>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -21,14 +21,18 @@ public static partial class Tasks
   [Task(verbose: false)]
   public static async ThreadTask run(Taskman tm, string[] args)
   {
-    var files = new List<string>();
-    bool add_debug_info = true;
+    string func = "main";
+    int tick_ms = 0;
 
     var p = new OptionSet()
     {
       {
-        "debug-info", "emit local variable names for the debugger",
-        v => add_debug_info = v != null
+        "func=", "function to run instead of 'main'",
+        v => func = v
+      },
+      {
+        "tick-ms=", "sleep this many milliseconds between VM ticks (default: no sleep)",
+        v => tick_ms = int.Parse(v)
       }
     };
 
@@ -42,31 +46,37 @@ public static partial class Tasks
       run_usage(e.Message);
     }
 
-    files.AddRange(extra);
-
-    for(int i = files.Count; i-- > 0;)
+    for(int i = extra.Count; i-- > 0;)
     {
-      if(string.IsNullOrEmpty(files[i]))
-        files.RemoveAt(i);
+      if(string.IsNullOrEmpty(extra[i]))
+        extra.RemoveAt(i);
     }
 
-    if(files.Count == 0)
+    if(extra.Count == 0)
       run_usage("No files to run");
 
-    var vm = await CompilationExecutor.CompileAndLoadVM(files, add_debug_info: add_debug_info);
+    //NOTE: only the first positional arg is the script to run, the rest
+    //      are forwarded to the entry function as its args
+    string script_file = extra[0];
+    var script_args = extra.GetRange(1, extra.Count - 1);
+
+    var vm = await CompilationExecutor.CompileAndLoadVM(new List<string> { script_file }, add_debug_info: true);
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);
 
-    var argv_lst = ValList.New(vm);
-    //TODO:
-    //foreach(var arg in args)
-    //  argv_lst.Add(Val.NewStr(vm, arg));
-    var argv = Val.NewObj(argv_lst, Types.Array);
-    if(vm.Start("main", argv) == null)
-      throw new Exception("No 'main' function found");
+    if(!vm.TryFindFuncAddr(func, out _))
+      run_usage($"No '{func}' function found");
 
-    const float dt = 0.016f;
+    var argv_lst = ValList.New(vm);
+    foreach(var arg in script_args)
+      argv_lst.Add(Val.NewStr(arg));
+    var argv = Val.NewObj(argv_lst, Types.Array);
+    vm.Start(func, argv);
+
     while(vm.Tick())
-      System.Threading.Thread.Sleep((int)(dt * 1000));
+    {
+      if(tick_ms > 0)
+        System.Threading.Thread.Sleep(tick_ms);
+    }
   }
 }
