@@ -74,6 +74,7 @@ public class CompilationExecutor
     bool add_debug_info = false,
     string tmp_dir = null,
     IUserBindings bindings = null,
+    IFrontPostProcessor postproc = null,
     int verbosity = -1
   )
   {
@@ -103,7 +104,7 @@ public class CompilationExecutor
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = bindings ?? new EmptyUserBindings();
-    conf.postproc = new EmptyPostProcessor();
+    conf.postproc = postproc ?? new EmptyPostProcessor();
     conf.add_debug_info = add_debug_info;
 
     var cmp = new CompilationExecutor();

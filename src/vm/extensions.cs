@@ -55,6 +55,12 @@ public static class VMExtensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public ValStack Execute(this VM vm, string func)
+  {
+    return vm.Execute(func, new FuncArgsInfo(0u), new StackList<Val>());
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public ValStack Execute(this VM vm, string func, Val arg1)
   {
     return vm.Execute(func, new FuncArgsInfo(1u), new StackList<Val>(arg1));

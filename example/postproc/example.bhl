@@ -1,0 +1,11 @@
+import "std/io"
+
+//NOTE: the body below is never actually executed - the postprocessor in example.cs
+//      replaces every call to this function with a constant literal at compile time
+func int GetAnswer() {
+  return -1
+}
+
+func Main() {
+  std.io.WriteLine("The answer is: " + (string)GetAnswer())
+}

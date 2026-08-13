@@ -10,5 +10,6 @@ export BHL_SILENT=0
 cd $DIR/hello && ./run.sh
 cd $DIR/unity && ./run.sh
 cd $DIR/editor && ./run.sh
+cd $DIR/postproc && ./run.sh
 cd $DIR/repl && ./run.sh
 cd $DIR/gameplay && ./run.sh
