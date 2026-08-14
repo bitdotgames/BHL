@@ -16,7 +16,7 @@ public static class ServerFactory
     Serilog.ILogger logger, Stream input, Stream output,
     Types types, Workspace workspace, CancellationToken ct = default)
   {
-    logger.Information("BHL server starting...");
+    logger.Information("BHL server starting... ({Version})", Version.Name);
 
     var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
@@ -96,7 +96,7 @@ public static class ServerFactory
           server.SendNotification("window/showMessage", new ShowMessageParams
           {
             Type = MessageType.Log,
-            Message = "BHL: Indexing...",
+            Message = $"BHL ({Version.Name}): Indexing...",
           });
 
           var sw = System.Diagnostics.Stopwatch.StartNew();

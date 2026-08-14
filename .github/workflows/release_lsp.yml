@@ -18,6 +18,12 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Stamp LSP version
+        run: |
+          ver="${{ github.ref_name }}"
+          ver="${ver#lsp-}"
+          sed -i -E "s/Name = \"[^\"]*\"/Name = \"$ver\"/" lsp/version.cs
+
       - name: Build ${{ matrix.rid }}
         run: make publish-standalone-one RID=${{ matrix.rid }}
 
