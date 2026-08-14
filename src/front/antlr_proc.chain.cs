@@ -1,5 +1,6 @@
 #if (BHL_PARSER || UNITY_EDITOR)
 
+using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
 
@@ -122,7 +123,8 @@ public partial class ANTLR_Processor
 
       if(name_symb == null)
       {
-        _proc.AddError(_curr_name, "symbol '" + _curr_name.GetText() + "' not resolved");
+        _proc.AddError(_curr_name, "symbol '" + _curr_name.GetText() + "' not resolved",
+          GetFollowingMemberNames(_chain.items));
         return false;
       }
 
@@ -142,6 +144,22 @@ public partial class ANTLR_Processor
       }
 
       return true;
+    }
+
+    // The '.member' names immediately following the chain's root (stops at the first item
+    // that isn't a plain member access, e.g. call args or an array index) - e.g. for
+    // 'std.io.WriteLine("x")' this returns ["io", "WriteLine"].
+    static List<string> GetFollowingMemberNames(ExpChainItems items)
+    {
+      List<string> names = null;
+      for(int i = 0; i < items.Count; i++)
+      {
+        if(items.At(i) is not bhlParser.MemberAccessContext macc || macc.NAME() == null)
+          break;
+        names ??= new List<string>();
+        names.Add(macc.NAME().GetText());
+      }
+      return names;
     }
 
     void ApplyBaseCall(ref Symbol name_symb)

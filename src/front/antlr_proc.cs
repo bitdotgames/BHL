@@ -181,6 +181,17 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
+  void AddError(IParseTree place, string msg, IReadOnlyList<string> unresolved_chain)
+  {
+    try
+    {
+      errors.Add(new ParseError(module, place, tokens, msg, unresolved_chain));
+    }
+    catch(Exception)
+    {
+    }
+  }
+
   void AddWarning(IParseTree place, string msg)
   {
     warnings.Add(new ParseWarning(module, place, tokens, msg));

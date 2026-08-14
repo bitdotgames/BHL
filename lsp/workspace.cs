@@ -340,15 +340,20 @@ public class Workspace
       if(!Path2Proc.TryGetValue(path, out var proc) || proc.result == null)
         return null;
 
-      // Collect unique symbol names from "symbol 'X' not resolved" errors, keyed to the
-      // position of the first such error - used below to disambiguate ties via the
-      // member-access chain actually written at that spot (e.g. '.io' after 'std').
-      var missing = new Dictionary<string, SourcePos>();
+      // Collect unique symbol names from "symbol 'X' not resolved" errors, along with
+      // whatever member-access chain the compiler saw following that identifier (e.g. 'io'
+      // after 'std') - used below to disambiguate a name shared by multiple modules.
+      var missing = new Dictionary<string, List<string>>();
       foreach(var err in proc.result.errors)
       {
         var m = _not_resolved_re.Match(err.text);
-        if(m.Success && !missing.ContainsKey(m.Groups[1].Value))
-          missing[m.Groups[1].Value] = err.range.start;
+        if(!m.Success || missing.ContainsKey(m.Groups[1].Value))
+          continue;
+
+        var chain = new List<string> { m.Groups[1].Value };
+        if(err is ParseError perr && perr.UnresolvedChain != null)
+          chain.AddRange(perr.UnresolvedChain);
+        missing[m.Groups[1].Value] = chain;
       }
 
       if(missing.Count == 0)
@@ -365,6 +370,7 @@ public class Workspace
       foreach(var kv0 in missing)
       {
         var sym_name = kv0.Key;
+        var chain = kv0.Value;
 
         // (mod_name, owned symbol) for every module that genuinely declares sym_name at its
         // top level - both user-authored modules and native ones (std, std.io, etc., which
@@ -399,11 +405,9 @@ public class Workspace
         {
           // The same root name is fragmented across several modules (e.g. 'std' is split
           // across std/std.io/std.bind, each nesting its own 'std' namespace piece) - root
-          // name alone can't tell them apart. Disambiguate using the member-access chain
-          // that actually follows the unresolved identifier in the source, preferring
-          // whichever candidate resolves the deepest prefix of it.
-          var chain = GetIdentifierChainAt(document, kv0.Value, sym_name);
-
+          // name alone can't tell them apart. Disambiguate using the member-access chain the
+          // compiler recorded on the error, preferring whichever candidate resolves the
+          // deepest prefix of it.
           int best_depth = 0;
           bool tie = false;
           foreach(var (mod_name, sym) in candidates)
@@ -443,38 +447,6 @@ public class Workspace
     if(sym is Namespace ns_sym && ns_sym.IsLinkedShadow)
       return null;
     return sym;
-  }
-
-  // Reads off the '.member.member...' chain starting at the NAME token located at 'pos'
-  // (the position of an unresolved root identifier), e.g. for "std.io.WriteLine(...)" with
-  // pos pointing at 'std' this returns ["std", "io", "WriteLine"].
-  static List<string> GetIdentifierChainAt(BHLDocument document, SourcePos pos, string first_name)
-  {
-    var chain = new List<string> { first_name };
-    var nodes = document.TermNodes;
-
-    int start_idx = -1;
-    for(int i = 0; i < nodes.Count; i++)
-    {
-      var t = nodes[i];
-      if(t.Symbol.Type == bhlLexer.NAME && t.Symbol.Line == pos.line && t.Symbol.Column == pos.column)
-      {
-        start_idx = i;
-        break;
-      }
-    }
-    if(start_idx == -1)
-      return chain;
-
-    int idx = start_idx + 1;
-    while(idx + 1 < nodes.Count && nodes[idx].Symbol.Type == bhlLexer.DOT &&
-          nodes[idx + 1].Symbol.Type == bhlLexer.NAME)
-    {
-      chain.Add(nodes[idx + 1].GetText());
-      idx += 2;
-    }
-
-    return chain;
   }
 
   // How many leading segments of 'chain' resolve as nested namespace members starting from

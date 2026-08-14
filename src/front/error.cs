@@ -195,13 +195,22 @@ public class ParseError : Exception, ICompileError
   public IParseTree place { get; }
   public ITokenStream tokens { get; }
 
-  public ParseError(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg)
+  // For a "symbol 'X' not resolved" error where X is the root of a member-access chain
+  // (e.g. 'std' in 'std.io.WriteLine(...)'), the member names that were written right after
+  // it in the source ("io", "WriteLine", ...) - null when not applicable/available. Lets
+  // consumers (e.g. the LSP's missing-import fix) disambiguate symbols whose name is shared
+  // across multiple modules without having to re-derive this from raw tokens themselves.
+  public IReadOnlyList<string> UnresolvedChain { get; }
+
+  public ParseError(ModuleDeclared module, IParseTree place, ITokenStream tokens, string msg,
+    IReadOnlyList<string> unresolved_chain = null)
     : base(ErrorUtils.MakeMessage(module, place, tokens, msg))
   {
     this.text = msg;
     this.module = module;
     this.place = place;
     this.tokens = tokens;
+    this.UnresolvedChain = unresolved_chain;
   }
 
   public ParseError(AnnotatedParseTree w, string msg)

@@ -584,4 +584,40 @@ public class TestErrors : BHL_TestBase
     Assert.Equal(0, proc.result.errors.Count);
     Assert.Equal(0, proc.result.warnings.Count);
   }
+
+  [Fact]
+  public void TestUnresolvedChainRootRecordsFollowingMembers()
+  {
+    string bhl = @"
+    func void test() {
+      std.io.WriteLine(""hi"")
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+
+    Assert.Single(proc.result.errors);
+    var err = Assert.IsType<ParseError>(proc.result.errors[0]);
+    Assert.Contains("symbol 'std' not resolved", err.text);
+    Assert.Equal(new[] { "io", "WriteLine" }, err.UnresolvedChain);
+  }
+
+  [Fact]
+  public void TestUnresolvedChainIsNullForPlainIdentifier()
+  {
+    string bhl = @"
+    func void test() {
+      foo()
+    }
+    ";
+
+    var ts = new Types();
+    var proc = Parse(bhl, ts, throw_errors: false);
+
+    Assert.Single(proc.result.errors);
+    var err = Assert.IsType<ParseError>(proc.result.errors[0]);
+    Assert.Contains("symbol 'foo' not resolved", err.text);
+    Assert.Null(err.UnresolvedChain);
+  }
 }
