@@ -181,20 +181,21 @@ public static partial class Tasks
 
   //NOTE: builds every bindings entry with C# sources that isn't opted out via
   //      manual_build (unless force_rebuild/bindings_only overrides that); returns
-  //      only the entries that were actually (re)built, keyed by entry name
-  public static Dictionary<string, string> BuildBindingsDlls(
+  //      only the entries that were actually (re)built, keyed by entry index in proj.bindings
+  public static Dictionary<int, string> BuildBindingsDlls(
     Taskman tm, bool force_rebuild, ProjectConf proj, bool bindings_only
   )
   {
-    var built = new Dictionary<string, string>();
-    foreach(var kv in proj.bindings)
+    var built = new Dictionary<int, string>();
+    for(int i = 0; i < proj.bindings.Count; ++i)
     {
-      if(kv.Value.manual_build && !bindings_only && !force_rebuild)
+      var entry = proj.bindings[i];
+      if(entry.manual_build && !bindings_only && !force_rebuild)
         continue;
 
-      var path = BuildBindingsDllForEntry(tm, force_rebuild, proj, kv.Value);
+      var path = BuildBindingsDllForEntry(tm, force_rebuild, proj, entry);
       if(path != null)
-        built[kv.Key] = path;
+        built[i] = path;
     }
     return built;
   }

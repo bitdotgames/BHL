@@ -7,10 +7,9 @@ namespace bhl {
 [BhlBinding("example", "1.0.0")]
 public class MyBindings : IUserBindings
 {
-  //NOTE: "example" matches this entry's key in bhl.proj's `bindings` dict. Module
-  //      initializers aren't guaranteed to fire under IL2CPP, so Unity gets its own
-  //      reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
-  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
+  //NOTE: "example" must match bindings.bhl's RegisterVersion("example", ...) call (its
+  //      compile-time stand-in). Module initializers aren't guaranteed under IL2CPP, so
+  //      Unity gets its own hooks instead (Play mode + Editor outside Play)
 #if UNITY_5_3_OR_NEWER
 #if UNITY_EDITOR
   [UnityEditor.InitializeOnLoadMethod]

@@ -103,6 +103,10 @@ public partial class Types : INamedResolver, IProxyTypeCache
     return bindings_versions.TryGetValue(name, out version);
   }
 
+  //NOTE: lets a caller diff before/after Register() to see what it self-declared
+  //      (see ProjectConf.LoadBindings) - never empty, a fresh Types() already has "prelude"
+  public IEnumerable<string> BindingsVersionNames => bindings_versions.Keys;
+
   public INamed ResolveNamedByPath(NamePath path)
   {
     return ns.ResolveSymbolByPath(path);

@@ -41,7 +41,7 @@ public class Workspace
     Types = ts;
     ProjConf = conf;
     _logger = logger;
-    WatchBindingsDlls(conf.bindings.Values.Select(b => b.dll));
+    WatchBindingsDlls(conf.bindings.Select(b => b.dll));
   }
 
   void WatchBindingsDlls(IEnumerable<string> paths)

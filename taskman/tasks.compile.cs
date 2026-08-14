@@ -16,7 +16,7 @@ public static partial class Tasks
     Console.WriteLine("Usage:");
     Console.WriteLine(
       "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
-      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<name>=<dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<index>=<dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<0=bin,1=lz4,2=lz4_chunked>] [--debug-info] " +
       "[--bindings-only] [--postproc-only]");
     Console.WriteLine(msg);
     Environment.Exit(1);
@@ -71,21 +71,21 @@ public static partial class Tasks
       {
         bool any = built_bindings_dlls.Count > 0;
         foreach(var kv in built_bindings_dlls)
-          Console.WriteLine($"{kv.Key}: {kv.Value}");
+          Console.WriteLine($"[{kv.Key}]: {kv.Value}");
 
-        foreach(var kv in proj.bindings)
+        for(int i = 0; i < proj.bindings.Count; ++i)
         {
-          if(built_bindings_dlls.ContainsKey(kv.Key))
+          if(built_bindings_dlls.ContainsKey(i))
             continue;
 
           //NOTE: unlike C# sources (built above via BuildBindingsDlls), .bhl sources are
           //      normally compiled lazily as a side effect of the regular compile pipeline
           //      (ScriptedBindings.Register()); here we trigger that same compile-and-cache
           //      step explicitly, without a host project to compile
-          var path = await BuildScriptedBindingsBytecode(proj, kv.Value);
+          var path = await BuildScriptedBindingsBytecode(proj, proj.bindings[i]);
           if(path != null)
           {
-            Console.WriteLine($"{kv.Key}: {path}");
+            Console.WriteLine($"[{i}]: {path}");
             any = true;
           }
         }
@@ -159,22 +159,21 @@ public static partial class Tasks
         v => proj.use_cache = v == null
       },
       {
-        "bindings-dll=", "bindings entry dll file path, as <name>=<path> (repeatable)",
+        "bindings-dll=", "bindings entry dll file path, as <index>=<path> (repeatable); " +
+          "out-of-range/non-numeric index appends a new entry",
         v =>
         {
           int idx = v.IndexOf('=');
           if(idx < 0)
-            throw new OptionException("Expected --bindings-dll=<name>=<path>", "bindings-dll");
+            throw new OptionException("Expected --bindings-dll=<index>=<path>", "bindings-dll");
 
-          string key = v.Substring(0, idx);
+          string idx_str = v.Substring(0, idx);
           string path = v.Substring(idx + 1);
 
-          if(!proj.bindings.TryGetValue(key, out var b))
-          {
-            b = new BindingsEntryConf();
-            proj.bindings[key] = b;
-          }
-          b.dll = path;
+          if(int.TryParse(idx_str, out int entry_idx) && entry_idx >= 0 && entry_idx < proj.bindings.Count)
+            proj.bindings[entry_idx].dll = path;
+          else
+            proj.bindings.Add(new BindingsEntryConf { dll = path });
         }
       },
       {
@@ -279,7 +278,7 @@ public static partial class Tasks
     conf.args_signature = string.Join(";", args) + ";sv=" + ModuleDeclared.STREAM_VERSION;
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
-    foreach(var b in proj.bindings.Values)
+    foreach(var b in proj.bindings)
       if(File.Exists(b.dll))
         conf.global_file_deps.Add(b.dll);
     //NOTE: bhl.proj-only settings (e.g. defines) have no cache-invalidation signal

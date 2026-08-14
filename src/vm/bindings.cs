@@ -225,6 +225,7 @@ public class DllBindings : IUserBindings
 {
   string dll_path;
   IUserBindings loaded;
+  List<Type> userbindings_classes;
 
   public DllBindings(string dll_path)
   {
@@ -237,6 +238,20 @@ public class DllBindings : IUserBindings
     loaded.Register(ts);
   }
 
+  //NOTE: (name, version) per self-registered class's own [BhlBinding] attribute - a dll can
+  //      have more than one. BC-fallback classes (no self-registration) declare nothing
+  public IEnumerable<(string name, string version)> GetDeclaredBindings()
+  {
+    EnsureLoaded();
+
+    foreach(var t in userbindings_classes)
+    {
+      var attr = (BhlBindingAttribute)Attribute.GetCustomAttribute(t, typeof(BhlBindingAttribute));
+      if(attr != null)
+        yield return (attr.Name, attr.Version);
+    }
+  }
+
   void EnsureLoaded()
   {
     if(loaded != null)
@@ -247,7 +262,7 @@ public class DllBindings : IUserBindings
     //NOTE: Assembly.LoadFrom alone doesn't reliably trigger [ModuleInitializer]s - force it
     System.Runtime.CompilerServices.RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
 
-    var userbindings_classes = BindingsRegistry.GetForAssembly(assembly).ToList();
+    userbindings_classes = BindingsRegistry.GetForAssembly(assembly).ToList();
 
     //NOTE: BC fallback for dlls built before self-registration existed
     if(userbindings_classes.Count == 0)

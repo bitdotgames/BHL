@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 namespace bhl
@@ -25,6 +26,50 @@ public class BindingsEntryConf
   //      for documentation/manual rebuilds without risking an unwanted rebuild of the
   //      committed dll (e.g. on a fresh checkout where tmp_dir's cache doesn't exist yet)
   public bool manual_build = false;
+
+  //NOTE: marks the entry Setup() synthesizes from the old flat bindings_sources/bindings_dll
+  //      fields - exempt from LoadBindings()'s "must declare a version" check
+  [JsonIgnore] public bool is_legacy = false;
+}
+
+//NOTE: lets an old dict-shaped "bindings" JSON value ({"name": {...}}) keep working - names
+//      are discovered post-load now (see LoadBindings), so this just drops the keys
+class BindingsListConverter : JsonConverter
+{
+  public override bool CanConvert(Type objectType) => objectType == typeof(List<BindingsEntryConf>);
+
+  public override bool CanWrite => false;
+
+  public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
+    JsonSerializer serializer)
+  {
+    var token = JToken.Load(reader);
+    var list = new List<BindingsEntryConf>();
+
+    if(token.Type == JTokenType.Null)
+      return list;
+
+    if(token.Type == JTokenType.Array)
+    {
+      foreach(var item in token)
+        list.Add(item.ToObject<BindingsEntryConf>(serializer));
+      return list;
+    }
+
+    if(token.Type == JTokenType.Object)
+    {
+      foreach(var prop in ((JObject)token).Properties())
+        list.Add(prop.Value.ToObject<BindingsEntryConf>(serializer));
+      return list;
+    }
+
+    throw new JsonSerializationException("'bindings' must be a JSON array or object, got " + token.Type);
+  }
+
+  public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+  {
+    throw new NotSupportedException();
+  }
 }
 
 //NOTE: split from postproc-only fields/methods in src/front/proj_conf.postproc.cs so
@@ -79,14 +124,13 @@ public partial class ProjectConf
 
   [JsonIgnore] public string proj_file = "";
 
-  //NOTE: every entry is used unconditionally - no per-entry "enabled" flag. At runtime
-  //      (LoadRuntimeBindings()) only the keys matter, matched by name against BindingsRegistry
-  public Dictionary<string, BindingsEntryConf> bindings = new Dictionary<string, BindingsEntryConf>();
+  //NOTE: every entry is used unconditionally - no per-entry "enabled" flag or name; see
+  //      LoadBindings() for how each entry's (name, version) is discovered after loading it
+  [JsonConverter(typeof(BindingsListConverter))]
+  public List<BindingsEntryConf> bindings = new List<BindingsEntryConf>();
 
   //NOTE: legacy fields, kept for BC with older bhl.proj files - folded into `bindings`
-  //      (under LegacyBindingsKey) during Setup()
-  public const string LegacyBindingsKey = "$legacy";
-
+  //      (as an is_legacy-flagged entry) during Setup()
   public List<string> bindings_sources = new List<string>();
   public string bindings_dll = "";
   public bool bindings_manual_build = false;
@@ -95,10 +139,11 @@ public partial class ProjectConf
   {
     if(bindings_sources.Count > 0 || !string.IsNullOrEmpty(bindings_dll))
     {
-      if(!bindings.TryGetValue(LegacyBindingsKey, out var legacy))
+      var legacy = bindings.Find(b => b.is_legacy);
+      if(legacy == null)
       {
-        legacy = new BindingsEntryConf();
-        bindings[LegacyBindingsKey] = legacy;
+        legacy = new BindingsEntryConf { is_legacy = true };
+        bindings.Add(legacy);
       }
       legacy.sources.AddRange(bindings_sources);
       if(string.IsNullOrEmpty(legacy.dll))
@@ -106,7 +151,7 @@ public partial class ProjectConf
       legacy.manual_build |= bindings_manual_build;
     }
 
-    foreach(var b in bindings.Values)
+    foreach(var b in bindings)
     {
       for(int i = 0; i < b.sources.Count; ++i)
         b.sources[i] = NormalizePath(proj_file, b.sources[i]);
@@ -114,7 +159,8 @@ public partial class ProjectConf
     }
 
     //NOTE: keep legacy fields normalized/in sync too, for anyone reading them directly
-    if(bindings.TryGetValue(LegacyBindingsKey, out var legacy_final))
+    var legacy_final = bindings.Find(b => b.is_legacy);
+    if(legacy_final != null)
     {
       bindings_sources = legacy_final.sources;
       bindings_dll = legacy_final.dll;
@@ -188,36 +234,34 @@ public partial class ProjectConf
     return new EmptyUserBindings();
   }
 
-  //NOTE: build/LSP-time loading, via dll loading and/or the compiler frontend - see
-  //      LoadRuntimeBindings() for the shipped-runtime counterpart. Entries run in
-  //      ordinal-key order for determinism
+  //NOTE: build/LSP-time loading, via dll loading and/or the compiler frontend. Entries
+  //      run in list order for determinism
   public IUserBindings LoadBindings()
   {
     return LoadBindings(out _);
   }
 
-  //NOTE: `versions` is each entry's own declared version (see BindingsRegistry.
-  //      TryGetVersion), embedded into the compiled .bhc so an incompatible version at
-  //      load time (see BindingsRegistry.RegisterRequiredBindings) is a clear failure
-  //      instead of a confusing symbol-resolution one
+  //NOTE: `versions` (discovered per entry, see DiscoverDeclaredBindings) is embedded into
+  //      the compiled .bhc so an incompatible version at load time is a clear failure
+  //      instead of a confusing symbol-resolution one (BindingsRegistry.RegisterRequiredBindings)
   public IUserBindings LoadBindings(out List<(string name, string version)> versions)
   {
-    var names = bindings.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
-    var loaded = names.Select(k => LoadBindingsEntry(bindings[k])).ToList();
+    var loaded = bindings.Select(LoadBindingsEntry).ToList();
 
     versions = new List<(string name, string version)>();
-    for(int i = 0; i < names.Count; ++i)
+    for(int i = 0; i < bindings.Count; ++i)
     {
-      //NOTE: "$legacy" is a synthetic key Setup() invents for old flat bindings_sources/
-      //      bindings_dll fields (see LegacyBindingsKey) - the underlying code was never
-      //      told that name, so it never declares a version under it. Skip rather than
-      //      forcing pre-versioning bhl.proj files to fail compilation entirely
-      if(names[i] == LegacyBindingsKey)
+      if(bindings[i].is_legacy)
         continue;
 
-      if(!BindingsRegistry.TryGetVersion(names[i], loaded[i], out var version))
-        throw new Exception($"Bindings entry '{names[i]}' does not declare a version");
-      versions.Add((names[i], version));
+      var declared = DiscoverDeclaredBindings(loaded[i]).ToList();
+      if(declared.Count == 0)
+      {
+        var entry = bindings[i];
+        var location = !string.IsNullOrEmpty(entry.dll) ? entry.dll : string.Join(", ", entry.sources);
+        throw new Exception($"Bindings entry #{i} ('{location}') does not declare a version");
+      }
+      versions.AddRange(declared);
     }
 
     if(loaded.Count == 0)
@@ -227,25 +271,30 @@ public partial class ProjectConf
     return new CombinedUserBindings(loaded.Cast<IUserBindings>().ToList());
   }
 
-  //NOTE: declares a bindings entry name with no sources/dll - for LoadRuntimeBindings()
-  //      callers that don't ship/parse bhl.proj itself
-  public void DeclareBindingsEntry(string name)
+  //NOTE: a dll's names come off each class's own [BhlBinding] attribute; anything else
+  //      (chiefly a .bhl-scripted entry) is run once on a scratch Types() and diffed against
+  //      its baseline ("prelude" is always there) to see what its own RegisterVersion(...) added
+  static IEnumerable<(string name, string version)> DiscoverDeclaredBindings(IUserBindings b)
   {
-    if(!bindings.ContainsKey(name))
-      bindings[name] = new BindingsEntryConf();
-  }
+    if(b is DllBindings dll)
+      return dll.GetDeclaredBindings();
 
-  //NOTE: runtime counterpart to LoadBindings() - no dynamic dll loading or compiler
-  //      frontend available on a shipped binary, so this matches `bindings`' keys by
-  //      name against BindingsRegistry instead. Unmatched names are skipped, not errors
-  public IUserBindings LoadRuntimeBindings()
-  {
-    var names = bindings.Keys.OrderBy(k => k, StringComparer.Ordinal);
-    return new CombinedUserBindings(
-      BindingsRegistry.GetByNames(names)
-        .Select(t => (IUserBindings)Activator.CreateInstance(t))
-        .ToList()
-    );
+    if(b is EmptyUserBindings)
+      return Enumerable.Empty<(string, string)>();
+
+    var scratch = new Types();
+    var before = new HashSet<string>(scratch.BindingsVersionNames);
+    b.Register(scratch);
+
+    var result = new List<(string name, string version)>();
+    foreach(var name in scratch.BindingsVersionNames)
+    {
+      if(before.Contains(name))
+        continue;
+      scratch.TryGetBindingsVersion(name, out var version);
+      result.Add((name, version));
+    }
+    return result;
   }
 }
 }
