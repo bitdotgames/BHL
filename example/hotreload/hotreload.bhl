@@ -1,0 +1,96 @@
+class Bot
+{
+  int state
+  int target_id
+  int pending_target_id
+
+  float state_timer
+  int action        //0=Idle, 1=Finding, 2=Attacking
+  float action_timer
+
+  func void init()
+  {
+    Trace("Bot starts...")
+    this.state = 0
+    this.target_id = 0
+    this.pending_target_id = 0
+    this.state_timer = 1 + Rand() * 4
+    this.action = 0
+    this.action_timer = 0
+  }
+
+  func void tick(float dt)
+  {
+    this.state_timer = this.state_timer - dt
+    if(this.state_timer <= 0)
+    {
+      this.state = this.state + 1
+      this.state_timer = 1 + Rand() * 4
+      Trace("State changed!")
+      //NOTE: mirrors the coroutine version's paral{StateChanged}{Selector} interrupt -
+      //      whatever action was in flight gets abandoned, not resolved
+      this.pick_next_action()
+      return
+    }
+
+    this.action_timer = this.action_timer - dt
+    if(this.action_timer <= 0)
+    {
+      this.resolve_action()
+      this.pick_next_action()
+    }
+  }
+
+  func void resolve_action()
+  {
+    if(this.action == 2)
+    {
+      Trace("Target " + (string)this.target_id + " is dead!")
+      this.target_id = 0
+    }
+    else if(this.action == 1)
+    {
+      this.target_id = this.pending_target_id
+      this.pending_target_id = 0
+    }
+  }
+
+  func void pick_next_action()
+  {
+    if(this.target_id != 0)
+    {
+      Trace("Attacking target " + (string)this.target_id)
+      this.action = 2
+      this.action_timer = 0.2
+      return
+    }
+
+    if(Rand() >= 0.6)
+    {
+      this.pending_target_id = (int)(Rand() * 1000)
+      Trace("Found new target " + (string)this.pending_target_id + "! Approaching it.")
+      this.action = 1
+      this.action_timer = 1 + Rand() * 3
+      return
+    }
+
+    Trace("No target in range")
+
+    int sec = (int)(1 + Rand() * 3)
+    Trace("Idling " + (string)sec + " sec...")
+    this.action = 0
+    this.action_timer = sec
+  }
+}
+
+func Bot make_bot()
+{
+  Bot b = new Bot
+  b.init()
+  return b
+}
+
+func void tick_bot(Bot b, float dt)
+{
+  b.tick(dt)
+}
