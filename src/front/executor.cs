@@ -28,9 +28,6 @@ public class CompileConf
   //      so toggling it with use_cache=true and no source changes can serve stale bytecode.
   public bool indirect_imports;
 
-  //NOTE: written once into the resulting bundle, see WriteCompilationResultToFile/ModuleLoader.RequiredBindings
-  public List<(string name, string version)> required_bindings = new List<(string name, string version)>();
-
   //NOTE: populated internally at the start of Exec(); a single consolidated
   //      cache file (instead of two files per source file) to avoid Windows'
   //      per-file I/O overhead (AV scanning, NTFS metadata churn) on projects
@@ -666,8 +663,13 @@ public class CompilationExecutor
   //      no COMPILE_FMT/FILE_VERSION bump is needed
   static void WriteRequiredBindings(CompileConf conf, MsgPack.MsgPackWriter mwriter)
   {
-    mwriter.Write(conf.required_bindings.Count);
-    foreach(var rb in conf.required_bindings)
+    var info = (conf.bindings as UserBindingsWithInfo)?.info;
+
+    mwriter.Write(info?.Count ?? 0);
+    if(info == null)
+      return;
+
+    foreach(var rb in info)
     {
       mwriter.Write(rb.name);
       mwriter.Write(rb.version);

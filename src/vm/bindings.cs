@@ -34,6 +34,26 @@ public class EmptyUserBindings : IUserBindings
   }
 }
 
+//NOTE: carries a bindings instance together with its own discovered (name, version)
+//      declarations, so the two never have to travel as separate out-param/field pairs
+//      through CompileConf etc. - see ProjectConf.LoadBindings
+public class UserBindingsWithInfo : IUserBindings
+{
+  public readonly IUserBindings bindings;
+  public readonly List<(string name, string version)> info;
+
+  public UserBindingsWithInfo(IUserBindings bindings, List<(string name, string version)> info)
+  {
+    this.bindings = bindings;
+    this.info = info;
+  }
+
+  public void Register(Types ts)
+  {
+    bindings.Register(ts);
+  }
+}
+
 //NOTE: implementations self-register here (typically via a [ModuleInitializer] calling
 //      Register("name", typeof(X), "X.Y.Z")) instead of being found via assembly-wide
 //      reflection, which Unity/IL2CPP's stripper tends to break. `version` is

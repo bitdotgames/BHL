@@ -42,7 +42,8 @@ func RegisterBindings(std.bind.Types types) {{
       proj.bindings.Add(new BindingsEntryConf { sources = new List<string> { script_path } });
       proj.Setup();
 
-      var bindings = proj.LoadBindings(out var versions);
+      var bindings = (UserBindingsWithInfo)proj.LoadBindings();
+      var versions = bindings.info;
 
       Assert.NotNull(bindings);
       Assert.Single(versions);
@@ -79,9 +80,9 @@ func RegisterBindings(std.bind.Types types) {{
       Assert.Single(proj.bindings);
       Assert.False(proj.bindings[0].is_legacy);
 
-      var bindings = proj.LoadBindings(out var versions);
-      Assert.Single(versions);
-      Assert.Equal("legacydict", versions[0].name);
+      var bindings = (UserBindingsWithInfo)proj.LoadBindings();
+      Assert.Single(bindings.info);
+      Assert.Equal("legacydict", bindings.info[0].name);
     }
     finally
     {
@@ -99,9 +100,9 @@ func RegisterBindings(std.bind.Types types) {{
     Assert.Single(proj.bindings);
     Assert.True(proj.bindings[0].is_legacy);
 
-    var bindings = proj.LoadBindings(out var versions);
+    var bindings = (UserBindingsWithInfo)proj.LoadBindings();
     Assert.NotNull(bindings);
-    Assert.Empty(versions);
+    Assert.Empty(bindings.info);
   }
 
   [Fact]
@@ -111,6 +112,6 @@ func RegisterBindings(std.bind.Types types) {{
     proj.bindings.Add(new BindingsEntryConf());
     proj.Setup();
 
-    Assert.Throws<Exception>(() => proj.LoadBindings(out _));
+    Assert.Throws<Exception>(() => proj.LoadBindings());
   }
 }

@@ -235,20 +235,15 @@ public partial class ProjectConf
   }
 
   //NOTE: build/LSP-time loading, via dll loading and/or the compiler frontend. Entries
-  //      run in list order for determinism
+  //      run in list order for determinism. The returned UserBindingsWithInfo.info
+  //      (discovered per entry, see DiscoverDeclaredBindings) is embedded into the compiled
+  //      .bhc so an incompatible version at load time is a clear failure instead of a
+  //      confusing symbol-resolution one (BindingsRegistry.RegisterRequiredBindings)
   public IUserBindings LoadBindings()
-  {
-    return LoadBindings(out _);
-  }
-
-  //NOTE: `versions` (discovered per entry, see DiscoverDeclaredBindings) is embedded into
-  //      the compiled .bhc so an incompatible version at load time is a clear failure
-  //      instead of a confusing symbol-resolution one (BindingsRegistry.RegisterRequiredBindings)
-  public IUserBindings LoadBindings(out List<(string name, string version)> versions)
   {
     var loaded = bindings.Select(LoadBindingsEntry).ToList();
 
-    versions = new List<(string name, string version)>();
+    var versions = new List<(string name, string version)>();
     for(int i = 0; i < bindings.Count; ++i)
     {
       if(bindings[i].is_legacy)
@@ -264,11 +259,12 @@ public partial class ProjectConf
       versions.AddRange(declared);
     }
 
-    if(loaded.Count == 0)
-      return new EmptyUserBindings();
-    if(loaded.Count == 1)
-      return loaded[0];
-    return new CombinedUserBindings(loaded.Cast<IUserBindings>().ToList());
+    IUserBindings combined =
+      loaded.Count == 0 ? new EmptyUserBindings() :
+      loaded.Count == 1 ? loaded[0] :
+      new CombinedUserBindings(loaded.Cast<IUserBindings>().ToList());
+
+    return new UserBindingsWithInfo(combined, versions);
   }
 
   //NOTE: a dll's names come off each class's own [BhlBinding] attribute; anything else

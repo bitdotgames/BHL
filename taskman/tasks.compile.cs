@@ -237,10 +237,9 @@ public static partial class Tasks
       compile_usage("Tmp dir not set");
 
     IUserBindings bindings = null;
-    List<(string name, string version)> required_bindings = new List<(string name, string version)>();
     try
     {
-      bindings = proj.LoadBindings(out required_bindings);
+      bindings = proj.LoadBindings();
     }
     catch(Exception e)
     {
@@ -288,7 +287,6 @@ public static partial class Tasks
     conf.bindings = bindings;
     conf.postproc = postproc;
     conf.add_debug_info = add_debug_info;
-    conf.required_bindings = required_bindings;
 
     var executor = new CompilationExecutor();
     var result = await executor.Exec(conf);
