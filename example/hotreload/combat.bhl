@@ -1,0 +1,19 @@
+func float roll_idle_duration()
+{
+  return 1 + Rand() * 3
+}
+
+func float roll_find_duration()
+{
+  return 1 + Rand() * 3
+}
+
+func float attack_duration()
+{
+  return 0.2
+}
+
+func bool roll_target_found()
+{
+  return Rand() >= 0.6
+}

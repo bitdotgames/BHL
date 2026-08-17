@@ -1,3 +1,5 @@
+import "combat"
+
 class Bot
 {
   int state
@@ -61,25 +63,24 @@ class Bot
     {
       Trace("Attacking target " + (string)this.target_id)
       this.action = 2
-      this.action_timer = 0.2
+      this.action_timer = attack_duration()
       return
     }
 
-    if(Rand() >= 0.6)
+    if(roll_target_found())
     {
       this.pending_target_id = (int)(Rand() * 1000)
       Trace("Found new target " + (string)this.pending_target_id + "! Approaching it.")
       this.action = 1
-      this.action_timer = 1 + Rand() * 3
+      this.action_timer = roll_find_duration()
       return
     }
 
     Trace("No target in range")
 
-    int sec = (int)(1 + Rand() * 3)
-    Trace("Idling " + (string)sec + " sec...")
     this.action = 0
-    this.action_timer = sec
+    this.action_timer = roll_idle_duration()
+    Trace("Idling " + (string)(int)this.action_timer + " sec...")
   }
 }
 
