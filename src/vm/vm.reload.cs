@@ -63,10 +63,10 @@ public partial class VM : INamedResolver
         continue;
 
       ref var new_val = ref new_module.gvars.vals[ni];
-      new_val._refc?.Release();
+      new_val.ReleaseData();
 
       ref var old_val = ref old_module.gvars.vals[i];
-      old_val._refc?.Retain();
+      old_val.RetainData();
 
       new_val = old_val;
       entry.migrated = true;
@@ -122,7 +122,7 @@ public partial class VM : INamedResolver
       {
         if(TryFindFieldValue(old_class, old_vl, new_field, out var v))
         {
-          v._refc?.Retain();
+          v.RetainData();
           new_vl.Add(v);
         }
         else

@@ -316,13 +316,13 @@ public class TestReload : BHL_TestBase
 
     //NOTE: passing a Val as a call arg transfers ownership (same convention as
     //      ValList.Add) - retain before each reuse since we keep calling with it
-    unit_val._refc?.Retain();
+    unit_val.RetainData();
     Assert.Equal(2, Execute(vm, "call_tick", unit_val).Stack.Pop().num);
-    unit_val._refc?.Retain();
+    unit_val.RetainData();
     Assert.Equal(42, Execute(vm, "call_get_health", unit_val).Stack.Pop().num);
-    unit_val._refc?.Retain();
+    unit_val.RetainData();
     Assert.Equal(0, Execute(vm, "call_get_level", unit_val).Stack.Pop().num);
 
-    unit_val._refc?.Release();
+    unit_val.ReleaseData();
   }
 }
