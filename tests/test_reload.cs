@@ -201,7 +201,7 @@ public class TestReload : BHL_TestBase
     NewTestFile("main.bhl", mainSrc, ref files);
 
     var conf = MakeCompileConf(files, max_threads: 1);
-    conf.indirect_imports = true;
+    conf.indirect_calls = true;
 
     var loader = new ModuleLoader(conf.ts, await CompileFiles(conf));
     var vm = new VM(conf.ts, loader);

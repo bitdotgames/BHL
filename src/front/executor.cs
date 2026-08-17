@@ -24,9 +24,9 @@ public class CompileConf
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public int max_errors_num = 100;
   public bool add_debug_info = true;
-  //NOTE: see ModuleCompiler.indirect_imports - not yet part of the cache signature (CheckDebugInfoSignatureFile),
+  //NOTE: see ModuleCompiler.indirect_calls - not yet part of the cache signature (CheckDebugInfoSignatureFile),
   //      so toggling it with use_cache=true and no source changes can serve stale bytecode.
-  public bool indirect_imports;
+  public bool indirect_calls;
 
   //NOTE: populated internally at the start of Exec(); a single consolidated
   //      cache file (instead of two files per source file) to avoid Windows'
@@ -1092,7 +1092,7 @@ public class CompilationExecutor
 
           var c = new ModuleCompiler(proc_result);
           c.add_debug_info = conf.add_debug_info;
-          c.indirect_imports = conf.indirect_imports;
+          c.indirect_calls = conf.indirect_calls;
           file2compiler.Add(current_file, c);
           c.Compile_VisitAST();
         }

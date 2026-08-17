@@ -46,7 +46,7 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: cross-module calls resolve the callee via func_idx at call time instead of
   //      baking its ip in, at the cost of an extra FuncPtr round trip per call - lets an
   //      imported module hot-reload without recompiling its callers.
-  public bool indirect_imports;
+  public bool indirect_calls;
 
   HashSet<AST_Block> ctrl_block_has_defers = new HashSet<AST_Block>();
 
@@ -1551,7 +1551,7 @@ public class ModuleCompiler : AST_Visitor
           var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           PatchLater(call_op, (inst) => inst.operands[0] = fsymb._ip_addr);
         }
-        else if(instr.op == Opcodes.GetFuncPtr && !indirect_imports)
+        else if(instr.op == Opcodes.GetFuncPtr && !indirect_calls)
         {
           var fsymb = (FuncSymbolScript)ast.symbol;
           var fmod = fsymb.GetModule();
@@ -1566,7 +1566,7 @@ public class ModuleCompiler : AST_Visitor
               throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
           });
         }
-        else if(instr.op == Opcodes.GetFuncPtr && indirect_imports)
+        else if(instr.op == Opcodes.GetFuncPtr && indirect_calls)
         {
           //NOTE: leave the already-emitted GetFuncPtr (func_idx-based) as-is
           //      and call through it, instead of baking the callee's ip here

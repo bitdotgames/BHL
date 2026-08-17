@@ -73,7 +73,7 @@ public partial class VM : INamedResolver
     }
   }
 
-  //NOTE: safe only for importers compiled with ModuleCompiler.indirect_imports=true;
+  //NOTE: safe only for importers compiled with ModuleCompiler.indirect_calls=true;
   //      a direct-mode caller has the callee's ip baked as a literal operand, which
   //      would now point at garbage in the new module's bytecode. Not automatic/cascading.
   public void RelinkImports(string imported_module_name)
