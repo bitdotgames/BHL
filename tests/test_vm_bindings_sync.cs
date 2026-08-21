@@ -52,7 +52,7 @@ public class TestVMBindingsSync
     conf.ts = new Types();
     conf.logger = new Logger(0, new ConsoleLogger());
     conf.proj = proj;
-    conf.files = new List<string> { Path.Combine(dir, "importer.bhl") };
+    conf.files = BuildUtils.NormalizeFilePaths(new List<string> { Path.Combine(dir, "importer.bhl") });
     //NOTE: resolves via RegistryBindings since ModName is already self-registered above -
     //      embeds required-bindings metadata into the compiled bytes (UserBindingsWithInfo)
     conf.bindings = proj.LoadBindings();
