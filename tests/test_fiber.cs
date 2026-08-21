@@ -1724,6 +1724,31 @@ public class TestFiber : BHL_TestBase
     }
   }
 
+  [Fact]
+  public void TestExecuteThrowsAndDoesNotLeakExecStateOnDirectYield()
+  {
+    string bhl = @"
+    coro func test()
+    {
+      yield()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var fs =
+      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
+
+    int initial_capacity = vm.ScriptExecutors.Length;
+
+    //NOTE: repeated misuse (calling a coroutine via Execute(), which can't suspend)
+    //      must not leak a pooled ExecState slot each time
+    for(int i = 0; i < 5; ++i)
+      Assert.Throws<Exception>(() => vm.Execute(fs));
+
+    Assert.Equal(initial_capacity, vm.ScriptExecutors.Length);
+  }
+
   void BindStartScriptInMgr(Types ts)
   {
     {

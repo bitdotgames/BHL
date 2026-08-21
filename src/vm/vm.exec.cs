@@ -250,9 +250,14 @@ public partial class VM
       script_executors[script_executors_count++] = new ExecState();
     }
     var exec = script_executors[script_executor_idx];
-    var res = Execute(exec, fs, args_info, ref args);
-    --script_executor_idx;
-    return res;
+    try
+    {
+      return Execute(exec, fs, args_info, ref args);
+    }
+    finally
+    {
+      --script_executor_idx;
+    }
   }
 
   ValStack Execute(ExecState exec, FuncSymbolScript fs, FuncArgsInfo args_info,  /*less copying*/ref StackList<Val> args)
@@ -302,7 +307,12 @@ public partial class VM
 #endif
 
     if(exec.status == BHS.RUNNING)
+    {
+      //NOTE: leaving frames/regions/coroutine dangling would corrupt this pooled exec
+      //      for its next reuse - tear it down properly before throwing
+      exec.ExitFrames();
       throw new Exception($"Not expected to be running: {fs}");
+    }
 
     return stack;
   }

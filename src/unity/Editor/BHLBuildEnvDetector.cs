@@ -3,28 +3,41 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace bhl
 {
 
 [InitializeOnLoad]
-static class BHLBuildEnvDetector
+public static class BHLBuildEnvDetector
 {
   static BHLBuildEnvDetector()
   {
-    // Build a group → representative BuildTarget map so we can query PluginImporter
-    // per-platform without a manual switch statement.
-    var groupToTarget = new Dictionary<BuildTargetGroup, BuildTarget>();
-    foreach(BuildTarget t in Enum.GetValues(typeof(BuildTarget)))
-    {
-      if(t == BuildTarget.NoTarget) continue;
-      var g = BuildPipeline.GetBuildTargetGroup(t);
-      if(g != BuildTargetGroup.Unknown && !groupToTarget.ContainsKey(g))
-        groupToTarget[g] = t;
-    }
+    Rescan();
+  }
 
+  //NOTE: public so a project's own UI (e.g. a control panel) can force a rescan on
+  //      demand, rather than waiting for the next unrelated domain reload to pick up
+  //      a plugin that was just added/reimported
+  public static void Rescan()
+  {
     var antlrImporter = FindPluginImporter("Antlr4.Runtime.Standard.dll");
     var lz4Importer   = FindPluginImporter("LZ4.dll");
+
+    //NOTE: both plugins live under Plugins/Editor/, which Unity excludes from every
+    //      Player build regardless of per-platform checkboxes - so what actually matters
+    //      is GetCompatibleWithEditor(), not Player-target compatibility. BHL_PARSER/
+    //      BHL_LZ4 are consumed by Editor-only compiler code either way.
+    bool antlrForEditor = antlrImporter != null && antlrImporter.GetCompatibleWithEditor();
+    bool lz4ForEditor   = lz4Importer   != null && lz4Importer.GetCompatibleWithEditor();
+
+    Debug.Log("[BHL] BuildEnvDetector: Antlr4.Runtime.Standard.dll " +
+      (antlrImporter != null ? $"found at {antlrImporter.assetPath}, CompatibleWithEditor={antlrForEditor}" : "NOT FOUND"));
+    Debug.Log("[BHL] BuildEnvDetector: LZ4.dll " +
+      (lz4Importer != null ? $"found at {lz4Importer.assetPath}, CompatibleWithEditor={lz4ForEditor}" : "NOT FOUND"));
+
+    var activeGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+    Debug.Log($"[BHL] BuildEnvDetector: active build target = {EditorUserBuildSettings.activeBuildTarget} (group={activeGroup})");
 
     foreach(BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
     {
@@ -33,15 +46,6 @@ static class BHLBuildEnvDetector
 
       try
       {
-        bool antlrForGroup = false;
-        bool lz4ForGroup   = false;
-
-        if(groupToTarget.TryGetValue(group, out var target))
-        {
-          antlrForGroup = antlrImporter != null && IsCompatibleWithPlatform(antlrImporter, target);
-          lz4ForGroup   = lz4Importer   != null && IsCompatibleWithPlatform(lz4Importer,   target);
-        }
-
         var raw  = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
         var list = new List<string>(
           raw.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
@@ -49,28 +53,19 @@ static class BHLBuildEnvDetector
         list.Remove("BHL_PARSER");
         list.Remove("BHL_LZ4");
 
-        if(antlrForGroup) list.Add("BHL_PARSER");
-        if(lz4ForGroup)   list.Add("BHL_LZ4");
+        if(antlrForEditor) list.Add("BHL_PARSER");
+        if(lz4ForEditor)   list.Add("BHL_LZ4");
 
         PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
-      }
-      catch(Exception)
-      {
-        // some BuildTargetGroups are not supported on this Unity installation
-      }
-    }
-  }
 
-  // Returns true if the plugin will be compiled in for the given build target.
-  // Handles the "Any Platform" + per-platform exclusion model.
-  static bool IsCompatibleWithPlatform(PluginImporter importer, BuildTarget target)
-  {
-    if(importer.GetCompatibleWithAnyPlatform())
-    {
-      try { return !importer.GetExcludeFromAnyPlatform(target.ToString()); }
-      catch { return true; }
+        if(group == activeGroup)
+          Debug.Log($"[BHL] BuildEnvDetector: ACTIVE group={group} BHL_PARSER={antlrForEditor} BHL_LZ4={lz4ForEditor} -> defines=[{string.Join(";", list)}]");
+      }
+      catch(Exception e)
+      {
+        Debug.Log($"[BHL] BuildEnvDetector: group={group} skipped ({e.Message})");
+      }
     }
-    return importer.GetCompatibleWithPlatform(target);
   }
 
   // Finds a plugin importer by DLL filename (case-insensitive).

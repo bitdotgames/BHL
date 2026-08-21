@@ -103,6 +103,11 @@ public static class BindingsRegistry
     Register(attr.Name, type, attr.Version);
   }
 
+  public static bool IsRegistered(string name)
+  {
+    return all.ContainsKey(name);
+  }
+
   public static IEnumerable<Type> GetAll()
   {
     return all.Values.Select(e => e.type);
@@ -239,6 +244,19 @@ public class CombinedUserBindings : IUserBindings
     for(int i = 0; i < _bindings.Count; i++)
       _bindings[i].Register(ts);
   }
+}
+
+//NOTE: references an already self-registered IUserBindings by name, see ProjectConf.LoadBindingsEntry
+public class RegistryBindings : IUserBindings
+{
+  public readonly string name;
+
+  public RegistryBindings(string name)
+  {
+    this.name = name;
+  }
+
+  public void Register(Types ts) => BindingsRegistry.RegisterForType(ts, name);
 }
 
 public class DllBindings : IUserBindings

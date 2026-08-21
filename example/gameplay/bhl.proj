@@ -2,6 +2,7 @@
   "src_dirs" : ["./"],
   "bindings" : [
     {
+      "name" : "example",
       "sources" : ["./bindings.bhl"]
     }
   ],

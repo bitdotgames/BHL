@@ -2,6 +2,7 @@
   "src_dirs" : ["./"],
   "bindings" : [
     {
+      "name" : "unity",
       "sources" : ["./bindings.bhl"]
     }
   ],

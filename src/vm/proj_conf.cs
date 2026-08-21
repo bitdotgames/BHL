@@ -11,6 +11,14 @@ namespace bhl
 
 public class BindingsEntryConf
 {
+  //NOTE: path (wildcard allowed) to a JSON file with one entry or an array of them; see
+  //      ProjectConf.ExpandBindingsIncludes. Mutually exclusive with the fields below
+  public string include = "";
+
+  //NOTE: required - cherry-picks a self-registered BindingsRegistry binding by this name
+  //      when available, else falls back to sources/dll below (see LoadBindingsEntry)
+  public string name = "";
+
   //NOTE: 1) if there are .bhl scripts they will be built into `dll` (if it's present)
   //      2) if there are .cs sources they will be built into `dll`
   public List<string> sources = new List<string>();
@@ -32,8 +40,9 @@ public class BindingsEntryConf
   [JsonIgnore] public bool is_legacy = false;
 }
 
-//NOTE: lets an old dict-shaped "bindings" JSON value ({"name": {...}}) keep working - names
-//      are discovered post-load now (see LoadBindings), so this just drops the keys
+//NOTE: lets an old dict-shaped "bindings" JSON value ({"name": {...}}) keep working - the
+//      dict key becomes the entry's `name` (now required, see BindingsEntryConf.name),
+//      unless the entry body already sets its own
 class BindingsListConverter : JsonConverter
 {
   public override bool CanConvert(Type objectType) => objectType == typeof(List<BindingsEntryConf>);
@@ -59,7 +68,12 @@ class BindingsListConverter : JsonConverter
     if(token.Type == JTokenType.Object)
     {
       foreach(var prop in ((JObject)token).Properties())
-        list.Add(prop.Value.ToObject<BindingsEntryConf>(serializer));
+      {
+        var entry = prop.Value.ToObject<BindingsEntryConf>(serializer);
+        if(string.IsNullOrEmpty(entry.name))
+          entry.name = prop.Name;
+        list.Add(entry);
+      }
       return list;
     }
 
@@ -117,15 +131,16 @@ public partial class ProjectConf
   public string error_file = "";
   public bool use_cache = true;
   public int verbosity = 1;
-  public int max_threads = 1;
-  public bool deterministic = false;
+  //NOTE: 0 (or unset) means auto - see Setup()
+  public int max_threads = 0;
+  public bool deterministic = true;
 
   public const string DefaultBindingsScriptName = "RegisterBindings";
 
   [JsonIgnore] public string proj_file = "";
 
-  //NOTE: every entry is used unconditionally - no per-entry "enabled" flag or name; see
-  //      LoadBindings() for how each entry's (name, version) is discovered after loading it
+  //NOTE: every entry is used unconditionally, no per-entry "enabled" flag; every non-legacy
+  //      entry must declare a `name` (checked in Setup())
   [JsonConverter(typeof(BindingsListConverter))]
   public List<BindingsEntryConf> bindings = new List<BindingsEntryConf>();
 
@@ -137,6 +152,11 @@ public partial class ProjectConf
 
   public void Setup()
   {
+    if(max_threads <= 0)
+      max_threads = Environment.ProcessorCount;
+
+    bindings = ExpandBindingsIncludes(bindings, proj_file, new HashSet<string>());
+
     if(bindings_sources.Count > 0 || !string.IsNullOrEmpty(bindings_dll))
     {
       var legacy = bindings.Find(b => b.is_legacy);
@@ -151,11 +171,27 @@ public partial class ProjectConf
       legacy.manual_build |= bindings_manual_build;
     }
 
+    //NOTE: stable per bhl.proj (hashed from its own path), so repeated runs reuse the
+    //      same scratch space instead of each caller having to invent/manage their own
+    if(string.IsNullOrEmpty(tmp_dir))
+      tmp_dir = DefaultProjectTempDir(proj_file);
+    tmp_dir = NormalizePath(proj_file, tmp_dir);
+
     foreach(var b in bindings)
     {
+      //NOTE: legacy entries predate `name` entirely and stay exempt
+      if(!b.is_legacy && string.IsNullOrEmpty(b.name))
+        throw new Exception("Bindings entry must have a non-empty 'name'");
+
       for(int i = 0; i < b.sources.Count; ++i)
         b.sources[i] = NormalizePath(proj_file, b.sources[i]);
-      b.dll = NormalizePath(proj_file, b.dll);
+
+      //NOTE: no explicit build target - park one under tmp_dir instead, stable per entry
+      //      name so repeated compiles reuse the same path
+      if(string.IsNullOrEmpty(b.dll) && b.sources.Count > 0)
+        b.dll = AutoBindingsDllPath(b);
+      else
+        b.dll = NormalizePath(proj_file, b.dll);
     }
 
     //NOTE: keep legacy fields normalized/in sync too, for anyone reading them directly
@@ -183,7 +219,9 @@ public partial class ProjectConf
     }
 
     result_file = NormalizePath(proj_file, result_file);
-    tmp_dir = NormalizePath(proj_file, tmp_dir);
+
+    if(string.IsNullOrEmpty(error_file))
+      error_file = Path.Combine(tmp_dir, "bhl.error");
     error_file = NormalizePath(proj_file, error_file);
   }
 
@@ -199,6 +237,90 @@ public partial class ProjectConf
       return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
 
     return file_path;
+  }
+
+  //NOTE: replaces each `include` entry with the JSON file's own entries, recursively,
+  //      anchored to that file's own directory
+  static List<BindingsEntryConf> ExpandBindingsIncludes(List<BindingsEntryConf> raw, string anchor_file, HashSet<string> visiting)
+  {
+    var result = new List<BindingsEntryConf>();
+
+    foreach(var b in raw)
+    {
+      if(string.IsNullOrEmpty(b.include))
+      {
+        result.Add(b);
+        continue;
+      }
+
+      if(!string.IsNullOrEmpty(b.name) || b.sources.Count > 0 || !string.IsNullOrEmpty(b.dll))
+        throw new Exception($"Bindings entry with 'include' ('{b.include}') must not set 'name'/'sources'/'dll'");
+
+      string pattern = NormalizePath(anchor_file, b.include);
+      var matches = BuildUtils.Glob(pattern).Where(File.Exists).ToList();
+
+      if(matches.Count == 0)
+        throw new Exception($"Bindings include '{b.include}' did not match any existing file");
+      if(matches.Count > 1)
+        throw new Exception($"Bindings include '{b.include}' matched more than one file: {string.Join(", ", matches)}");
+
+      string included_file = matches[0];
+      string canon = BuildUtils.NormalizeFilePath(included_file);
+      if(!visiting.Add(canon))
+        throw new Exception($"Bindings include cycle detected at '{included_file}'");
+
+      var included_entries = ParseBindingsJson(File.ReadAllText(included_file), included_file);
+      foreach(var e in included_entries)
+      {
+        for(int i = 0; i < e.sources.Count; ++i)
+          e.sources[i] = NormalizePath(included_file, e.sources[i]);
+        if(!string.IsNullOrEmpty(e.dll))
+          e.dll = NormalizePath(included_file, e.dll);
+      }
+
+      result.AddRange(ExpandBindingsIncludes(included_entries, included_file, visiting));
+      visiting.Remove(canon);
+    }
+
+    return result;
+  }
+
+  static List<BindingsEntryConf> ParseBindingsJson(string json_text, string source_path)
+  {
+    var token = JToken.Parse(json_text);
+
+    if(token.Type == JTokenType.Array)
+      return token.Select(t => t.ToObject<BindingsEntryConf>()).ToList();
+    if(token.Type == JTokenType.Object)
+      return new List<BindingsEntryConf> { token.ToObject<BindingsEntryConf>() };
+
+    throw new Exception($"Bindings include '{source_path}' must be a JSON object or array, got {token.Type}");
+  }
+
+  static string DefaultProjectTempDir(string proj_file)
+  {
+    string key = string.IsNullOrEmpty(proj_file) ? Guid.NewGuid().ToString() : Path.GetFullPath(proj_file);
+    return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetTempPath(), "bhl_" + ShortHash(key)));
+  }
+
+  string AutoBindingsDllPath(BindingsEntryConf b)
+  {
+    string ext = b.sources.Any(s => s.EndsWith(".cs")) ? ".dll" : ".bhc";
+    string label = string.IsNullOrEmpty(b.name) ? "bindings" : b.name;
+    string safe_label = new string(label.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
+    return BuildUtils.NormalizeFilePath(Path.Combine(tmp_dir, safe_label + ext));
+  }
+
+  static string ShortHash(string s)
+  {
+    using(var md5 = System.Security.Cryptography.MD5.Create())
+    {
+      var bytes = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(s));
+      var sb = new System.Text.StringBuilder();
+      foreach(var b in bytes)
+        sb.Append(b.ToString("x2"));
+      return sb.ToString().Substring(0, 12);
+    }
   }
 
   bool TryGetScriptedBindings(
@@ -223,8 +345,13 @@ public partial class ProjectConf
     return bindings_scripts.Count > 0 || !string.IsNullOrEmpty(bindings_bytecode_file);
   }
 
+  //NOTE: a name already self-registered in this process (e.g. Unity Editor) resolves to
+  //      that live binding; otherwise falls back to sources/dll (e.g. a separate LSP/CLI)
   IUserBindings LoadBindingsEntry(BindingsEntryConf b)
   {
+    if(BindingsRegistry.IsRegistered(b.name))
+      return new RegistryBindings(b.name);
+
     if(!string.IsNullOrEmpty(b.dll) && b.dll.EndsWith(".dll"))
       return new DllBindings(b.dll);
 
@@ -251,11 +378,15 @@ public partial class ProjectConf
 
       var declared = DiscoverDeclaredBindings(loaded[i]).ToList();
       if(declared.Count == 0)
-      {
-        var entry = bindings[i];
-        var location = !string.IsNullOrEmpty(entry.dll) ? entry.dll : string.Join(", ", entry.sources);
-        throw new Exception($"Bindings entry #{i} ('{location}') does not declare a version");
-      }
+        throw new Exception($"Bindings entry '{bindings[i].name}' does not declare a version");
+
+      //NOTE: catches a stale/typo'd `name` early
+      if(!declared.Any(d => d.name == bindings[i].name))
+        throw new Exception(
+          $"Bindings entry '{bindings[i].name}' does not match its actual declared name(s) " +
+          $"({string.Join(", ", declared.Select(d => d.name))}) - check bhl.proj's 'name' field"
+        );
+
       versions.AddRange(declared);
     }
 

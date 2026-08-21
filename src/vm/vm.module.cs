@@ -27,6 +27,13 @@ public partial class VM : INamedResolver
 
   IModuleLoader loader;
 
+  //NOTE: swappable post-construction so a long-lived VM can point at freshly recompiled bytecode
+  public IModuleLoader Loader
+  {
+    get => loader;
+    set => loader = value;
+  }
+
   Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module_cache = new Dictionary<SymbolSpec, ModuleSymbol>();
 
   static int trampoline_ids_seq = 0;
@@ -113,6 +120,17 @@ public partial class VM : INamedResolver
   }
 
   public Action<Module> OnModuleLoaded;
+
+  //NOTE: for registering a native module into an already-constructed VM (e.g. after
+  //      BindingsRegistry.RegisterRequiredBindings adds it to types.modules post-hoc) -
+  //      the ctor only mirrors types.modules into this VM's own registry once, at
+  //      construction time, so anything added to types.modules afterward needs this
+  public void RegisterModule(ModuleDeclared decl)
+  {
+    var m = new Module(decl);
+    m.Setup(null);
+    RegisterModule(m);
+  }
 
   void RegisterModule(Module module)
   {

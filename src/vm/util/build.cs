@@ -97,29 +97,54 @@ static public class BuildUtils
     return new FileInfo(file).LastWriteTime;
   }
 
-  static public List<string> Glob(string s)
+  //NOTE: expands one path segment at a time, so '*' works in any segment, not just a trailing one
+  static public List<string> Glob(string pattern)
   {
-    var files = new List<string>();
-    int idx = s.IndexOf('*');
-    if(idx != -1)
+    if(pattern.IndexOf('*') == -1)
+      return new List<string> { pattern };
+
+    string norm = pattern.Replace('\\', '/');
+    string root = "";
+    if(norm.StartsWith("/"))
     {
-      string dir = s.Substring(0, idx);
-      string mask = s.Substring(idx);
-
-      if(Directory.Exists(dir))
-        files.AddRange(Directory.GetFiles(dir, mask));
+      root = "/";
+      norm = norm.Substring(1);
     }
-    else
-      files.Add(s);
 
-    return files;
+    var segments = norm.Split('/');
+    var current = new List<string> { root };
+
+    for(int i = 0; i < segments.Length; ++i)
+    {
+      string segment = segments[i];
+      bool is_last = i == segments.Length - 1;
+      bool has_wildcard = segment.IndexOf('*') != -1;
+
+      var next = new List<string>();
+      foreach(var dir in current)
+      {
+        if(!has_wildcard)
+        {
+          next.Add(dir.Length == 0 ? segment : dir.EndsWith("/") ? dir + segment : dir + "/" + segment);
+          continue;
+        }
+
+        if(!Directory.Exists(dir))
+          continue;
+
+        next.AddRange(is_last ? Directory.GetFiles(dir, segment) : Directory.GetDirectories(dir, segment));
+      }
+      current = next;
+    }
+
+    return current;
   }
 
   static public void Rm(string path)
   {
     if(Directory.Exists(path))
       Directory.Delete(path, true);
-    else
+    else if(File.Exists(path))
       File.Delete(path);
   }
 

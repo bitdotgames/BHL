@@ -172,7 +172,7 @@ public class CompilationExecutor
         if(conf.proj.error_file == "-")
           Console.Error.WriteLine(err_str);
         else
-          File.WriteAllText(conf.proj.error_file, err_str);
+          BuildUtils.Write(conf.proj.error_file, err_str);
       }
     }
 
