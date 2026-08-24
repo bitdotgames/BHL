@@ -5,7 +5,7 @@ using bhl;
 using bhl.lsp;
 using Xunit;
 
-// Regression coverage for Workspace's bindings-DLL FileSystemWatcher (lsp/workspace.cs).
+// Regression coverage for Workspace's bindings FileSystemWatcher (lsp/workspace.cs).
 // A prior bug (EnableRaisingEvents set before handlers were subscribed) could silently end
 // up not watching for anything meaningful on Linux's inotify-backed implementation, while
 // still appearing to work on macOS/Windows. These tests exercise the real OS file watcher —
@@ -39,10 +39,10 @@ public class TestLSPBindingsWatcher : IDisposable
     Action handler = null;
     handler = () =>
     {
-      ws.BindingsDllChanged -= handler;
+      ws.BindingsChanged -= handler;
       tcs.TrySetResult(true);
     };
-    ws.BindingsDllChanged += handler;
+    ws.BindingsChanged += handler;
 
     var cts = new System.Threading.CancellationTokenSource(timeout);
     cts.Token.Register(() => tcs.TrySetResult(false));
@@ -90,7 +90,7 @@ public class TestLSPBindingsWatcher : IDisposable
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(dll_path, "v2 - rewritten in place");
 
-    Assert.True(await wait, "expected BindingsDllChanged to fire after an in-place rewrite");
+    Assert.True(await wait, "expected BindingsChanged to fire after an in-place rewrite");
   }
 
   [Fact]
@@ -110,6 +110,27 @@ public class TestLSPBindingsWatcher : IDisposable
     File.WriteAllText(tmp_path, "v2 - built externally");
     File.Move(tmp_path, dll_path, overwrite: true);
 
-    Assert.True(await wait, "expected BindingsDllChanged to fire after an external rebuild (temp+rename)");
+    Assert.True(await wait, "expected BindingsChanged to fire after an external rebuild (temp+rename)");
+  }
+
+  [Fact]
+  public async Task fires_on_bhl_scripted_source_change()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    var bhl_path = Path.Combine(dir, "bindings.bhl");
+    File.WriteAllText(bhl_path, "v1");
+
+    var conf = new ProjectConf
+    {
+      bindings = new() { new BindingsEntryConf { sources = new() { bhl_path } } }
+    };
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
+    File.WriteAllText(bhl_path, "v2 - edited source");
+
+    Assert.True(await wait, "expected BindingsChanged to fire after editing a .bhl-scripted binding's source");
   }
 }

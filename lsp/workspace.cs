@@ -32,7 +32,7 @@ public class Workspace
 
   ILogger _logger;
 
-  public event System.Action BindingsDllChanged;
+  public event System.Action BindingsChanged;
 
   List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
 
@@ -41,10 +41,31 @@ public class Workspace
     Types = ts;
     ProjConf = conf;
     _logger = logger;
-    WatchBindingsDlls(conf.bindings.Select(b => b.dll));
+    WatchBindingsPaths(CollectBindingsWatchPaths(conf));
   }
 
-  void WatchBindingsDlls(IEnumerable<string> paths)
+  //NOTE: watches each entry's compiled dll/bhc output, plus (for .bhl-scripted entries,
+  //      which ScriptedBindings compiles itself, unlike a .cs source needing an external
+  //      build tool to produce a new dll first) their resolved source files directly -
+  //      otherwise editing a .bhl binding source has nothing to trigger a reload at all
+  static IEnumerable<string> CollectBindingsWatchPaths(ProjectConf conf)
+  {
+    foreach(var b in conf.bindings)
+    {
+      if(!string.IsNullOrEmpty(b.dll))
+        yield return b.dll;
+
+      foreach(var pattern in b.sources)
+      {
+        if(!pattern.EndsWith(".bhl"))
+          continue;
+        foreach(var resolved in BuildUtils.Glob(pattern))
+          yield return resolved;
+      }
+    }
+  }
+
+  void WatchBindingsPaths(IEnumerable<string> paths)
   {
     foreach(var w in _bindingsWatchers)
       w.Dispose();
@@ -68,9 +89,9 @@ public class Workspace
       // they typically build to a temp file and atomically replace the destination (rename-over,
       // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
       // by an external process is detected the same way an in-place `touch` is.
-      watcher.Changed += (_, _) => BindingsDllChanged?.Invoke();
-      watcher.Created += (_, _) => BindingsDllChanged?.Invoke();
-      watcher.Renamed += (_, _) => BindingsDllChanged?.Invoke();
+      watcher.Changed += (_, _) => BindingsChanged?.Invoke();
+      watcher.Created += (_, _) => BindingsChanged?.Invoke();
+      watcher.Renamed += (_, _) => BindingsChanged?.Invoke();
       // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
       // watch mask/dispatch appears to be tied to which handlers are attached at the moment
       // raising starts, so flipping this on first (as the previous code did, via the object

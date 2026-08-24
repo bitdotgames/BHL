@@ -112,9 +112,9 @@ public static class ServerFactory
           var diagnostics = workspace.GetDiagnosticsToPublish();
           _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
 
-          workspace.BindingsDllChanged += () =>
+          workspace.BindingsChanged += () =>
           {
-            logger.Debug("bindings DLL changed, reloading workspace");
+            logger.Debug("bindings changed, reloading workspace");
             _ = Task.Run(async () =>
             {
               server.SendNotification("window/showMessage", new ShowMessageParams
