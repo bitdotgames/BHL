@@ -58,7 +58,7 @@ func RegisterBindings(std.bind.Types types) {{
 
       Assert.Single(proj.bindings);
       Assert.Equal("unity", proj.bindings[0].name);
-      Assert.Equal(included_bhl.Replace('\\', '/'), proj.bindings[0].sources[0]);
+      Assert.Equal(BuildUtils.NormalizeFilePath(included_bhl), proj.bindings[0].sources[0]);
     }
     finally
     {
@@ -82,7 +82,7 @@ func RegisterBindings(std.bind.Types types) {{
       proj.bindings.Add(new BindingsEntryConf { include = Path.Combine(dir, "pkg", "bindings.json") });
       proj.Setup();
 
-      Assert.Equal(included_bhl.Replace('\\', '/'), proj.bindings[0].sources[0]);
+      Assert.Equal(BuildUtils.NormalizeFilePath(included_bhl), proj.bindings[0].sources[0]);
     }
     finally
     {
