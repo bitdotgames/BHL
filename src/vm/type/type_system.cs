@@ -109,7 +109,19 @@ public partial class Types : INamedResolver, IProxyTypeCache
 
   public INamed ResolveNamedByPath(NamePath path)
   {
-    return ns.ResolveSymbolByPath(path);
+    var found = ns.ResolveSymbolByPath(path);
+    if(found != null)
+      return found;
+
+    //NOTE: mirrors what import's Link() does for a real script - try each module's own ns
+    foreach(var m in modules.Values)
+    {
+      var found_in_module = m.ns.ResolveSymbolByPath(path);
+      if(found_in_module != null)
+        return found_in_module;
+    }
+
+    return null;
   }
 }
 
