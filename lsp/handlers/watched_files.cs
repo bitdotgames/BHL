@@ -62,24 +62,36 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase
 
       _logger.LogInformation("bhl.proj changed, reloading workspace");
 
-      _server.SendNotification("window/showMessage", new ShowMessageParams
+      try
       {
-        Type = MessageType.Log,
-        Message = "BHL: bhl.proj changed, reloading...",
-      });
+        _server.SendNotification("window/showMessage", new ShowMessageParams
+        {
+          Type = MessageType.Log,
+          Message = "BHL: bhl.proj changed, reloading...",
+        });
 
-      var sw = System.Diagnostics.Stopwatch.StartNew();
-      await _workspace.ReloadAsync(proj, ct);
-      sw.Stop();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        await _workspace.ReloadAsync(proj, ct);
+        sw.Stop();
 
-      _server.SendNotification("window/showMessage", new ShowMessageParams
+        _server.SendNotification("window/showMessage", new ShowMessageParams
+        {
+          Type = MessageType.Log,
+          Message = $"BHL: {_workspace.IndexedFileCount} file(s) reloaded in {sw.ElapsedMilliseconds}ms",
+        });
+
+        var diagnostics = _workspace.GetDiagnosticsToPublish();
+        _ = Task.Run(() => _server.PublishDiagnostics(diagnostics), ct);
+      }
+      catch(System.Exception e)
       {
-        Type = MessageType.Log,
-        Message = $"BHL: {_workspace.IndexedFileCount} file(s) reloaded in {sw.ElapsedMilliseconds}ms",
-      });
-
-      var diagnostics = _workspace.GetDiagnosticsToPublish();
-      _ = Task.Run(() => _server.PublishDiagnostics(diagnostics), ct);
+        _logger.LogError(e, "reload on bhl.proj change failed");
+        _server.SendNotification("window/showMessage", new ShowMessageParams
+        {
+          Type = MessageType.Error,
+          Message = $"BHL: reload failed: {e.Message}",
+        });
+      }
       break;
     }
 

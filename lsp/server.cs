@@ -51,89 +51,111 @@ public static class ServerFactory
 
           server.Shutdown.Subscribe(_ => shutdownCts.Cancel());
 
-          ProjectConf proj = null;
-
-          if(request.WorkspaceFolders != null)
+          try
           {
-            foreach(var wf in request.WorkspaceFolders)
+            ProjectConf proj = null;
+
+            if(request.WorkspaceFolders != null)
             {
-              proj = ProjectConf.TryReadFromDir(wf.Uri.PathNormalized());
-              if(proj != null)
-                break;
+              foreach(var wf in request.WorkspaceFolders)
+              {
+                proj = ProjectConf.TryReadFromDir(wf.Uri.PathNormalized());
+                if(proj != null)
+                  break;
+              }
             }
+            else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
+            {
+              proj = ProjectConf.TryReadFromDir(request.RootPath);
+              if(proj == null)
+              {
+                proj = new ProjectConf();
+                proj.SetupForRootPath(request.RootPath);
+              }
+            }
+            else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
+            {
+              proj = ProjectConf.TryReadFromDir(request.RootUri.PathNormalized());
+              if(proj == null)
+              {
+                proj = new ProjectConf();
+                proj.SetupForRootPath(request.RootUri.PathNormalized());
+              }
+            }
+            else
+              logger.Error("No root path specified");
+
+            proj ??= new ProjectConf();
+
+            proj.LoadBindings().Register(types);
+
+            workspace.Init(types, proj, logger);
           }
-          else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
+          catch(Exception e)
           {
-            proj = ProjectConf.TryReadFromDir(request.RootPath);
-            if(proj == null)
-            {
-              proj = new ProjectConf();
-              proj.SetupForRootPath(request.RootPath);
-            }
+            ReportError(server, logger, "initialization failed", e);
+            throw;
           }
-          else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
-          {
-            proj = ProjectConf.TryReadFromDir(request.RootUri.PathNormalized());
-            if(proj == null)
-            {
-              proj = new ProjectConf();
-              proj.SetupForRootPath(request.RootUri.PathNormalized());
-            }
-          }
-          else
-            logger.Error("No root path specified");
-
-          proj ??= new ProjectConf();
-
-          proj.LoadBindings().Register(types);
-
-          workspace.Init(types, proj, logger);
         })
         .OnInitialized(async (server, request, response, token) =>
         {
           logger.Debug("OnInitialized");
 
-          server.SendNotification("window/showMessage", new ShowMessageParams
+          try
           {
-            Type = MessageType.Log,
-            Message = $"BHL ({Version.Name}): Indexing...",
-          });
+            server.SendNotification("window/showMessage", new ShowMessageParams
+            {
+              Type = MessageType.Log,
+              Message = $"BHL ({Version.Name}): Indexing...",
+            });
 
-          var sw = System.Diagnostics.Stopwatch.StartNew();
-          await workspace.IndexFilesAsync(token);
-          sw.Stop();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            await workspace.IndexFilesAsync(token);
+            sw.Stop();
 
-          server.SendNotification("window/showMessage", new ShowMessageParams
+            server.SendNotification("window/showMessage", new ShowMessageParams
+            {
+              Type = MessageType.Log,
+              Message = $"BHL: {workspace.IndexedFileCount} file(s) indexed in {sw.ElapsedMilliseconds}ms",
+            });
+
+            var diagnostics = workspace.GetDiagnosticsToPublish();
+            _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
+          }
+          catch(Exception e)
           {
-            Type = MessageType.Log,
-            Message = $"BHL: {workspace.IndexedFileCount} file(s) indexed in {sw.ElapsedMilliseconds}ms",
-          });
-
-          var diagnostics = workspace.GetDiagnosticsToPublish();
-          _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
+            ReportError(server, logger, "indexing failed", e);
+          }
 
           workspace.BindingsChanged += () =>
           {
             logger.Debug("bindings changed, reloading workspace");
             _ = Task.Run(async () =>
             {
-              server.SendNotification("window/showMessage", new ShowMessageParams
+              try
               {
-                Type = MessageType.Log,
-                Message = "BHL: bindings changed, reloading...",
-              });
+                server.SendNotification("window/showMessage", new ShowMessageParams
+                {
+                  Type = MessageType.Log,
+                  Message = "BHL: bindings changed, reloading...",
+                });
 
-              var sw = System.Diagnostics.Stopwatch.StartNew();
-              await workspace.ReloadAsync();
-              sw.Stop();
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                await workspace.ReloadAsync();
+                sw.Stop();
 
-              server.SendNotification("window/showMessage", new ShowMessageParams
+                server.SendNotification("window/showMessage", new ShowMessageParams
+                {
+                  Type = MessageType.Log,
+                  Message = $"BHL: {workspace.IndexedFileCount} file(s) reloaded in {sw.ElapsedMilliseconds}ms",
+                });
+
+                server.PublishDiagnostics(workspace.GetDiagnosticsToPublish());
+              }
+              catch(Exception e)
               {
-                Type = MessageType.Log,
-                Message = $"BHL: {workspace.IndexedFileCount} file(s) reloaded in {sw.ElapsedMilliseconds}ms",
-              });
-
-              server.PublishDiagnostics(workspace.GetDiagnosticsToPublish());
+                ReportError(server, logger, "reload on bindings change failed", e);
+              }
             });
           };
         })
@@ -147,5 +169,19 @@ public static class ServerFactory
     );
     logger.Information("BHL server initialized...");
     return server;
+  }
+
+  //NOTE: window/showMessage (unlike window/logMessage) is what most clients surface as a
+  //      visible popup - without this, exceptions in OnInitialize/OnInitialized or the
+  //      fire-and-forget reload tasks above are only ever logged, never seen by the user
+  static void ReportError(OmniSharp.Extensions.JsonRpc.IResponseRouter server,
+    Serilog.ILogger logger, string context, Exception e)
+  {
+    logger.Error(e, context);
+    server.SendNotification("window/showMessage", new ShowMessageParams
+    {
+      Type = MessageType.Error,
+      Message = $"BHL: {context}: {e.Message}",
+    });
   }
 }
