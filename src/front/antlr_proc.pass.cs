@@ -919,12 +919,6 @@ public partial class ANTLR_Processor
             return;
           }
 
-          if(ifs is InterfaceSymbolNative)
-          {
-            AddError(ext_name, "implementing native interfaces is not supported");
-            return;
-          }
-
           LSP_SetSymbol(ext_name.dotName().NAME(), ifs);
           implements.Add(ifs);
         }

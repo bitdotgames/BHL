@@ -688,13 +688,18 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
-  public void TestImplementingNativeInterfaceNotSupported()
+  public void TestScriptClassImplementingNativeInterface()
   {
     string bhl = @"
     class Foo : IFoo {
       func int bar(int i) {
         return i+1
       }
+    }
+
+    func int test() {
+      IFoo ifoo = new Foo
+      return ifoo.bar(41)
     }
     ";
     var ts_fn = new Action<Types>((ts) =>
@@ -708,20 +713,51 @@ public class TestInterface : BHL_TestBase
         )
       );
       ts.ns.Define(ifs);
+      ifs.Setup();
     });
 
-    AssertError<Exception>(
-      delegate() { Compile(bhl, ts_fn); },
-      "implementing native interfaces is not supported",
-      new PlaceAssert(bhl, @"
-    class Foo : IFoo {
-----------------^"
-      )
-    );
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
   }
 
   [Fact]
-  public void TestMixNativeAndScriptInterfacesNotSupported()
+  public void TestExplicitCastToNativeInterfaceForScriptClassPreservesDispatch()
+  {
+    string bhl = @"
+    class Foo : IFoo {
+      func int bar(int i) {
+        return i+1
+      }
+    }
+
+    func int test() {
+      Foo foo = new Foo
+      IFoo ifoo = (IFoo)foo
+      return ifoo.bar(41)
+    }
+    ";
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var ifs = new InterfaceSymbolNative(
+        new Origin(),
+        "IFoo",
+        null,
+        new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null,
+          new FuncArgSymbol("int", ts.T("int"))
+        )
+      );
+      ts.ns.Define(ifs);
+      ifs.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestScriptClassImplementingMixOfNativeAndScriptInterfaces()
   {
     string bhl = @"
     interface IFoo {
@@ -737,6 +773,13 @@ public class TestInterface : BHL_TestBase
         return i+1
       }
     }
+
+    func int test() {
+      Foo foo = new Foo
+      IBar ibar = foo
+      IFoo ifoo = foo
+      return ibar.bar(41) + ifoo.foo(1)
+    }
     ";
 
     var ts_fn = new Action<Types>((ts) =>
@@ -750,16 +793,12 @@ public class TestInterface : BHL_TestBase
         )
       );
       ts.ns.Define(ifs);
+      ifs.Setup();
     });
 
-    AssertError<Exception>(
-      delegate() { Compile(bhl, ts_fn); },
-      "implementing native interfaces is not supported",
-      new PlaceAssert(bhl, @"
-    class Foo : IBar, IFoo {
-----------------^"
-      )
-    );
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(43, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
   }
 
   public interface IFooLocal
