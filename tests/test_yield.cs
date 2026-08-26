@@ -25,7 +25,7 @@ public class TestYield : BHL_TestBase
   }
 
   [Fact]
-  public void TestEmptyCoroFuncNotAllowed()
+  public void TestEmptyCoroFuncWarnsButCompiles()
   {
     {
       string bhl = @"
@@ -33,14 +33,11 @@ public class TestYield : BHL_TestBase
       }
       ";
 
-      AssertError<Exception>(
-        delegate() { Compile(bhl); },
-        "coro functions without yield calls not allowed",
-        new PlaceAssert(bhl, @"
-      coro func test() {
-------^"
-        )
-      );
+      var ts = new Types();
+      var proc = Parse(bhl, ts, throw_errors: false);
+      Assert.Equal(0, proc.result.errors.Count);
+      Assert.Equal(1, proc.result.warnings.Count);
+      Assert.Contains("coro function has no yield calls", proc.result.warnings[0].text);
     }
 
     {
@@ -50,14 +47,11 @@ public class TestYield : BHL_TestBase
       }
       ";
 
-      AssertError<Exception>(
-        delegate() { Compile(bhl); },
-        "coro functions without yield calls not allowed",
-        new PlaceAssert(bhl, @"
-      coro func test() {
-------^"
-        )
-      );
+      var ts = new Types();
+      var proc = Parse(bhl, ts, throw_errors: false);
+      Assert.Equal(0, proc.result.errors.Count);
+      Assert.Equal(1, proc.result.warnings.Count);
+      Assert.Contains("coro function has no yield calls", proc.result.warnings[0].text);
     }
 
     {
@@ -69,14 +63,11 @@ public class TestYield : BHL_TestBase
       }
       ";
 
-      AssertError<Exception>(
-        delegate() { Compile(bhl); },
-        "coro functions without yield calls not allowed",
-        new PlaceAssert(bhl, @"
-      coro func test() {
-------^"
-        )
-      );
+      var ts = new Types();
+      var proc = Parse(bhl, ts, throw_errors: false);
+      Assert.Equal(0, proc.result.errors.Count);
+      Assert.Equal(1, proc.result.warnings.Count);
+      Assert.Contains("coro function has no yield calls", proc.result.warnings[0].text);
     }
 
     {
@@ -87,15 +78,26 @@ public class TestYield : BHL_TestBase
       }
       ";
 
-      AssertError<Exception>(
-        delegate() { Compile(bhl); },
-        "coro functions without yield calls not allowed",
-        new PlaceAssert(bhl, @"
-        start(coro func() {
---------------^"
-        )
-      );
+      var ts = new Types();
+      var proc = Parse(bhl, ts, throw_errors: false);
+      Assert.Equal(0, proc.result.errors.Count);
+      Assert.Equal(1, proc.result.warnings.Count);
+      Assert.Contains("coro function has no yield calls", proc.result.warnings[0].text);
     }
+  }
+
+  [Fact]
+  public void TestEmptyCoroFuncRunsToCompletion()
+  {
+    string bhl = @"
+    coro func int test() {
+      return 42
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
   }
 
   [Fact]

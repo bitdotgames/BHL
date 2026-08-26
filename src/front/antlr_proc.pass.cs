@@ -508,7 +508,7 @@ public partial class ANTLR_Processor
       AddError(ret_ctx, "matching 'return' statement not found");
 
     if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Coro) && !has_yield_calls.Contains(func_ast.symbol))
-      AddError(ctx, "coro functions without yield calls not allowed");
+      AddWarning(ctx, "coro function has no yield calls");
   }
 
   void Pass_OutlineNamespace(ParserPass pass)
