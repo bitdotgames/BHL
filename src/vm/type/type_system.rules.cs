@@ -103,10 +103,6 @@ public partial class Types : INamedResolver, IProxyTypeCache
         var nobj = val.obj;
         return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
       }
-      //NOTE: a userland script class has no native object backing it, fall back to
-      //      the related-types check (e.g a script class implementing a native interface)
-      else if(val_type is IInstantiable)
-        return Is(val_type, dest_type);
       else
         return false;
     }

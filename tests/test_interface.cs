@@ -664,6 +664,148 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
+  public void TestScriptInterfaceDeclaredFromBindings()
+  {
+    string bhl = @"
+    class Foo : IFoo {
+      func int bar(int i) {
+        return i+1
+      }
+    }
+
+    func int test() {
+      IFoo ifoo = new Foo
+      return ifoo.bar(41)
+    }
+    ";
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var ifs = new InterfaceSymbolScript(new Origin(), "IFoo");
+      ifs.DefineMethod("bar", ts.T("int"), new FuncArgSymbol("i", ts.T("int")));
+      ts.ns.Define(ifs);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestScriptInterfaceDeclaredFromBindingsNoArgsMultiArgsAndCoro()
+  {
+    string bhl = @"
+    class Foo : IFoo {
+      func hey() {
+      }
+
+      func int sum(int a, int b, int c) {
+        return a + b + c
+      }
+
+      coro func int Doer() {
+        yield()
+        return 42
+      }
+    }
+
+    coro func int test() {
+      IFoo ifoo = new Foo
+      ifoo.hey()
+      int s = ifoo.sum(1, 2, 3)
+      return s + yield ifoo.Doer()
+    }
+    ";
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var ifs = new InterfaceSymbolScript(new Origin(), "IFoo");
+      ifs.DefineMethod("hey", Types.Void);
+      ifs.DefineMethod("sum", ts.T("int"),
+        new FuncArgSymbol("a", ts.T("int")),
+        new FuncArgSymbol("b", ts.T("int")),
+        new FuncArgSymbol("c", ts.T("int"))
+      );
+      ifs.DefineMethod("Doer", ts.T("int"), is_coro: true);
+      ts.ns.Define(ifs);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(6 + 42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestScriptInterfaceDeclaredFromBindingsInheritance()
+  {
+    string bhl = @"
+    class Foo : IBar {
+      func int a() {
+        return 4
+      }
+      func int b() {
+        return 3
+      }
+    }
+
+    func int test() {
+      IBar ibar = new Foo
+      return ibar.a() + ibar.b()
+    }
+    ";
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var ia = new InterfaceSymbolScript(new Origin(), "IA");
+      ia.DefineMethod("a", ts.T("int"));
+      ts.ns.Define(ia);
+
+      var ibar = new InterfaceSymbolScript(new Origin(), "IBar");
+      ibar.SetInherits(new List<InterfaceSymbol> { ia });
+      ibar.DefineMethod("b", ts.T("int"));
+      ts.ns.Define(ibar);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(7, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestScriptInterfaceDeclaredFromBhlBindings()
+  {
+    string bindings_bhl = @"
+    import ""std/bind""
+
+    func RegisterBindings(std.bind.Types types) {
+      var ifs = std.bind.NewInterfaceSymbolScript(""IFoo"")
+      ifs.DefineMethod(""bar"", types.T(""int""), [std.bind.NewFuncArgSymbol(""i"", types.T(""int""))])
+      types.ns.Define(ifs)
+    }
+    ";
+
+    string bhl = @"
+    class Foo : IFoo {
+      func int bar(int i) {
+        return i+1
+      }
+    }
+
+    func int test() {
+      IFoo ifoo = new Foo
+      return ifoo.bar(41)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var bind_vm = MakeVM(bindings_bhl);
+      bind_vm.Execute("RegisterBindings", Val.NewObj(ts, std.bind.TypesSymbol));
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestNonNullInterface()
   {
     string bhl = @"
@@ -688,18 +830,13 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
-  public void TestScriptClassImplementingNativeInterface()
+  public void TestImplementingNativeInterfaceNotSupported()
   {
     string bhl = @"
     class Foo : IFoo {
       func int bar(int i) {
         return i+1
       }
-    }
-
-    func int test() {
-      IFoo ifoo = new Foo
-      return ifoo.bar(41)
     }
     ";
     var ts_fn = new Action<Types>((ts) =>
@@ -713,51 +850,20 @@ public class TestInterface : BHL_TestBase
         )
       );
       ts.ns.Define(ifs);
-      ifs.Setup();
     });
 
-    var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
-    CommonChecks(vm);
-  }
-
-  [Fact]
-  public void TestExplicitCastToNativeInterfaceForScriptClassPreservesDispatch()
-  {
-    string bhl = @"
+    AssertError<Exception>(
+      delegate() { Compile(bhl, ts_fn); },
+      "implementing native interfaces is not supported",
+      new PlaceAssert(bhl, @"
     class Foo : IFoo {
-      func int bar(int i) {
-        return i+1
-      }
-    }
-
-    func int test() {
-      Foo foo = new Foo
-      IFoo ifoo = (IFoo)foo
-      return ifoo.bar(41)
-    }
-    ";
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      var ifs = new InterfaceSymbolNative(
-        new Origin(),
-        "IFoo",
-        null,
-        new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null,
-          new FuncArgSymbol("int", ts.T("int"))
-        )
-      );
-      ts.ns.Define(ifs);
-      ifs.Setup();
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
-    CommonChecks(vm);
+----------------^"
+      )
+    );
   }
 
   [Fact]
-  public void TestScriptClassImplementingMixOfNativeAndScriptInterfaces()
+  public void TestMixNativeAndScriptInterfacesNotSupported()
   {
     string bhl = @"
     interface IFoo {
@@ -773,13 +879,6 @@ public class TestInterface : BHL_TestBase
         return i+1
       }
     }
-
-    func int test() {
-      Foo foo = new Foo
-      IBar ibar = foo
-      IFoo ifoo = foo
-      return ibar.bar(41) + ifoo.foo(1)
-    }
     ";
 
     var ts_fn = new Action<Types>((ts) =>
@@ -793,12 +892,16 @@ public class TestInterface : BHL_TestBase
         )
       );
       ts.ns.Define(ifs);
-      ifs.Setup();
     });
 
-    var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(43, Execute(vm, "test").Stack.Pop().num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { Compile(bhl, ts_fn); },
+      "implementing native interfaces is not supported",
+      new PlaceAssert(bhl, @"
+    class Foo : IBar, IFoo {
+----------------^"
+      )
+    );
   }
 
   public interface IFooLocal

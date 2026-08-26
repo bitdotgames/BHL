@@ -75,6 +75,17 @@ public class TestBindings : BHL_TestBase
       }
 
       types.SetupType(""List_Color"")
+
+      {
+        var ifs = std.bind.NewInterfaceSymbolScript(""IMover"")
+        ifs.DefineMethod(""move"", types.T(""void""),
+          [
+            std.bind.NewFuncArgSymbol(""dx"", types.T(""float""))
+          ]
+        )
+        ifs.DefineMethod(""wait_and_move"", types.T(""void""), [], is_coro: true)
+        types.ns.Define(ifs)
+      }
     }
     ";
 
@@ -120,6 +131,14 @@ public class TestBindings : BHL_TestBase
 
     var color_list = (NativeListTypeSymbol<object>)new_types.ns.Resolve("List_Color");
     Assert.Equal("List_Color", color_list.name);
+
+    var imover_ifs = (InterfaceSymbolScript)new_types.ns.Resolve("IMover");
+    Assert.Equal("IMover", imover_ifs.name);
+    var move_fn = (FuncSymbolScript)imover_ifs.FindMethod("move");
+    Assert.Equal(Types.Void, move_fn.GetReturnType());
+    Assert.Equal("dx", move_fn.TryGetArg(0).name);
+    var wait_and_move_fn = (FuncSymbolScript)imover_ifs.FindMethod("wait_and_move");
+    Assert.Equal(FuncAttrib.Coro, wait_and_move_fn.attribs);
 
     CommonChecks(vm);
   }

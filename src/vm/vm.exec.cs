@@ -1510,35 +1510,16 @@ public partial class VM
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
           int self_idx = exec.stack.sp - (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK) - 1;
-          ref var self = ref exec.stack.vals[self_idx];
 
           var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
-          var class_type = (ClassSymbol)self.type;
-          var target_symb = class_type._itable[iface_symb.type_id][iface_func_idx];
+          var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
-          //NOTE: a script class implementing a native interface has no native
-          //      object backing it, dispatch via itable instead
-          if(target_symb is FuncSymbolScript func_symb)
+          exec.self_val_idx = self_idx;
+          exec.self_val_vals = exec.stack;
+          if(CallNative(exec, func_symb, args_bits))
           {
-            //NOTE: 'this' is on the stack but not counted in args_bits
-            --exec.stack.sp;
-
-            int new_frame_idx = exec.frames_count;
-            ref var new_frame = ref exec.PushFrame();
-            var args_info_cmi = new FuncArgsInfo(args_bits);
-            new_frame.args_info = args_info_cmi;
-            new_frame.InitWithModule(vm.modules_by_id[func_symb._module.id], func_symb._ip_addr);
-            CallFrameAndEnterFrame(exec, ref new_frame, new_frame_idx, new_frame.bytecode, func_symb._ip_addr, args_info_cmi);
-          }
-          else
-          {
-            exec.self_val_idx = self_idx;
-            exec.self_val_vals = exec.stack;
-            if(CallNative(exec, (FuncSymbolNative)target_symb, args_bits))
-            {
-              //let's cancel ip incrementing
-              --exec.ip;
-            }
+            //let's cancel ip incrementing
+            --exec.ip;
           }
         }
 #if BHL_USE_OPCODE_SWITCH
@@ -2352,8 +2333,7 @@ public partial class VM
             //NOTE: extra type check in case cast type is instantiable object (e.g class)
             if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
               throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-            //NOTE: never force a native type onto a script class value, it would wipe its itable info
-            if(force_type && !(cast_type is INativeType && val.type is ClassSymbolScript))
+            if(force_type)
               val.type = cast_type;
           }
         }
@@ -2376,8 +2356,7 @@ public partial class VM
 
           if(Types.Is(val, as_type))
           {
-            //NOTE: never force a native type onto a script class value, it would wipe its itable info
-            if(force_type && !(as_type is INativeType && val.type is ClassSymbolScript))
+            if(force_type)
               val.type = as_type;
           }
           else

@@ -458,6 +458,39 @@ public class FuncSymbolScript : FuncSymbol
     this._ip_addr = ip_addr;
   }
 
+  //NOTE: convenience version for declaring a signature-only stub directly from C#
+  //      (e.g. bindings declaring interface methods, see InterfaceSymbolScript.DefineMethod) -
+  //      keeps the signature and the named args members in sync, which is otherwise easy to
+  //      get wrong by hand since FuncSymbolNative does the same bookkeeping for its own args
+  public FuncSymbolScript(
+    Origin origin,
+    string name,
+    FuncAttrib attribs,
+    ProxyType ret_type,
+    params FuncArgSymbol[] args
+  )
+    : base(origin, name, new FuncSignature(attribs.ToFuncSignatureAttrib(), ret_type))
+  {
+    this.name = name;
+    this._ip_addr = -1;
+
+    foreach(var arg in args)
+    {
+      Define(arg);
+      signature.AddArg(arg.type);
+    }
+  }
+
+  public FuncSymbolScript(
+    Origin origin,
+    string name,
+    ProxyType ret_type,
+    params FuncArgSymbol[] args
+  )
+    : this(origin, name, FuncAttrib.None, ret_type, args)
+  {
+  }
+
   //symbol factory version
   public FuncSymbolScript()
     : base(null, null, new FuncSignature())

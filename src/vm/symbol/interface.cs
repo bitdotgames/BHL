@@ -115,6 +115,21 @@ public class InterfaceSymbolScript : InterfaceSymbol
   {
   }
 
+  //NOTE: convenience for declaring a method's signature directly from C# (e.g. bindings
+  //      declaring an interface that userland BHL classes then implement normally, dispatched
+  //      through the same itable/CallMethodIface path as any interface parsed from .bhl source)
+  public FuncSymbolScript DefineMethod(string name, ProxyType ret_type, params FuncArgSymbol[] args)
+  {
+    return DefineMethod(name, ret_type, is_coro: false, args);
+  }
+
+  public FuncSymbolScript DefineMethod(string name, ProxyType ret_type, bool is_coro, params FuncArgSymbol[] args)
+  {
+    var fs = new FuncSymbolScript(origin, name, is_coro ? FuncAttrib.Coro : FuncAttrib.None, ret_type, args);
+    Define(fs);
+    return fs;
+  }
+
   public override uint ClassId()
   {
     return CLASS_ID;

@@ -504,6 +504,70 @@ public static partial class std
         bind.Define(fn);
       }
 
+      var ifss_type = new ClassSymbolNative(new Origin(), "InterfaceSymbolScript", symbol_type, null, null, typeof(bhl.InterfaceSymbolScript));
+      bind.Define(ifss_type);
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "DefineMethod", Types.Void, 1,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.GetSelfRef();
+            var ifs = (InterfaceSymbolScript)self.obj;
+
+            bool is_coro = args_info.IsDefaultArgUsed(0) ? false : exec.stack.Pop();
+
+            var args = (ValList)exec.stack.Pop().obj;
+            var func_args = new FuncArgSymbol[args.Count];
+            for(int i = 0; i < args.Count; ++i)
+              func_args[i] = (FuncArgSymbol)args[i].obj;
+            args.Release();
+            var type_ref = (ProxyType)exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+            exec.stack.Pop(); //for self
+
+            ifs.DefineMethod(name, type_ref, is_coro, func_args);
+
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("type", proxy_type),
+          new FuncArgSymbol("args", ts.TArr(fsn_arg_type)),
+          new FuncArgSymbol("is_coro", Types.Bool)
+        );
+        ifss_type.Define(fn);
+      }
+
+      ifss_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewInterfaceSymbolScript", ifss_type, 1,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ValList inherits = args_info.IsDefaultArgUsed(0) ? null : (ValList)exec.stack.Pop().obj;
+            List<InterfaceSymbol> inherits_list = null;
+            if(inherits != null)
+            {
+              inherits_list = new List<InterfaceSymbol>(inherits.Count);
+              foreach(var inh in inherits)
+                inherits_list.Add((InterfaceSymbol)((ProxyType)inh.obj).Get());
+            }
+            inherits?.Release();
+
+            string name = exec.stack.Pop();
+
+            var ifs = new InterfaceSymbolScript(new Origin(), name);
+            if(inherits_list != null)
+              ifs.SetInherits(inherits_list);
+
+            exec.stack.Push(Val.NewObj(ifs, ifss_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("inherits", ts.TArr(proxy_type))
+        );
+        bind.Define(fn);
+      }
+
       var enum_type = new ClassSymbolNative(new Origin(), "EnumSymbolNative", symbol_type, null, null, typeof(bhl.EnumSymbolNative));
       bind.Define(enum_type);
 
