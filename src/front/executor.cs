@@ -613,7 +613,7 @@ public class CompilationExecutor
 
       if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4_CHUNKED)
       {
-#if BHL_LZ4
+#if (UNITY_EDITOR || BHL_LZ4)
         WriteChunkedModules(conf, compiler_workers, mwriter);
         WriteRequiredBindings(conf, mwriter);
         return;
@@ -642,7 +642,7 @@ public class CompilationExecutor
 
             if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(interim.compiled_bytes);
-#if BHL_LZ4
+#if (UNITY_EDITOR || BHL_LZ4)
             else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4)
               mwriter.Write(EncodeToLZ4(interim.compiled_bytes));
 #endif
@@ -676,7 +676,7 @@ public class CompilationExecutor
     }
   }
 
-#if BHL_LZ4
+#if (UNITY_EDITOR || BHL_LZ4)
   //NOTE: modules are grouped into chunks (never splitting a single module
   //      across two chunks) and each chunk is LZ4-compressed as a whole,
   //      since compressing many small modules together compacts noticeably
@@ -817,7 +817,7 @@ public class CompilationExecutor
     return changed;
   }
 
-#if BHL_LZ4
+#if (UNITY_EDITOR || BHL_LZ4)
   static byte[] EncodeToLZ4(byte[] bytes)
   {
     var lz4_bytes = LZ4ps.LZ4Codec.Encode64(bytes, 0, bytes.Length);
