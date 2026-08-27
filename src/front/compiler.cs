@@ -30,6 +30,8 @@ public class ModuleCompiler : AST_Visitor
     internal LambdaCode parent;
     internal LambdaSymbol symbol;
     internal List<Instruction> code;
+    //'head' value to restore on pop (e.g. 'init' for a global var's lambda)
+    internal List<Instruction> prev_head;
   }
   //we need to collect them all while preserving a 'tree alike' structure
   //becase we can have an arbitrary nesting of lambdas one into each other
@@ -240,7 +242,8 @@ public class ModuleCompiler : AST_Visitor
     {
       parent = current_lambda,
       code = new List<Instruction>(),
-      symbol = symbol
+      symbol = symbol,
+      prev_head = head
     };
     lambdas.Add(lambda);
 
@@ -250,8 +253,9 @@ public class ModuleCompiler : AST_Visitor
 
   void PopLambda()
   {
+    var prev_head = current_lambda.prev_head;
     current_lambda = current_lambda.parent;
-    head = current_lambda == null ? code : current_lambda.code;
+    head = prev_head;
   }
 
   void FlushLambdas()
@@ -277,6 +281,10 @@ public class ModuleCompiler : AST_Visitor
       try
       {
         Visit(ast);
+
+        //flush lambdas not already flushed by DoVisit(AST_FuncDecl), e.g. a global var's
+        UseCode();
+        FlushLambdas();
       }
       catch
       {

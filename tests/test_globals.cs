@@ -374,6 +374,44 @@ public class TestGlobals : BHL_TestBase
     CommonChecks(vm);
   }
 
+  // Regression coverage: a lambda in a global var's initializer, when that var is the last
+  // top-level decl, used to never get its bytecode flushed/positioned (ModuleCompiler in
+  // compiler.cs), so PatchOffsets() threw "Invalid position of destination instruction".
+  [Fact]
+  public void TestGlobalVarWithLambdaFieldContainingLogicalOp()
+  {
+    string bhl = @"
+    class Foo {
+      func bool() ready
+    }
+
+    func bool A()
+    {
+      return true
+    }
+
+    func bool B()
+    {
+      return true
+    }
+
+    func bool test()
+    {
+      return foo.ready()
+    }
+
+    Foo foo = new Foo {
+      ready : func bool() {
+        return A() && B()
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.True(Execute(vm, "test").Stack.Pop().bval);
+    CommonChecks(vm);
+  }
+
   public class TestSetGlobalFromOutside : BHL_TestBase
   {
     [Fact]
