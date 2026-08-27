@@ -26,8 +26,7 @@ public static class BHLBuildEnvDetector
 
     //NOTE: both plugins live under Plugins/Editor/, which Unity excludes from every
     //      Player build regardless of per-platform checkboxes - so what actually matters
-    //      is GetCompatibleWithEditor(), not Player-target compatibility. BHL_PARSER/
-    //      BHL_LZ4 are consumed by Editor-only compiler code either way.
+    //      is GetCompatibleWithEditor(), not Player-target compatibility.
     bool antlrForEditor = antlrImporter != null && antlrImporter.GetCompatibleWithEditor();
     bool lz4ForEditor   = lz4Importer   != null && lz4Importer.GetCompatibleWithEditor();
 
@@ -53,13 +52,15 @@ public static class BHLBuildEnvDetector
         list.Remove("BHL_PARSER");
         list.Remove("BHL_LZ4");
 
-        if(antlrForEditor) list.Add("BHL_PARSER");
-        if(lz4ForEditor)   list.Add("BHL_LZ4");
+        //BHL_PARSER is never re-added (redundant: gated code falls back to '|| UNITY_EDITOR'
+        //anyway), which keeps BHL_LZ4 - nested inside that same gate - from ever reaching a real Player build
+        if(group == activeGroup && lz4ForEditor)
+          list.Add("BHL_LZ4");
 
         PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
 
         if(group == activeGroup)
-          Debug.Log($"[BHL] BuildEnvDetector: ACTIVE group={group} BHL_PARSER={antlrForEditor} BHL_LZ4={lz4ForEditor} -> defines=[{string.Join(";", list)}]");
+          Debug.Log($"[BHL] BuildEnvDetector: ACTIVE group={group} BHL_LZ4={lz4ForEditor} -> defines=[{string.Join(";", list)}]");
       }
       catch(Exception e)
       {
