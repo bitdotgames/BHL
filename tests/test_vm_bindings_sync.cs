@@ -15,6 +15,7 @@ public class TestVMBindingsSync
 {
   public const string ModName = "test_vm_sync_mod_7c2a";
 
+  [BhlBinding(ModName, "1.0.0")]
   public class FakeModBindings : IUserBindings
   {
     public void Register(Types ts)
@@ -32,8 +33,6 @@ public class TestVMBindingsSync
 
   static async Task<(byte[] bytes, string dir)> CompileImporter()
   {
-    BindingsRegistry.Register(ModName, typeof(FakeModBindings), "1.0.0");
-
     var dir = MakeTempDir();
     File.WriteAllText(Path.Combine(dir, "importer.bhl"), $"import \"{ModName}\"\n");
 
@@ -53,8 +52,9 @@ public class TestVMBindingsSync
     conf.logger = new Logger(0, new ConsoleLogger());
     conf.proj = proj;
     conf.files = BuildUtils.NormalizeFilePaths(new List<string> { Path.Combine(dir, "importer.bhl") });
-    //NOTE: resolves via RegistryBindings since ModName is already self-registered above -
-    //      embeds required-bindings metadata into the compiled bytes (UserBindingsWithInfo)
+    //NOTE: resolves via RegistryBindings since FakeModBindings' [BhlBinding] makes it
+    //      discoverable under ModName - embeds required-bindings metadata into the
+    //      compiled bytes (UserBindingsWithInfo)
     conf.bindings = proj.LoadBindings();
 
     var executor = new CompilationExecutor();

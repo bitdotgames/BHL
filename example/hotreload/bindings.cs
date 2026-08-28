@@ -1,25 +1,17 @@
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 namespace bhl {
 
+//NOTE: "example" must match bindings.bhl's RegisterVersion("example", ...) call (its
+//      compile-time stand-in). Discovered by reflection (see BindingsRegistry) - [Preserve]
+//      keeps IL2CPP/Mono's stripper from removing it, since nothing references it directly
+#if UNITY_5_3_OR_NEWER
+[UnityEngine.Scripting.Preserve]
+#endif
 [BhlBinding("example", "1.0.0")]
 public class MyBindings : IUserBindings
 {
-  //NOTE: "example" must match bindings.bhl's RegisterVersion("example", ...) call (its
-  //      compile-time stand-in). Module initializers aren't guaranteed under IL2CPP, so
-  //      Unity gets its own hooks instead (Play mode + Editor outside Play)
-#if UNITY_5_3_OR_NEWER
-#if UNITY_EDITOR
-  [UnityEditor.InitializeOnLoadMethod]
-#endif
-  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-#else
-  [ModuleInitializer]
-#endif
-  internal static void Init() => BindingsRegistry.Register<MyBindings>();
-
   //must be present due to loading class instance from dll requirements
   public MyBindings()
   {}

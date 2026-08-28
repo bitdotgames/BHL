@@ -1,30 +1,18 @@
 using System;
-using System.Runtime.CompilerServices;
 
 namespace bhl {
 
-//NOTE: self-registers so the driver in example.cs can discover it via BindingsRegistry
-//      without a compile-time reference - a generic "compile and run my .bhl scripts"
-//      driver (e.g. a reusable Unity Editor integration) shouldn't need to know about
-//      game-specific bindings classes. No required_bindings/hash-check embedding needed
-//      though, since there's no separate consumer here to protect against drift from -
-//      the process that compiles it is the one running it
+//NOTE: discoverable by reflection so example.cs's driver finds it via BindingsRegistry with
+//      no compile-time reference needed (e.g. a reusable Editor integration shouldn't have to
+//      know about game-specific bindings classes). No required_bindings/hash-check embedding
+//      needed either, since the process compiling it is also the one running it.
+//      [Preserve] guards against IL2CPP/Mono stripping
+#if UNITY_5_3_OR_NEWER
+[UnityEngine.Scripting.Preserve]
+#endif
 [BhlBinding("unity", "1.0.0")]
 public class UnityBindings : IUserBindings
 {
-  //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
-  //      own reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
-  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
-#if UNITY_5_3_OR_NEWER
-#if UNITY_EDITOR
-  [UnityEditor.InitializeOnLoadMethod]
-#endif
-  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-#else
-  [ModuleInitializer]
-#endif
-  internal static void Init() => BindingsRegistry.Register<UnityBindings>();
-
   public class Vector3
   {
     public float x, y, z;

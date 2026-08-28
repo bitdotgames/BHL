@@ -1,11 +1,14 @@
 using System;
-using System.Runtime.CompilerServices;
 
 namespace bhl {
 
 //NOTE: registers a real "unity" module (via Types.RegisterModule) instead of writing
 //      straight into the global namespace - see example/bindings for that flat style.
-//      Scripts need `import "unity"` to reach unity.Vector3/unity.Mathf.Floor/etc
+//      Scripts need `import "unity"` to reach unity.Vector3/unity.Mathf.Floor/etc.
+//      [Preserve] guards against IL2CPP/Mono stripping
+#if UNITY_5_3_OR_NEWER
+[UnityEngine.Scripting.Preserve]
+#endif
 [BhlBinding("unity", "1.0.0")]
 public class UnityBindings : IUserBindings
 {
@@ -13,19 +16,6 @@ public class UnityBindings : IUserBindings
   {
     public float x, y, z;
   }
-
-  //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
-  //      own reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
-  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
-#if UNITY_5_3_OR_NEWER
-#if UNITY_EDITOR
-  [UnityEditor.InitializeOnLoadMethod]
-#endif
-  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-#else
-  [ModuleInitializer]
-#endif
-  internal static void Init() => BindingsRegistry.Register<UnityBindings>();
 
   //must be present due to loading class instance from dll requirements
   public UnityBindings()

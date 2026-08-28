@@ -155,7 +155,9 @@ func RegisterBindings(std.bind.Types types) {{
   //NOTE: registers a module under a distinctive name so a live Register() call is easy to
   //      tell apart from the scripted-binding fallback below, which would register a
   //      DIFFERENT ModuleDeclared object under the very same name and crash on the
-  //      resulting Dictionary key collision if both ever ran together
+  //      resulting Dictionary key collision if both ever ran together. [BhlBinding] makes it
+  //      discoverable by BindingsRegistry without any manual registration call
+  [BhlBinding(FakeLiveBindings.TestName, "1.0.0")]
   public class FakeLiveBindings : IUserBindings
   {
     public const string TestName = "test_named_bindings_9f3a1c";
@@ -169,8 +171,6 @@ func RegisterBindings(std.bind.Types types) {{
   [Fact]
   public void UsesLiveBindingAndNeverTouchesConflictingSourcesWhenNameIsRegistered()
   {
-    BindingsRegistry.Register(FakeLiveBindings.TestName, typeof(FakeLiveBindings), "1.0.0");
-
     var dir = MakeTempDir();
     try
     {

@@ -11,9 +11,8 @@ public interface IUserBindings
   void Register(Types ts);
 }
 
-//NOTE: carries the (name, version) a self-registering IUserBindings class would otherwise
-//      repeat as loose Register(...) arguments inside its own Init() hook - see
-//      BindingsRegistry.Register<T>()
+//NOTE: how an IUserBindings class declares its (name, version) so BindingsRegistry can
+//      discover it by reflection - see BindingsRegistry
 [AttributeUsage(AttributeTargets.Class)]
 public class BhlBindingAttribute : Attribute
 {
@@ -54,86 +53,102 @@ public class UserBindingsWithInfo : IUserBindings
   }
 }
 
-//NOTE: implementations self-register here (typically via a [ModuleInitializer] calling
-//      Register("name", typeof(X), "X.Y.Z")) instead of being found via assembly-wide
-//      reflection, which Unity/IL2CPP's stripper tends to break. `version` is
-//      human-maintained and is the single source of truth for it - checked for semver
-//      compatibility (see RegisterRequiredBindings) and injected into Types right before
-//      a binding's own Register() runs
+//NOTE: implementations are discovered by reflection (any IUserBindings with a [BhlBinding]
+//      attribute) instead of self-registering via a hook - a hook's firing order isn't
+//      guaranteed (caused a real "prelude missing" bootstrap race on Android), while
+//      reflection needs none: whatever calls in here already has its own assembly loaded.
+//      Every IUserBindings class MUST be preserved from IL2CPP/Mono stripping (nothing
+//      references it directly anymore) - see PreludeBindings for the '#if UNITY_5_3_OR_NEWER
+//      [UnityEngine.Scripting.Preserve] #endif' pattern.
 public static class BindingsRegistry
 {
   //NOTE: Types()'s own constructor always attaches this one directly (see PreludeBindings)
   //      so it must be excluded from "attach everything" helpers like CreateCombined()
   public const string PreludeName = "prelude";
 
-  static readonly Dictionary<string, (Type type, string version)> all = new Dictionary<string, (Type type, string version)>();
+  //NOTE: cached after first scan - a full Editor domain scan isn't cheap, and deferring it
+  //      is safe since anything calling in here already has its own assembly loaded
+  static Dictionary<string, (Type type, string version)> _all;
+  static Dictionary<string, (Type type, string version)> All => _all ??= Scan();
 
-  public static void Register(string name, Type type, string version)
+  static Dictionary<string, (Type type, string version)> Scan()
   {
-    if(string.IsNullOrEmpty(name))
-      throw new Exception("Bindings entry name must not be empty");
-    if(!typeof(IUserBindings).IsAssignableFrom(type))
-      throw new Exception($"{type} does not implement {nameof(IUserBindings)}");
-    if(!System.Version.TryParse(VersionCore(version), out _))
-      throw new Exception($"Bindings '{name}' version '{version}' is not a valid version (expected 'X.Y.Z' or 'X.Y.Z-tag')");
+    var result = new Dictionary<string, (Type type, string version)>();
 
-    //NOTE: compares by FullName, not Type reference equality - a Unity script recompile
-    //      without a full domain reload (e.g. Enter Play Mode Options with Domain Reload
-    //      off) re-fires this with a *different* Type object for the same class, so a
-    //      stale entry for it needs replacing rather than piling up as a duplicate. A
-    //      different class claiming an already-used name is a real collision, not a
-    //      recompile, so that's a hard failure instead of a silent overwrite
-    if(all.TryGetValue(name, out var existing) && existing.type.FullName != type.FullName)
-      throw new Exception(
-        $"Bindings '{name}' already registered by {existing.type.FullName}, " +
-        $"cannot also register {type.FullName} under the same name"
-      );
+    foreach(var type in AllBindingTypes())
+    {
+      var attr = (BhlBindingAttribute)Attribute.GetCustomAttribute(type, typeof(BhlBindingAttribute));
+      if(attr == null)
+        continue;
 
-    all[name] = (type, version);
+      if(string.IsNullOrEmpty(attr.Name))
+        throw new Exception($"{type} has a [BhlBinding] attribute with an empty name");
+      if(!System.Version.TryParse(VersionCore(attr.Version), out _))
+        throw new Exception($"Bindings '{attr.Name}' version '{attr.Version}' is not a valid version (expected 'X.Y.Z' or 'X.Y.Z-tag')");
+
+      //NOTE: compares by FullName not Type reference - a domain-reload-free script recompile
+      //      can hand us a different Type object for the same class, unlike a real collision
+      if(result.TryGetValue(attr.Name, out var existing) && existing.type.FullName != type.FullName)
+        throw new Exception(
+          $"Bindings '{attr.Name}' found on both {existing.type.FullName} and {type.FullName} - " +
+          "names must be unique"
+        );
+
+      result[attr.Name] = (type, attr.Version);
+    }
+
+    return result;
   }
 
-  //NOTE: reads (name, version) off T's [BhlBinding] attribute instead of having the
-  //      caller repeat them as loose arguments - keeps each Init() hook to one line
-  public static void Register<T>() where T : IUserBindings
+  //NOTE: unfiltered by [BhlBinding] - GetForAssembly needs that too (a dll built before it existed)
+  static IEnumerable<Type> AllBindingTypes()
   {
-    var type = typeof(T);
-    var attr = (BhlBindingAttribute)Attribute.GetCustomAttribute(type, typeof(BhlBindingAttribute));
-    if(attr == null)
-      throw new Exception($"{type} must have a [BhlBinding(name, version)] attribute to use Register<T>()");
-    Register(attr.Name, type, attr.Version);
+    foreach(var asm in AppDomain.CurrentDomain.GetAssemblies())
+    {
+      Type[] types;
+      try { types = asm.GetTypes(); }
+      catch(System.Reflection.ReflectionTypeLoadException e) { types = e.Types; }
+      catch(Exception) { continue; }
+
+      foreach(var type in types)
+        if(type != null && !type.IsAbstract && !type.IsInterface && typeof(IUserBindings).IsAssignableFrom(type))
+          yield return type;
+    }
   }
 
   public static bool IsRegistered(string name)
   {
-    return all.ContainsKey(name);
+    return All.ContainsKey(name);
   }
 
   public static IEnumerable<Type> GetAll()
   {
-    return all.Values.Select(e => e.type);
+    return All.Values.Select(e => e.type);
   }
 
+  //NOTE: not cached, unlike All - a caller passing in a just-loaded assembly (e.g.
+  //      DllBindings, right after Assembly.LoadFrom) needs it reflected fresh
   public static IEnumerable<Type> GetForAssembly(System.Reflection.Assembly assembly)
   {
-    return all.Values.Where(e => e.type.Assembly == assembly).Select(e => e.type);
+    return AllBindingTypes().Where(t => t.Assembly == assembly);
   }
 
-  //NOTE: a name with nothing registered under it is skipped, not an error
+  //NOTE: a name with nothing found under it is skipped, not an error
   public static IEnumerable<Type> GetByNames(IEnumerable<string> names)
   {
     foreach(var name in names)
-      if(all.TryGetValue(name, out var e))
+      if(All.TryGetValue(name, out var e))
         yield return e.type;
   }
 
-  //NOTE: instantiates and fans out to everything self-registered - for a driver with no
+  //NOTE: instantiates and fans out to everything discovered - for a driver with no
   //      compile-time knowledge of which bindings classes exist (e.g. a Unity Editor
   //      integration), unlike RegisterRequiredBindings' name-filtered lookup. Excludes
   //      prelude, since every Types() already attaches that one itself
   public static IUserBindings CreateCombined()
   {
     return new CombinedUserBindings(
-      all.Where(kv => kv.Key != PreludeName)
+      All.Where(kv => kv.Key != PreludeName)
         .Select(kv => (IUserBindings)Activator.CreateInstance(kv.Value.type))
         .ToList()
     );
@@ -141,10 +156,10 @@ public static class BindingsRegistry
 
   //NOTE: falls back to running Register() on a scratch Types() only for entries with no
   //      registry entry (e.g. a .bhl-scripted stub, which self-declares its own version
-  //      via ts.RegisterBindingsVersion instead of self-registering here)
+  //      via ts.RegisterBindingsVersion instead of carrying a [BhlBinding] attribute)
   public static bool TryGetVersion(string name, IUserBindings bindings, out string version)
   {
-    if(all.TryGetValue(name, out var match))
+    if(All.TryGetValue(name, out var match))
     {
       version = match.version;
       return true;
@@ -153,7 +168,7 @@ public static class BindingsRegistry
     var scratch = new Types();
     bindings.Register(scratch);
 
-    if(all.TryGetValue(name, out match))
+    if(All.TryGetValue(name, out match))
     {
       version = match.version;
       return true;
@@ -168,9 +183,9 @@ public static class BindingsRegistry
   {
     foreach(var (name, required_version) in loader.RequiredBindings)
     {
-      if(!all.TryGetValue(name, out var match))
+      if(!All.TryGetValue(name, out var match))
         throw new Exception(
-          $"Required bindings '{name}' not found - no IUserBindings self-registered " +
+          $"Required bindings '{name}' not found - no IUserBindings declared " +
           $"under that name (renamed? assembly not loaded?)"
         );
 
@@ -184,14 +199,14 @@ public static class BindingsRegistry
     }
   }
 
-  //NOTE: instantiates a self-registered entry, injects its version into `ts`, and runs
-  //      its Register() - no version-compatibility check, unlike RegisterRequiredBindings.
+  //NOTE: instantiates a discovered entry, injects its version into `ts`, and runs its
+  //      Register() - no version-compatibility check, unlike RegisterRequiredBindings.
   //      For entries that are unconditionally needed (e.g. Types()'s own prelude) rather
   //      than checked against a compiled .bhc's required version
   public static void RegisterForType(Types ts, string name)
   {
-    if(!all.TryGetValue(name, out var match))
-      throw new Exception($"Bindings '{name}' not found - no IUserBindings self-registered under that name");
+    if(!All.TryGetValue(name, out var match))
+      throw new Exception($"Bindings '{name}' not found - no IUserBindings declared under that name");
 
     var instance = (IUserBindings)Activator.CreateInstance(match.type);
     ts.RegisterBindingsVersion(name, match.version);
@@ -246,7 +261,7 @@ public class CombinedUserBindings : IUserBindings
   }
 }
 
-//NOTE: references an already self-registered IUserBindings by name, see ProjectConf.LoadBindingsEntry
+//NOTE: references an already discovered IUserBindings by name, see ProjectConf.LoadBindingsEntry
 public class RegistryBindings : IUserBindings
 {
   public readonly string name;
@@ -276,8 +291,8 @@ public class DllBindings : IUserBindings
     loaded.Register(ts);
   }
 
-  //NOTE: (name, version) per self-registered class's own [BhlBinding] attribute - a dll can
-  //      have more than one. BC-fallback classes (no self-registration) declare nothing
+  //NOTE: (name, version) per class's own [BhlBinding] attribute - a dll can have more than
+  //      one. Classes with no attribute (built before [BhlBinding] existed) declare nothing
   public IEnumerable<(string name, string version)> GetDeclaredBindings()
   {
     EnsureLoaded();
@@ -297,23 +312,14 @@ public class DllBindings : IUserBindings
 
     var assembly = LoadAssemblyFromDirOrFile(dll_path);
 
-    //NOTE: Assembly.LoadFrom alone doesn't reliably trigger [ModuleInitializer]s - force it
-    System.Runtime.CompilerServices.RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
-
+    //NOTE: GetForAssembly finds every IUserBindings type in the assembly regardless of
+    //      whether it carries [BhlBinding] - covers dlls built before that attribute existed
     userbindings_classes = BindingsRegistry.GetForAssembly(assembly).ToList();
-
-    //NOTE: BC fallback for dlls built before self-registration existed
-    if(userbindings_classes.Count == 0)
-    {
-      userbindings_classes = assembly.GetTypes()
-        .Where(t => typeof(IUserBindings).IsAssignableFrom(t))
-        .ToList();
-    }
 
     if(userbindings_classes.Count == 0)
       throw new Exception(
         $"IUserBindings instance not found in '{dll_path}'. " +
-        "Make sure it self-registers with BindingsRegistry (e.g. via a [ModuleInitializer]) and " +
+        "Make sure it implements IUserBindings and " +
         "was built against the same bhl_front.dll used by this tool " +
         "(e.g. not against bhl_runtime.dll, which defines its own distinct IUserBindings type)."
       );

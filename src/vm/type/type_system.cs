@@ -126,23 +126,14 @@ public partial class Types : INamedResolver, IProxyTypeCache
 }
 
 //NOTE: the built-in std/std.io/std.bind modules, unified under BindingsRegistry like any
-//      other binding so Types() bootstraps through the same RegisterForType() path
+//      other binding so Types() bootstraps through RegisterForType() too. Discovered by
+//      reflection - [Preserve] keeps IL2CPP/Mono from stripping it as unreferenced
+#if UNITY_5_3_OR_NEWER
+[UnityEngine.Scripting.Preserve]
+#endif
 [BhlBinding(BindingsRegistry.PreludeName, "1.0.0")]
 public class PreludeBindings : IUserBindings
 {
-  //NOTE: module initializers aren't guaranteed to fire under IL2CPP, so Unity gets its
-  //      own reliable hooks instead - RuntimeInitializeOnLoadMethod for Player/Play mode,
-  //      InitializeOnLoadMethod so it also happens in the Editor outside Play
-#if UNITY_5_3_OR_NEWER
-#if UNITY_EDITOR
-  [UnityEditor.InitializeOnLoadMethod]
-#endif
-  [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-#else
-  [System.Runtime.CompilerServices.ModuleInitializer]
-#endif
-  internal static void Init() => BindingsRegistry.Register<PreludeBindings>();
-
   public void Register(Types ts)
   {
     ts.RegisterModule(std.MakeModule(ts));
