@@ -85,6 +85,8 @@ public class CompilationExecutor
     foreach(var file in files)
     {
       var dir = Path.GetDirectoryName(file);
+      if(string.IsNullOrEmpty(dir))
+        throw new Exception("Could not get directory for file (not a full path ?): " + file);
       if(proj.src_dirs.IndexOf(dir) == -1)
         proj.src_dirs.Add(dir);
     }
