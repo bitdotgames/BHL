@@ -67,9 +67,11 @@ public static class BindingsRegistry
   public const string PreludeName = "prelude";
 
   //NOTE: cached after first scan - a full Editor domain scan isn't cheap, and deferring it
-  //      is safe since anything calling in here already has its own assembly loaded
-  static Dictionary<string, (Type type, string version)> _all;
-  static Dictionary<string, (Type type, string version)> All => _all ??= Scan();
+  //      is safe since anything calling in here already has its own assembly loaded.
+  //      Lazy<T> (not a plain ??=) so concurrent compile workers racing the first access
+  //      don't each pay for a redundant scan
+  static readonly Lazy<Dictionary<string, (Type type, string version)>> _all = new Lazy<Dictionary<string, (Type type, string version)>>(Scan);
+  static Dictionary<string, (Type type, string version)> All => _all.Value;
 
   static Dictionary<string, (Type type, string version)> Scan()
   {
