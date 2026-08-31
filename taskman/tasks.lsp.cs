@@ -40,18 +40,26 @@ public static partial class Tasks
   static Stream OpenStdinStream()  => Console.OpenStandardInput();
   static Stream OpenStdoutStream() => Console.OpenStandardOutput();
 
-  [Task(verbose: false)]
+  public class LspArgs
+  {
+    public string log_file_path = "";
+  }
+
+  //NOTE: shared by lsp() for real parsing and by 'bhl help lsp' for documentation
+  //      (see the '_options' convention in tasks.cs's help task)
+  static OptionSet lsp_options(LspArgs a) => new OptionSet
+  {
+    {
+      "log-file=", "log file path",
+      v => a.log_file_path = v
+    }
+  };
+
+  [Task(verbose: false, desc: "Starts the BHL Language Server over stdio")]
   public static async ThreadTask lsp(Taskman tm, string[] args)
   {
-    string log_file_path = "";
-
-    var p = new OptionSet
-    {
-      {
-        "log-file=", "log file path",
-        v => log_file_path = v
-      }
-    };
+    var a = new LspArgs();
+    var p = lsp_options(a);
 
     p.Parse(args);
 
@@ -64,12 +72,12 @@ public static partial class Tasks
     var bhl_silent = Environment.GetEnvironmentVariable("BHL_SILENT");
     var silent = !string.IsNullOrEmpty(bhl_silent) && bhl_silent != "0";
 
-    if(!string.IsNullOrEmpty(log_file_path))
-      logger_conf = logger_conf.WriteTo.File(log_file_path /*, rollingInterval: RollingInterval.Day*/);
+    if(!string.IsNullOrEmpty(a.log_file_path))
+      logger_conf = logger_conf.WriteTo.File(a.log_file_path /*, rollingInterval: RollingInterval.Day*/);
     else if(!silent)
       logger_conf = logger_conf.WriteTo.Console(standardErrorFromLevel: Serilog.Events.LogEventLevel.Verbose);
 
-    if(!silent || !string.IsNullOrEmpty(log_file_path))
+    if(!silent || !string.IsNullOrEmpty(a.log_file_path))
       Log.Logger = logger_conf.CreateLogger();
 
     Stream stdin = OpenStdinStream();

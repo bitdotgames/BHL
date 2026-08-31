@@ -22,18 +22,26 @@ public static partial class Tasks
     Environment.Exit(1);
   }
 
-  [Task(verbose: false)]
+  public class DumpArgs
+  {
+    public bool include_symbols = false;
+  }
+
+  //NOTE: shared by dump() for real parsing and by 'bhl help dump' for documentation
+  //      (see the '_options' convention in tasks.cs's help task)
+  static OptionSet dump_options(DumpArgs a) => new OptionSet()
+  {
+    {
+      "symbols", "also dump declared namespaces/functions/classes/interfaces/enums with their types",
+      v => a.include_symbols = v != null
+    }
+  };
+
+  [Task(verbose: false, desc: "Dumps a compiled .bhc bundle's contents as JSON")]
   public static ThreadTask dump(Taskman tm, string[] args)
   {
-    bool include_symbols = false;
-
-    var p = new OptionSet()
-    {
-      {
-        "symbols", "also dump declared namespaces/functions/classes/interfaces/enums with their types",
-        v => include_symbols = v != null
-      }
-    };
+    var a = new DumpArgs();
+    var p = dump_options(a);
 
     List<string> extra;
     try
@@ -56,7 +64,7 @@ public static partial class Tasks
     JObject root;
     try
     {
-      root = DumpBundle(path, include_symbols);
+      root = DumpBundle(path, a.include_symbols);
     }
     catch(Exception e)
     {

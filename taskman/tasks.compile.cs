@@ -22,23 +22,32 @@ public static partial class Tasks
     Environment.Exit(1);
   }
 
-  [Task]
+  public class CompileFlagsArgs
+  {
+    public bool bindings_only = false;
+    public bool postproc_only = false;
+  }
+
+  //NOTE: shared by compile() for real parsing and by 'bhl help compile' for documentation
+  //      (see the '_options' convention in tasks.cs's help task, and compile_options() below
+  //      for why this is a separate stage from compile_full_options())
+  static OptionSet compile_flags_options(CompileFlagsArgs a) => new OptionSet()
+  {
+    {
+      "bindings-only", "only prebuild each bindings entry's dll from its sources (C# or .bhl), then exit",
+      v => a.bindings_only = v != null
+    },
+    {
+      "postproc-only", "only prebuild postproc_dll from postproc_sources, then exit",
+      v => a.postproc_only = v != null
+    }
+  };
+
+  [Task(desc: "Compiles bhl scripts into bytecode")]
   public static async ThreadTask compile(Taskman tm, string[] args)
   {
-    bool bindings_only = false;
-    bool postproc_only = false;
-
-    var flags = new OptionSet()
-    {
-      {
-        "bindings-only", "only prebuild each bindings entry's dll from its sources (C# or .bhl), then exit",
-        v => bindings_only = v != null
-      },
-      {
-        "postproc-only", "only prebuild postproc_dll from postproc_sources, then exit",
-        v => postproc_only = v != null
-      }
-    };
+    var flags_args = new CompileFlagsArgs();
+    var flags = compile_flags_options(flags_args);
     args = flags.Parse(args).ToArray();
 
     string proj_file;
@@ -55,19 +64,19 @@ public static partial class Tasks
     //      rebuilds (--bindings-only/--postproc-only), without an unwanted rebuild firing
     //      during a plain compile (e.g. on a fresh checkout where tmp_dir's cache doesn't
     //      exist yet, which would otherwise make the committed dll look stale)
-    var built_bindings_dlls = BuildBindingsDlls(tm, force_rebuild, proj, bindings_only);
+    var built_bindings_dlls = BuildBindingsDlls(tm, force_rebuild, proj, flags_args.bindings_only);
     foreach(var kv in built_bindings_dlls)
       runtime_args.Add($"--bindings-dll={kv.Key}={kv.Value}");
 
     string postproc_dll_path = null;
-    if(!proj.postproc_manual_build || postproc_only || force_rebuild)
+    if(!proj.postproc_manual_build || flags_args.postproc_only || force_rebuild)
       postproc_dll_path = BuildPostprocDll(tm, force_rebuild, proj);
     if(postproc_dll_path != null)
       runtime_args.Add($"--postproc-dll={postproc_dll_path}");
 
-    if(bindings_only || postproc_only)
+    if(flags_args.bindings_only || flags_args.postproc_only)
     {
-      if(bindings_only)
+      if(flags_args.bindings_only)
       {
         bool any = built_bindings_dlls.Count > 0;
         foreach(var kv in built_bindings_dlls)
@@ -94,7 +103,7 @@ public static partial class Tasks
           Console.WriteLine($"No bindings sources found in '{proj_file}', nothing to build");
       }
 
-      if(postproc_only)
+      if(flags_args.postproc_only)
         Console.WriteLine(postproc_dll_path ?? $"No postproc_sources found in '{proj_file}', nothing to build");
 
       return;
@@ -125,89 +134,99 @@ public static partial class Tasks
     return b.dll;
   }
 
+  public class CompileFullArgs
+  {
+    public ProjectConf proj = new ProjectConf();
+    public List<string> files = new List<string>();
+    public bool add_debug_info = false;
+  }
+
+  //NOTE: shared by _compile() for real parsing and by 'bhl help compile' for documentation
+  //      (see compile_options() below) - a.proj is reassigned wholesale by '--proj=', which
+  //      is why it lives on a shared mutable 'a' rather than being a plain local: a closure
+  //      can't rebind a variable declared in its caller, only mutate/reassign a field on an
+  //      object both sides hold a reference to
+  static OptionSet compile_full_options(CompileFullArgs a) => new OptionSet()
+  {
+    {
+      "p|proj=", "project config file",
+      v => { a.proj = ProjectConf.ReadFromFile(v); }
+    },
+    {
+      "dir=", "source directories separated by ;",
+      v => a.proj.src_dirs.AddRange(v.Split(';'))
+    },
+    {
+      "files=", "file containing all source files list",
+      v => a.files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None))
+    },
+    {
+      "result=", "resulting file",
+      v => a.proj.result_file = v
+    },
+    {
+      "tmp-dir=", "tmp dir",
+      v => a.proj.tmp_dir = v
+    },
+    {
+      "C", "don't use cache",
+      v => a.proj.use_cache = v == null
+    },
+    {
+      "bindings-dll=", "bindings entry dll file path, as <index>=<path> (repeatable); " +
+        "out-of-range/non-numeric index appends a new entry",
+      v =>
+      {
+        int idx = v.IndexOf('=');
+        if(idx < 0)
+          throw new OptionException("Expected --bindings-dll=<index>=<path>", "bindings-dll");
+
+        string idx_str = v.Substring(0, idx);
+        string path = v.Substring(idx + 1);
+
+        if(int.TryParse(idx_str, out int entry_idx) && entry_idx >= 0 && entry_idx < a.proj.bindings.Count)
+          a.proj.bindings[entry_idx].dll = path;
+        else
+          a.proj.bindings.Add(new BindingsEntryConf { dll = path });
+      }
+    },
+    {
+      "postproc-dll=", "postprocess dll file path",
+      v => a.proj.postproc_dll = v
+    },
+    {
+      "error=", "error file",
+      v => a.proj.error_file = v
+    },
+    {
+      "deterministic", "deterministic build (sorts files by name)",
+      v => a.proj.deterministic = v != null
+    },
+    {
+      "threads=", "number of threads",
+      v => a.proj.max_threads = int.Parse(v)
+    },
+    {
+      "d", "debug verbosity level",
+      v => a.proj.verbosity = v != null ? 2 : 1
+    },
+    {
+      "module-fmt=", "binary module format",
+      v => a.proj.module_fmt = (ModuleBinaryFormat)int.Parse(v)
+    },
+    {
+      "debug-info", "emit local variable names for the debugger",
+      v => a.add_debug_info = v != null
+    }
+  };
+
   static async ThreadTask _compile(string[] args, bool force_rebuild)
   {
-    var files = new List<string>();
-
-    var proj = new ProjectConf();
-    bool add_debug_info = false;
-
-    var p = new OptionSet()
-    {
-      {
-        "p|proj=", "project config file",
-        v => { proj = ProjectConf.ReadFromFile(v); }
-      },
-      {
-        "dir=", "source directories separated by ;",
-        v => proj.src_dirs.AddRange(v.Split(';'))
-      },
-      {
-        "files=", "file containing all source files list",
-        v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None))
-      },
-      {
-        "result=", "resulting file",
-        v => proj.result_file = v
-      },
-      {
-        "tmp-dir=", "tmp dir",
-        v => proj.tmp_dir = v
-      },
-      {
-        "C", "don't use cache",
-        v => proj.use_cache = v == null
-      },
-      {
-        "bindings-dll=", "bindings entry dll file path, as <index>=<path> (repeatable); " +
-          "out-of-range/non-numeric index appends a new entry",
-        v =>
-        {
-          int idx = v.IndexOf('=');
-          if(idx < 0)
-            throw new OptionException("Expected --bindings-dll=<index>=<path>", "bindings-dll");
-
-          string idx_str = v.Substring(0, idx);
-          string path = v.Substring(idx + 1);
-
-          if(int.TryParse(idx_str, out int entry_idx) && entry_idx >= 0 && entry_idx < proj.bindings.Count)
-            proj.bindings[entry_idx].dll = path;
-          else
-            proj.bindings.Add(new BindingsEntryConf { dll = path });
-        }
-      },
-      {
-        "postproc-dll=", "postprocess dll file path",
-        v => proj.postproc_dll = v
-      },
-      {
-        "error=", "error file",
-        v => proj.error_file = v
-      },
-      {
-        "deterministic", "deterministic build (sorts files by name)",
-        v => proj.deterministic = v != null
-      },
-      {
-        "threads=", "number of threads",
-        v => proj.max_threads = int.Parse(v)
-      },
-      {
-        "d", "debug verbosity level",
-        v => proj.verbosity = v != null ? 2 : 1
-      },
-      {
-        "module-fmt=", "binary module format",
-        v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v)
-      },
-      {
-        "debug-info", "emit local variable names for the debugger",
-        v => add_debug_info = v != null
-      }
-    };
+    var a = new CompileFullArgs();
+    var p = compile_full_options(a);
 
     if(force_rebuild)
-      proj.use_cache = false;
+      a.proj.use_cache = false;
 
     var extra = new List<string>();
     try
@@ -220,26 +239,26 @@ public static partial class Tasks
     }
 
     if(Environment.GetEnvironmentVariable("BHL_VERBOSE") != null)
-      int.TryParse(Environment.GetEnvironmentVariable("BHL_VERBOSE"), out proj.verbosity);
+      int.TryParse(Environment.GetEnvironmentVariable("BHL_VERBOSE"), out a.proj.verbosity);
 
-    var logger = new Logger(proj.verbosity, new ConsoleLogger());
+    var logger = new Logger(a.proj.verbosity, new ConsoleLogger());
 
-    files.AddRange(extra);
+    a.files.AddRange(extra);
 
-    for(int i = 0; i < proj.src_dirs.Count; ++i)
-      if(!Directory.Exists(proj.src_dirs[i]))
-        compile_usage("Source directory not found: " + proj.src_dirs[i]);
+    for(int i = 0; i < a.proj.src_dirs.Count; ++i)
+      if(!Directory.Exists(a.proj.src_dirs[i]))
+        compile_usage("Source directory not found: " + a.proj.src_dirs[i]);
 
-    if(string.IsNullOrEmpty(proj.result_file))
+    if(string.IsNullOrEmpty(a.proj.result_file))
       compile_usage("Result file path not set");
 
-    if(string.IsNullOrEmpty(proj.tmp_dir))
+    if(string.IsNullOrEmpty(a.proj.tmp_dir))
       compile_usage("Tmp dir not set");
 
     IUserBindings bindings = null;
     try
     {
-      bindings = proj.LoadBindings();
+      bindings = a.proj.LoadBindings();
     }
     catch(Exception e)
     {
@@ -249,44 +268,44 @@ public static partial class Tasks
     IFrontPostProcessor postproc = null;
     try
     {
-      postproc = proj.LoadPostprocessor();
+      postproc = a.proj.LoadPostprocessor();
     }
     catch(Exception e)
     {
-      compile_usage($"Could not load postproc({proj.postproc_dll}): " + e);
+      compile_usage($"Could not load postproc({a.proj.postproc_dll}): " + e);
     }
 
-    if(files.Count == 0)
+    if(a.files.Count == 0)
     {
-      for(int i = 0; i < proj.src_dirs.Count; ++i)
-        CompilationExecutor.AddFilesFromDir(proj.src_dirs[i], files);
+      for(int i = 0; i < a.proj.src_dirs.Count; ++i)
+        CompilationExecutor.AddFilesFromDir(a.proj.src_dirs[i], a.files);
     }
     else
     {
-      for(int i = files.Count; i-- > 0;)
+      for(int i = a.files.Count; i-- > 0;)
       {
-        if(string.IsNullOrEmpty(files[i]))
-          files.RemoveAt(i);
+        if(string.IsNullOrEmpty(a.files[i]))
+          a.files.RemoveAt(i);
       }
     }
 
-    logger.Log(1, $"BHL({Version.Name}) files: {files.Count}, cache: {proj.use_cache}, debug info: {add_debug_info}");
+    logger.Log(1, $"BHL({Version.Name}) files: {a.files.Count}, cache: {a.proj.use_cache}, debug info: {a.add_debug_info}");
     var conf = new CompileConf();
-    conf.proj = proj;
+    conf.proj = a.proj;
     conf.logger = logger;
     conf.args_signature = string.Join(";", args) + ";sv=" + ModuleDeclared.STREAM_VERSION;
     conf.self_file = BuildUtils.GetSelfFile();
-    conf.files = BuildUtils.NormalizeFilePaths(files);
-    foreach(var b in proj.bindings)
+    conf.files = BuildUtils.NormalizeFilePaths(a.files);
+    foreach(var b in a.proj.bindings)
       if(File.Exists(b.dll))
         conf.global_file_deps.Add(b.dll);
     //NOTE: bhl.proj-only settings (e.g. defines) have no cache-invalidation signal
     //      otherwise, so track the proj file itself as a dep
-    if(!string.IsNullOrEmpty(proj.proj_file) && File.Exists(proj.proj_file))
-      conf.global_file_deps.Add(proj.proj_file);
+    if(!string.IsNullOrEmpty(a.proj.proj_file) && File.Exists(a.proj.proj_file))
+      conf.global_file_deps.Add(a.proj.proj_file);
     conf.bindings = bindings;
     conf.postproc = postproc;
-    conf.add_debug_info = add_debug_info;
+    conf.add_debug_info = a.add_debug_info;
 
     var executor = new CompilationExecutor();
     var result = await executor.Exec(conf);
@@ -296,7 +315,7 @@ public static partial class Tasks
 
     if(result.errors.Count > 0)
     {
-      if(string.IsNullOrEmpty(proj.error_file))
+      if(string.IsNullOrEmpty(a.proj.error_file))
       {
         foreach(var err in result.errors)
           ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
@@ -325,5 +344,19 @@ public static partial class Tasks
     if (!string.IsNullOrEmpty(proj_file))
       left.Insert(0, "--proj=" + proj_file);
     return left;
+  }
+
+  //NOTE: 'compile' parses its options in two stages (compile_flags_options up front, then
+  //      compile_full_options inside _compile(), on whatever's left after prebuilding
+  //      bindings/postproc dlls) - this merges both purely for 'bhl help compile' to display
+  //      as one list, without changing how the real two-stage parse works
+  static OptionSet compile_options()
+  {
+    var combined = new OptionSet();
+    foreach(var o in compile_flags_options(new CompileFlagsArgs()))
+      combined.Add(o);
+    foreach(var o in compile_full_options(new CompileFullArgs()))
+      combined.Add(o);
+    return combined;
   }
 }

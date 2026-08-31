@@ -21,40 +21,48 @@ public static partial class Tasks
     Environment.Exit(1);
   }
 
-  [Task]
+  public class BenchArgs
+  {
+    public int iterations = 1;
+    public HashSet<string> defines = new HashSet<string>();
+    public bool profile = false;
+    public bool fast = false;
+  }
+
+  //NOTE: shared by bench() for real parsing and by 'bhl help bench' for documentation
+  //      (see the '_options' convention in tasks.cs's help task)
+  static OptionSet bench_options(BenchArgs a) => new OptionSet()
+  {
+    {
+      "defines=", "comma delimetered defines",
+      v =>
+      {
+        foreach (var d in v.Split(","))
+          a.defines.Add(d);
+      }
+    },
+    {
+      "n=", "number of bench iterations",
+      v => { a.iterations = int.Parse(v); }
+    },
+    {
+      "p|profile", "profile parser",
+      v => a.profile = v != null
+    },
+    {
+      "fast", "fast parsing strategy",
+      v => a.fast = v != null
+    },
+  };
+
+  [Task(desc: "Benchmarks the lexer/preprocessor/parser on the given .bhl files")]
   public static ThreadTask bench(Taskman tm, string[] args)
   {
     if (args.Length == 0)
       throw new Exception("No arguments");
 
-    int iterations = 1;
-    var defines = new HashSet<string>();
-    bool profile = false;
-    bool fast = false;
-
-    var opts = new OptionSet()
-    {
-      {
-        "defines=", "comma delimetered defines",
-        v =>
-        {
-          foreach (var d in v.Split(","))
-            defines.Add(d);
-        }
-      },
-      {
-        "n=", "number of bench iterations",
-        v => { iterations = int.Parse(v); }
-      },
-      {
-        "p|profile", "profile parser",
-        v => profile = v != null
-      },
-      {
-        "fast", "fast parsing strategy",
-        v => fast = v != null
-      },
-    };
+    var a = new BenchArgs();
+    var opts = bench_options(a);
 
     var files = new List<string>();
     try
@@ -67,7 +75,7 @@ public static partial class Tasks
     }
 
     foreach (var file in files)
-      BenchFile(file, iterations, defines, profile, fast);
+      BenchFile(file, a.iterations, a.defines, a.profile, a.fast);
 
     return ThreadTask.CompletedTask;
   }

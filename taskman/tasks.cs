@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
+using Mono.Options;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
@@ -38,28 +40,72 @@ public static partial class Tasks
 
   const int ERROR_EXIT_CODE = 2;
 
-  [Task(verbose: false)]
+  [Task(verbose: false, desc: "Prints the tool's version")]
   public static ThreadTask version(Taskman tm, string[] args)
   {
     Console.WriteLine(bhl.Version.Name);
     return ThreadTask.CompletedTask;
   }
 
-  [Task(verbose: false)]
+  [Task(verbose: false, desc: "Lists available tasks, or details one task's options ('bhl help <task>')")]
   public static ThreadTask help(Taskman tm, string[] args)
   {
+    if(args.Length > 0)
+    {
+      PrintTaskHelp(tm, args[0]);
+      return ThreadTask.CompletedTask;
+    }
+
     Console.WriteLine("BHL language tool (" + bhl.Version.Name + ")");
     Console.WriteLine("Usage:");
     Console.WriteLine("\tbhl <task> [args]");
+    Console.WriteLine("\tbhl help <task>    show a task's options");
     Console.WriteLine("Available tasks:");
 
     var tasks = new List<Taskman.Task>(tm.Tasks);
     tasks.Sort((a, b) => a.Name.CompareTo(b.Name));
 
+    int name_col = tasks.Max(t => t.Name.Length) + 2;
     foreach(var t in tasks)
-      Console.WriteLine("\t" + t.Name);
+      Console.WriteLine("\t" + t.Name.PadRight(name_col) + t.attr.desc);
 
     return ThreadTask.CompletedTask;
+  }
+
+  //NOTE: every task's options live in a static '<task>_options(...)' method (see e.g.
+  //      run_options in tasks.run.cs) shared between the task's own real parsing and this -
+  //      it takes either zero args or one 'Args' holder we can Activator.CreateInstance,
+  //      so we can build (but never Parse(), hence no side effects) the same OptionSet the
+  //      task itself uses, purely to print its descriptions
+  static void PrintTaskHelp(Taskman tm, string task_name)
+  {
+    var task = tm.FindTask(task_name);
+    if(task == null)
+    {
+      Console.WriteLine($"No such task: {task_name}");
+      Environment.Exit(1);
+      return;
+    }
+
+    Console.WriteLine("bhl " + task_name + (string.IsNullOrEmpty(task.attr.desc) ? "" : " - " + task.attr.desc));
+
+    var options_method = typeof(Tasks).GetMethod(task_name + "_options",
+      BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+    if(options_method == null)
+    {
+      Console.WriteLine("(no options)");
+      return;
+    }
+
+    var method_params = options_method.GetParameters();
+    var call_args = method_params.Length == 0
+      ? Array.Empty<object>()
+      : new object[] { Activator.CreateInstance(method_params[0].ParameterType) };
+
+    var options = (OptionSet)options_method.Invoke(null, call_args);
+
+    Console.WriteLine("Options:");
+    options.WriteOptionDescriptions(Console.Out);
   }
 
   public static string DotnetBuildLibrary(

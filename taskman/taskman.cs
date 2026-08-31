@@ -172,17 +172,15 @@ public class Taskman
 
 public class TaskAttribute : Attribute
 {
-  public bool verbose = true;
+  public bool verbose;
+  //NOTE: one-line summary shown by 'bhl help' and 'bhl help <task>'
+  public string desc;
   public string[] deps;
 
-  public TaskAttribute(params string[] deps)
-  {
-    this.deps = deps;
-  }
-
-  public TaskAttribute(bool verbose, params string[] deps)
+  public TaskAttribute(bool verbose = true, string desc = "", params string[] deps)
   {
     this.verbose = verbose;
+    this.desc = desc;
     this.deps = deps;
   }
 }

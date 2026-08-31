@@ -11,18 +11,26 @@ namespace bhl.taskman;
 
 public static partial class Tasks
 {
-  [Task(verbose: false)]
+  public class ReplArgs
+  {
+    public bool eval_mode = false;
+  }
+
+  //NOTE: shared by repl() for real parsing and by 'bhl help repl' for documentation
+  //      (see the '_options' convention in tasks.cs's help task)
+  static OptionSet repl_options(ReplArgs a) => new OptionSet()
+  {
+    {
+      "e|eval", "evaluate the rest of the command line as an expression, print the result, then exit",
+      v => a.eval_mode = v != null
+    }
+  };
+
+  [Task(verbose: false, desc: "Starts an interactive BHL REPL, or evaluates one expression with --eval")]
   public static ThreadTask repl(Taskman tm, string[] args)
   {
-    bool eval_mode = false;
-
-    var p = new OptionSet()
-    {
-      {
-        "e|eval", "evaluate the rest of the command line as an expression, print the result, then exit",
-        v => eval_mode = v != null
-      }
-    };
+    var a = new ReplArgs();
+    var p = repl_options(a);
 
     List<string> extra;
     try
@@ -39,7 +47,7 @@ public static partial class Tasks
     var vm = new VM(new Types());
     var session = new ReplSession(vm);
 
-    if(eval_mode)
+    if(a.eval_mode)
     {
       try
       {

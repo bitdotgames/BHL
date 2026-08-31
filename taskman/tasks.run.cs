@@ -18,23 +18,31 @@ public static partial class Tasks
     Environment.Exit(1);
   }
 
-  [Task(verbose: false)]
+  public class RunArgs
+  {
+    public string func = "main";
+    public int tick_ms = 0;
+  }
+
+  //NOTE: shared by run() for real parsing and by 'bhl help run' for documentation
+  //      (see the '_options' convention in tasks.cs's help task)
+  static OptionSet run_options(RunArgs a) => new OptionSet()
+  {
+    {
+      "func=", "function to run instead of 'main'",
+      v => a.func = v
+    },
+    {
+      "tick-ms=", "sleep this many milliseconds between VM ticks (default: no sleep)",
+      v => a.tick_ms = int.Parse(v)
+    }
+  };
+
+  [Task(verbose: false, desc: "Compiles and runs a single .bhl script")]
   public static async ThreadTask run(Taskman tm, string[] args)
   {
-    string func = "main";
-    int tick_ms = 0;
-
-    var p = new OptionSet()
-    {
-      {
-        "func=", "function to run instead of 'main'",
-        v => func = v
-      },
-      {
-        "tick-ms=", "sleep this many milliseconds between VM ticks (default: no sleep)",
-        v => tick_ms = int.Parse(v)
-      }
-    };
+    var a = new RunArgs();
+    var p = run_options(a);
 
     var extra = new List<string>();
     try
@@ -64,19 +72,19 @@ public static partial class Tasks
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);
 
-    if(!vm.TryFindFuncAddr(func, out _))
-      run_usage($"No '{func}' function found");
+    if(!vm.TryFindFuncAddr(a.func, out _))
+      run_usage($"No '{a.func}' function found");
 
     var argv_lst = ValList.New(vm);
     foreach(var arg in script_args)
       argv_lst.Add(Val.NewStr(arg));
     var argv = Val.NewObj(argv_lst, Types.Array);
-    vm.Start(func, argv);
+    vm.Start(a.func, argv);
 
     while(vm.Tick())
     {
-      if(tick_ms > 0)
-        System.Threading.Thread.Sleep(tick_ms);
+      if(a.tick_ms > 0)
+        System.Threading.Thread.Sleep(a.tick_ms);
     }
   }
 }
