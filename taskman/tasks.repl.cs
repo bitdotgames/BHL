@@ -21,12 +21,12 @@ public static partial class Tasks
   static OptionSet repl_options(ReplArgs a) => new OptionSet()
   {
     {
-      "e|eval", "evaluate the rest of the command line as an expression, print the result, then exit",
+      "e|eval", "evaluate the rest of the command line as an expression (or stdin if none given), print the result, then exit",
       v => a.eval_mode = v != null
     }
   };
 
-  [Task(verbose: false, desc: "Starts an interactive BHL REPL, or evaluates one expression with --eval")]
+  [Task(verbose: false, desc: "Starts an interactive BHL REPL, or evaluates a single expression")]
   public static ThreadTask repl(Taskman tm, string[] args)
   {
     var a = new ReplArgs();

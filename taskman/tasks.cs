@@ -69,6 +69,18 @@ public static partial class Tasks
     foreach(var t in tasks)
       Console.WriteLine("\t" + t.Name.PadRight(name_col) + t.attr.desc);
 
+    Console.WriteLine("Environment variables:");
+
+    var env_vars = new (string name, string desc)[]
+    {
+      ("BHL_REBUILD", "force a full rebuild, bypassing cache (also rebuilds the bhl tool itself)"),
+      ("BHL_VERBOSE=<level>", "compile task verbosity, 0-2 - higher is more verbose (default: 1)"),
+      ("BHL_SILENT=0|1", "0 = verbose, 1 = quiet (default) - for the bhl wrapper script's own rebuild output, and 'lsp' console logging")
+    };
+    int env_col = env_vars.Max(e => e.name.Length) + 2;
+    foreach(var e in env_vars)
+      Console.WriteLine("\t" + e.name.PadRight(env_col) + e.desc);
+
     return ThreadTask.CompletedTask;
   }
 

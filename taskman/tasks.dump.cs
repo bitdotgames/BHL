@@ -37,7 +37,7 @@ public static partial class Tasks
     }
   };
 
-  [Task(verbose: false, desc: "Dumps a compiled .bhc bundle's contents as JSON")]
+  [Task(verbose: false, desc: "Dumps a compiled .bhc bundle's meta info as JSON")]
   public static ThreadTask dump(Taskman tm, string[] args)
   {
     var a = new DumpArgs();
