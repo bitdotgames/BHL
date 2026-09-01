@@ -170,6 +170,45 @@ public class TestVMInstance : BHL_TestBase
   }
 
   [Fact]
+  public void TestFindMethodResolvesToMostDerivedOverride()
+  {
+    var ts = new Types();
+
+    var decl = CompileModule(@"
+    class Foo
+    {
+      int a
+      virtual func int getA()
+      {
+        return this.a
+      }
+    }
+    class Bar : Foo
+    {
+      int new_a
+      override func int getA()
+      {
+        return this.new_a
+      }
+    }
+    ", ts);
+    var vm = new VM(ts);
+    vm.LoadModule(new Module(decl));
+
+    var bar_val = vm.NewInstance("Bar");
+    vm.SetFieldValue(ref bar_val, "a", Val.NewInt(1));
+    vm.SetFieldValue(ref bar_val, "new_a", Val.NewInt(2));
+
+    var func_symb = vm.FindMethod(bar_val, "getA");
+    Assert.NotNull(func_symb);
+
+    var result = vm.ExecuteMethod(ref bar_val, func_symb, new StackList<Val>());
+    Assert.Equal(2, result.Pop().num);
+
+    bar_val.ReleaseData();
+  }
+
+  [Fact]
   public void TestExecuteMethodRunsNonCoroMethodSynchronously()
   {
     var ts = new Types();

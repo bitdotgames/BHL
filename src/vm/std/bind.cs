@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CS8981
 
@@ -9,6 +10,59 @@ public static partial class std
   public static class bind
   {
     public static ClassSymbolNative TypesSymbol;
+
+    //NOTE: DSL-internal bookkeeping for NewClassSymbolScript/DefineVirtualMethod, kept out of ClassSymbolScript/ModuleDeclared, weak so it never outlives its owner
+    static readonly ConditionalWeakTable<ClassSymbolScript, ModuleDeclared> _class_owner_module = new();
+    static readonly ConditionalWeakTable<ModuleDeclared, List<byte>> _module_stub_bytecode = new();
+
+    //NOTE: hand-assembles a stub body matching EmitFuncDecl's output for an empty function (Frame + Return); v1 is void-only, no constant pool needed
+    static void DefineStubBody(FuncSymbolScript fs, ModuleDeclared owner, int args_num)
+    {
+      if(fs.signature.return_type.Get() != Types.Void)
+        throw new System.Exception("DefineVirtualMethod: only void-returning stubs are supported for now");
+
+      var bytecode = _module_stub_bytecode.GetValue(owner, _ => new List<byte>());
+
+      //NOTE: a bindings module never goes through ModuleDeclared.Setup's SetupFuncSymbol (only explicitly-loaded modules do), so _module is assigned by hand
+      fs._module = owner;
+      fs._ip_addr = bytecode.Count;
+      bytecode.Add((byte)Opcodes.Frame);
+      bytecode.Add((byte)args_num); //locals_vars_num - args are the stub's only locals
+      bytecode.Add(0); //return_vars_num - void only
+      bytecode.Add((byte)Opcodes.Return);
+
+      owner.InitWithCompiled(new CompiledModule(
+        -1, new List<string>(), 0,
+        System.Array.Empty<Const>(), new TypeRefIndex(),
+        System.Array.Empty<byte>(), bytecode.ToArray(),
+        new Ip2SrcLine()
+      ));
+    }
+
+    //NOTE: plain C# entry points for native bindings (e.g. Unity's UnityBindings.cs) - the
+    //      script-callable NewClassSymbolScript/DefineVirtualMethod below are thin wrappers over these,
+    //      same relationship as ClassSymbolNative/FuncSymbolNative have to their own DSL functions
+    public static ClassSymbolScript NewClassSymbolScript(ModuleDeclared module, string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
+    {
+      var cl = new ClassSymbolScript(new Origin(), name);
+      cl.SetSuperClassAndInterfaces(super_class, implements);
+      _class_owner_module.Add(cl, module);
+      return cl;
+    }
+
+    //NOTE: always virtual and bodyless - a non-virtual stub could never be overridden or do anything, so there's no point offering that
+    public static FuncSymbolScript DefineVirtualMethod(ClassSymbolScript cl, string name, ProxyType ret_type, FuncArgSymbol[] args)
+    {
+      if(!_class_owner_module.TryGetValue(cl, out var owner))
+        throw new System.Exception("DefineVirtualMethod: class '" + name + "' has no owning module - was it created via NewClassSymbolScript?");
+
+      var fs = new FuncSymbolScript(new Origin(), name, FuncAttrib.Virtual, ret_type, args);
+      //NOTE: the ctor's signature.attribs mask covers Coro/VariadicArgs only - Virtual needs this
+      fs.attribs = FuncAttrib.Virtual;
+      DefineStubBody(fs, owner, args.Length);
+      cl.Define(fs);
+      return fs;
+    }
 
     static public ModuleDeclared MakeModule(Types ts)
     {
@@ -564,6 +618,71 @@ public static partial class std
           },
           new FuncArgSymbol("name", Types.String),
           new FuncArgSymbol("inherits", ts.TArr(proxy_type))
+        );
+        bind.Define(fn);
+      }
+
+      //NOTE: unlike ClassSymbolNative, real .bhl classes can ': Base' this (see the native-class-extension check in antlr_proc.pass.cs); methods are signature-only stubs (_ip_addr == -1), same as InterfaceSymbolScript.DefineMethod
+      var clss_type = new ClassSymbolNative(new Origin(), "ClassSymbolScript", cl_type, null, null, typeof(bhl.ClassSymbolScript));
+      bind.Define(clss_type);
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "DefineVirtualMethod", Types.Void,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.GetSelfRef();
+            var cl = (bhl.ClassSymbolScript)self.obj;
+
+            var args = (ValList)exec.stack.Pop().obj;
+            var func_args = new FuncArgSymbol[args.Count];
+            for(int i = 0; i < args.Count; ++i)
+              func_args[i] = (FuncArgSymbol)args[i].obj;
+            args.Release();
+            var type_ref = (ProxyType)exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+            exec.stack.Pop(); //for self
+
+            DefineVirtualMethod(cl, name, type_ref, func_args);
+
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("type", proxy_type),
+          new FuncArgSymbol("args", ts.TArr(fsn_arg_type))
+        );
+        clss_type.Define(fn);
+      }
+
+      clss_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolScript", clss_type, 2,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ValList implements = args_info.IsDefaultArgUsed(1) ? null : (ValList)exec.stack.Pop().obj;
+            List<InterfaceSymbol> implements_list = null;
+            if(implements != null)
+            {
+              implements_list = new List<InterfaceSymbol>(implements.Count);
+              foreach(var impl in implements)
+                implements_list.Add((InterfaceSymbol)((ProxyType)impl.obj).Get());
+            }
+            implements?.Release();
+
+            var parent_type_ref_obj = args_info.IsDefaultArgUsed(0) ? null : exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+            var module = (bhl.ModuleDeclared)exec.stack.Pop().obj;
+
+            var super_class = parent_type_ref_obj == null ? null : (ClassSymbol)((ProxyType)parent_type_ref_obj).Get();
+            var cl = NewClassSymbolScript(module, name, super_class, implements_list);
+
+            exec.stack.Push(Val.NewObj(cl, clss_type));
+            return null;
+          },
+          new FuncArgSymbol("module", module_type),
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("parent_type", proxy_type),
+          new FuncArgSymbol("implements", ts.TArr(proxy_type))
         );
         bind.Define(fn);
       }

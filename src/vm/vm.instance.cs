@@ -39,8 +39,16 @@ public partial class VM : INamedResolver
 
     for(int i = 0; i < cls._all_members.Length; ++i)
     {
-      if(cls._all_members[i] is FuncSymbolScript fss && fss.name == method_name)
+      var m = cls._all_members[i];
+
+      if(m is FuncSymbolScript fss && fss.name == method_name)
         return fss;
+
+      //NOTE: a virtual/override method is stored as a FuncSymbolVirtual (a FuncSymbol
+      //      sibling, not a FuncSymbolScript) - resolve to this class's vtable slot
+      //      (the most-derived override), same as what CallMethodVirt does at runtime
+      if(m is FuncSymbolVirtual fsv && fsv.name == method_name)
+        return (FuncSymbolScript)cls._vtable[i];
     }
 
     return null;
