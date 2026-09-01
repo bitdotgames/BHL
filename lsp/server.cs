@@ -171,9 +171,7 @@ public static class ServerFactory
     return server;
   }
 
-  //NOTE: window/showMessage (unlike window/logMessage) is what most clients surface as a
-  //      visible popup - without this, exceptions in OnInitialize/OnInitialized or the
-  //      fire-and-forget reload tasks above are only ever logged, never seen by the user
+  //NOTE: window/showMessage is what clients actually surface as a popup, unlike window/logMessage
   static void ReportError(OmniSharp.Extensions.JsonRpc.IResponseRouter server,
     Serilog.ILogger logger, string context, Exception e)
   {
