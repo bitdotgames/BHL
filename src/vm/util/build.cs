@@ -132,7 +132,12 @@ static public class BuildUtils
         if(!Directory.Exists(dir))
           continue;
 
-        next.AddRange(is_last ? Directory.GetFiles(dir, segment) : Directory.GetDirectories(dir, segment));
+        //NOTE: GetFiles/GetDirectories return OS-native separators (backslash on Windows),
+        //      which would otherwise leak past this point - every other segment here is
+        //      joined with '/' by hand, so normalize these too to keep the whole path consistent
+        var matches = is_last ? Directory.GetFiles(dir, segment) : Directory.GetDirectories(dir, segment);
+        foreach(var m in matches)
+          next.Add(m.Replace('\\', '/'));
       }
       current = next;
     }
