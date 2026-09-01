@@ -102,4 +102,36 @@ public class TestProjConf
 
     Assert.Equal(3, proj.max_threads);
   }
+
+  [Fact]
+  public void SrcDirsExpandsWildcardToExistingDirs()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_test_srcdirs_" + Guid.NewGuid().ToString("N"));
+    var pkg_dir = Path.Combine(root, "pkg@1.2.3", "Runtime", "Scripts");
+    Directory.CreateDirectory(pkg_dir);
+    try
+    {
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(Path.Combine(root, "pkg@*", "Runtime", "Scripts"));
+      proj.Setup();
+
+      Assert.Single(proj.src_dirs);
+      Assert.Equal(BuildUtils.NormalizeFilePath(pkg_dir), proj.src_dirs[0]);
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
+  [Fact]
+  public void SrcDirsWildcardWithNoMatchesResultsInEmptySrcDirs()
+  {
+    var proj = new ProjectConf();
+    proj.src_dirs.Add(Path.Combine(Path.GetTempPath(),
+      "bhl_proj_conf_test_nomatch_" + Guid.NewGuid().ToString("N"), "pkg@*", "Runtime"));
+    proj.Setup();
+
+    Assert.Empty(proj.src_dirs);
+  }
 }

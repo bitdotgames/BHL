@@ -211,11 +211,20 @@ public partial class ProjectConf
       inc_path.Add(inc_dirs[i]);
     }
 
-    for(int i = 0; i < src_dirs.Count; ++i)
+    //NOTE: wildcard-expanded (e.g. a UPM package's version-suffixed PackageCache path),
+    //      same as bindings' `sources` - see BuildUtils.Glob
+    var expanded_src_dirs = new List<string>();
+    foreach(var src_dir in src_dirs)
     {
-      src_dirs[i] = NormalizePath(proj_file, src_dirs[i]);
-      if(inc_dirs.Count == 0)
-        inc_path.Add(src_dirs[i]);
+      string pattern = NormalizePath(proj_file, src_dir);
+      expanded_src_dirs.AddRange(BuildUtils.Glob(pattern).Where(Directory.Exists));
+    }
+    src_dirs = expanded_src_dirs;
+
+    if(inc_dirs.Count == 0)
+    {
+      foreach(var src_dir in src_dirs)
+        inc_path.Add(src_dir);
     }
 
     result_file = NormalizePath(proj_file, result_file);
