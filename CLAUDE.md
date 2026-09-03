@@ -77,3 +77,26 @@ Tests typically verify both bytecode output (opcode-level assertions via `Assert
 - `VM`, `ANTLR_Processor`, and `Tasks` are split across multiple files using `partial class` / `partial static class`
 - Heavy use of object pooling (fibers, `Val`, coroutines) to minimize GC pressure — avoid unnecessary allocations in hot paths
 - `Val` is a plain struct; ref-counting applies to `IRefcounted` objects stored inside it — always pair `Retain()`/`Release()` calls on those correctly
+
+## Documentation — `aidocs/` LLM Wiki
+
+`aidocs/` is a persistent, agent-maintained wiki (architecture notes,
+decisions, gotchas, reusable Q&A) — distinct from `docs/`, the human-facing
+language reference. Before working with project documentation, read
+`aidocs/AGENTS.md` (wiki schema) and `aidocs/index.md` (catalog).
+
+### Service files (do not multiply these)
+- `aidocs/AGENTS.md` — schema: layers, categories, conventions, ingest/query/lint operations.
+- `aidocs/index.md` — catalog of pages by category (link + one-line description).
+- `aidocs/log.md` — append-only journal, format `## [YYYY-MM-DD] <type> | <title>`.
+
+### Required actions
+- Created/deleted/renamed a wiki page → update `aidocs/index.md` and append an entry to `aidocs/log.md`.
+- Non-trivial question about the project → read `aidocs/index.md` first, then the relevant pages; a reusable answer becomes a new/updated page (ingest it).
+- Lint on request → contradictions, stale content, orphan pages, missing cross-links; summarize in `aidocs/log.md`.
+
+### Constraints
+- Generate wiki documentation only on explicit user request, or as a natural byproduct of ingest/query/lint above.
+- Don't duplicate content — link to the existing page (in `aidocs/` or `docs/`) instead.
+- On conflict between a page and the code, the code wins — flag and update the page.
+- Extend `index.md` / `log.md` / `aidocs/AGENTS.md` rather than creating parallel service files.
