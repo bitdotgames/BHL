@@ -1,5 +1,6 @@
 #if (BHL_PARSER || UNITY_EDITOR)
 
+using System;
 using System.Collections.Generic;
 
 namespace bhl
@@ -25,6 +26,15 @@ public partial class ProjectConf
     for(int i = 0; i < postproc_sources.Count; ++i)
       postproc_sources[i] = NormalizePath(proj_file, postproc_sources[i]);
     postproc_dll = NormalizePath(proj_file, postproc_dll);
+  }
+
+  partial void CheckNoPostproc(string included_file)
+  {
+    if(postproc_sources.Count > 0 || !string.IsNullOrEmpty(postproc_dll) || postproc_manual_build)
+      throw new Exception(
+        $"Included bhl.proj '{included_file}' must not use 'postproc_sources'/'postproc_dll'/" +
+        "'postproc_manual_build' - postproc only applies to the including project"
+      );
   }
 
   public IFrontPostProcessor LoadPostprocessor()

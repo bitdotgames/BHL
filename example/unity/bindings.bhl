@@ -1,8 +1,10 @@
 import "std/bind"
 
-func RegisterBindings(std.bind.Types types) {
+func string,string BindingInfo() {
+    return "unity", "1.0.0"
+}
 
-    types.RegisterVersion("unity", "1.0.0")
+func RegisterBindings(std.bind.Types types) {
 
     var m = std.bind.NewModuleDeclared("unity")
     var ns = m.ns.Nest("unity")

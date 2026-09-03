@@ -311,26 +311,6 @@ public static partial class std
           cl.Define(fn);
         }
 
-        {
-          var fn = new FuncSymbolNative(new Origin(), "RegisterVersion", Types.Void,
-            (VM.ExecState exec, FuncArgsInfo args_info) =>
-            {
-              ref var self = ref exec.GetSelfRef();
-              var types = (Types)self.obj;
-              string version = exec.stack.Pop();
-              string name = exec.stack.Pop();
-              exec.stack.Pop(); //for self
-
-              types.RegisterBindingsVersion(name, version);
-
-              return null;
-            },
-            new FuncArgSymbol("name", Types.String),
-            new FuncArgSymbol("version", Types.String)
-          );
-          cl.Define(fn);
-        }
-
         cl.Setup();
         //TODO: this looks a bit dirty but 'kinda ok' for now,
         //      maybe it makes sense to bind these symbols as static ones

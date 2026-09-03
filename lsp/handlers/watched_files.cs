@@ -52,15 +52,21 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase
       if(change.Type == FileChangeType.Deleted)
         continue;
 
-      var dir = Path.GetDirectoryName(path);
-      var proj = ProjectConf.TryReadFromDir(dir);
-      if(proj == null)
+      if(!TryGetReloadTarget(_workspace.ProjConf, path, out var reload_from))
+        continue;
+
+      ProjectConf proj;
+      try
       {
-        _logger.LogWarning("bhl.proj changed but could not be read from {Dir}", dir);
+        proj = ProjectConf.ReadFromFile(reload_from);
+      }
+      catch(System.Exception e)
+      {
+        _logger.LogWarning(e, "bhl.proj changed but could not be re-read from {File}", reload_from);
         continue;
       }
 
-      _logger.LogInformation("bhl.proj changed, reloading workspace");
+      _logger.LogInformation("bhl.proj changed ({Path}), reloading workspace", path);
 
       try
       {
@@ -96,5 +102,26 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase
     }
 
     return Unit.Value;
+  }
+
+  //NOTE: the client's glob watches EVERY bhl.proj under the workspace, so with 'includes'
+  //      it's normal to have several - only reload (always from the ROOT's own proj_file,
+  //      never the changed file's dir) if the change is relevant to the tracked root
+  public static bool TryGetReloadTarget(ProjectConf current, string changed_path, out string reload_from)
+  {
+    reload_from = null;
+
+    var root_proj_file = current.proj_file;
+    if(string.IsNullOrEmpty(root_proj_file) || !File.Exists(root_proj_file))
+      return false;
+
+    var norm_path = BuildUtils.NormalizeFilePath(changed_path);
+    bool is_relevant = norm_path == BuildUtils.NormalizeFilePath(root_proj_file)
+      || current.included_files.Contains(norm_path);
+    if(!is_relevant)
+      return false;
+
+    reload_from = root_proj_file;
+    return true;
   }
 }

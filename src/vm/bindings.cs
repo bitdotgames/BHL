@@ -157,8 +157,9 @@ public static class BindingsRegistry
   }
 
   //NOTE: falls back to running Register() on a scratch Types() only for entries with no
-  //      registry entry (e.g. a .bhl-scripted stub, which self-declares its own version
-  //      via ts.RegisterBindingsVersion instead of carrying a [BhlBinding] attribute)
+  //      registry entry - e.g. a custom IUserBindings that calls Types.RegisterBindingsVersion
+  //      directly instead of carrying a [BhlBinding] attribute (DllBindings/ScriptedBindings
+  //      have their own faster discovery - see DiscoverDeclaredBindings in proj_conf.cs)
   public static bool TryGetVersion(string name, IUserBindings bindings, out string version)
   {
     if(All.TryGetValue(name, out var match))
@@ -399,6 +400,41 @@ public class ScriptedBindings : IUserBindings
       var sym = module.ns.members.Find(func_name);
       if(sym is FuncSymbolScript fss)
         vm.Execute(fss, Val.NewObj(ts, std.bind.TypesSymbol));
+    }
+#else
+    throw new NotImplementedException();
+#endif
+  }
+
+  //NOTE: cheaper mirror of Register() - looks for the optional 'BindingInfo' function
+  //      instead of running the real 'RegisterBindings', so discovering a scripted
+  //      binding's (name, version) doesn't require defining all its classes/functions
+  public IEnumerable<(string name, string version)> GetDeclaredBindings()
+  {
+#if (BHL_PARSER || UNITY_EDITOR)
+    var vm = CompilationExecutor.CompileAndLoadVM(
+      script_paths,
+      use_cache: use_cache,
+      bytecode_result_file: bytecode_file,
+      tmp_dir: tmp_dir
+    ).GetAwaiter().GetResult();
+    if(vm == null)
+      throw new Exception("Failed to initialize scripted bindings");
+
+    foreach(var script_path in script_paths)
+    {
+      var module_name = Path.GetFileNameWithoutExtension(script_path);
+      if(!vm.LoadModule(module_name, out var module))
+        continue;
+
+      var sym = module.ns.members.Find(ProjectConf.DefaultBindingsInfoScriptName);
+      if(sym is FuncSymbolScript fss)
+      {
+        var stack = vm.Execute(fss);
+        string name = stack.Pop();
+        string version = stack.Pop();
+        yield return (name, version);
+      }
     }
 #else
     throw new NotImplementedException();

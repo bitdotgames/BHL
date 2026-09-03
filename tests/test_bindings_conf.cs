@@ -21,8 +21,10 @@ public class TestBindingsConf
     string path = Path.Combine(dir, file_name);
     File.WriteAllText(path, $@"
 import ""std/bind""
+func string,string BindingInfo() {{
+  return ""{decl_name}"", ""{version}""
+}}
 func RegisterBindings(std.bind.Types types) {{
-  types.RegisterVersion(""{decl_name}"", ""{version}"")
 }}
 ");
     return path;
@@ -88,7 +90,7 @@ func RegisterBindings(std.bind.Types types) {{
     try
     {
       //NOTE: the dict key becomes the entry's `name` (see BindingsListConverter), which
-      //      must now match what the script actually declares via RegisterVersion
+      //      must now match what the script actually declares via BindingInfo()
       var script_path = WriteScriptedBinding(dir, "mybindings.bhl", "legacydict", "1.0.0");
 
       string json = JsonConvert.SerializeObject(new
@@ -131,6 +133,36 @@ func RegisterBindings(std.bind.Types types) {{
     var bindings = (UserBindingsWithInfo)proj.LoadBindings();
     Assert.NotNull(bindings);
     Assert.Empty(bindings.info);
+  }
+
+  //NOTE: legacy entries are never required to declare a version, but if one opts in anyway
+  //      (e.g. adding BindingInfo() without migrating off bindings_sources) it gets picked up
+  [Fact]
+  public void LegacyFlatFieldsWithBindingInfoGetPickedUpOptionally()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var script_path = WriteScriptedBinding(dir, "mybindings.bhl", "legacy_opted_in", "2.0.0");
+
+      var proj = new ProjectConf();
+      proj.tmp_dir = dir;
+      proj.use_cache = false;
+      proj.bindings_sources.Add(script_path);
+      proj.Setup();
+
+      Assert.Single(proj.bindings);
+      Assert.True(proj.bindings[0].is_legacy);
+
+      var bindings = (UserBindingsWithInfo)proj.LoadBindings();
+      Assert.Single(bindings.info);
+      Assert.Equal("legacy_opted_in", bindings.info[0].name);
+      Assert.Equal("2.0.0", bindings.info[0].version);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
   }
 
   [Fact]

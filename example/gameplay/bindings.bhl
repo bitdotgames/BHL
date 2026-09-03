@@ -1,8 +1,10 @@
 import "std/bind"
 
-func RegisterBindings(std.bind.Types types) {
+func string,string BindingInfo() {
+    return "example", "1.0.0"
+}
 
-    types.RegisterVersion("example", "1.0.0")
+func RegisterBindings(std.bind.Types types) {
 
     {
       var fn = std.bind.NewFuncSymbolNative("Trace", types.T("void"),

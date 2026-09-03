@@ -78,6 +78,9 @@ public class TestTypesModuleResolve
       //NOTE: mirrors UnityBindings.bhl's shape - cross-references its own module via types.T
       File.WriteAllText(Path.Combine(dir, "bindings.bhl"), @"
 import ""std/bind""
+func string,string BindingInfo() {
+  return ""testmod"", ""1.0.0""
+}
 func RegisterBindings(std.bind.Types types) {
   var module = std.bind.NewModuleDeclared(""testmod"")
   var ns = module.ns.Nest(""testmod"")
@@ -92,7 +95,6 @@ func RegisterBindings(std.bind.Types types) {
   outer.Setup()
 
   types.RegisterModule(module)
-  types.RegisterVersion(""testmod"", ""1.0.0"")
 }
 ");
       File.WriteAllText(Path.Combine(dir, "main.bhl"), @"

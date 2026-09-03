@@ -11,11 +11,7 @@ namespace bhl
 
 public class BindingsEntryConf
 {
-  //NOTE: path (wildcard allowed) to a JSON file with one entry or an array of them; see
-  //      ProjectConf.ExpandBindingsIncludes. Mutually exclusive with the fields below
-  public string include = "";
-
-  //NOTE: required - cherry-picks a self-registered BindingsRegistry binding by this name
+  //NOTE: required - cherry-picks a BindingsRegistry-discoverable binding by this name
   //      when available, else falls back to sources/dll below (see LoadBindingsEntry)
   public string name = "";
 
@@ -124,6 +120,10 @@ public partial class ProjectConf
 
   public List<string> src_dirs = new List<string>();
 
+  //NOTE: paths to other bhl.proj files whose src_dirs/bindings/inc_dirs get folded in (see
+  //      ExpandIncludes) - a non-empty 'defines' on one of them is rejected, everything else is ignored
+  public List<string> includes = new List<string>();
+
   public List<string> defines = new List<string>();
 
   public string result_file = "";
@@ -137,7 +137,16 @@ public partial class ProjectConf
 
   public const string DefaultBindingsScriptName = "RegisterBindings";
 
+  //NOTE: optional companion function - 'func string,string BindingInfo() { return "name",
+  //      "1.0.0" }' - cheaper to discover a scripted binding's (name, version) than running
+  //      the whole RegisterBindings (see ScriptedBindings.GetDeclaredBindings)
+  public const string DefaultBindingsInfoScriptName = "BindingInfo";
+
   [JsonIgnore] public string proj_file = "";
+
+  //NOTE: canonical paths of every bhl.proj folded in via 'includes' (recursively) - lets a
+  //      caller (e.g. the LSP's file watcher) tell it apart from an unrelated bhl.proj
+  [JsonIgnore] public HashSet<string> included_files = new HashSet<string>();
 
   //NOTE: every entry is used unconditionally, no per-entry "enabled" flag; every non-legacy
   //      entry must declare a `name` (checked in Setup())
@@ -155,7 +164,7 @@ public partial class ProjectConf
     if(max_threads <= 0)
       max_threads = Environment.ProcessorCount;
 
-    bindings = ExpandBindingsIncludes(bindings, proj_file, new HashSet<string>());
+    ExpandIncludes(this, proj_file, new HashSet<string>(), included_files);
 
     if(bindings_sources.Count > 0 || !string.IsNullOrEmpty(bindings_dll))
     {
@@ -177,11 +186,18 @@ public partial class ProjectConf
       tmp_dir = DefaultProjectTempDir(proj_file);
     tmp_dir = NormalizePath(proj_file, tmp_dir);
 
+    //NOTE: two entries sharing a name (own + include, or two includes) would otherwise only
+    //      fail later, during the real compile, as a confusing raw dictionary-key exception
+    //      deep in Types.RegisterModule/RegisterBindingsVersion - catch it here instead
+    var seen_binding_names = new HashSet<string>();
     foreach(var b in bindings)
     {
       //NOTE: legacy entries predate `name` entirely and stay exempt
       if(!b.is_legacy && string.IsNullOrEmpty(b.name))
         throw new Exception("Bindings entry must have a non-empty 'name'");
+
+      if(!b.is_legacy && !seen_binding_names.Add(b.name))
+        throw new Exception($"Bindings entry '{b.name}' declared more than once - names must be unique");
 
       for(int i = 0; i < b.sources.Count; ++i)
         b.sources[i] = NormalizePath(proj_file, b.sources[i]);
@@ -237,6 +253,11 @@ public partial class ProjectConf
   //NOTE: implemented in proj_conf.postproc.cs when present, no-op otherwise
   partial void SetupPostproc();
 
+  //NOTE: implemented in proj_conf.postproc.cs when present, no-op otherwise - rejects
+  //      postproc_* fields on an included proj (called from ExpandIncludes below), same
+  //      treatment as 'defines' and the legacy bindings_* fields
+  partial void CheckNoPostproc(string included_file);
+
   public static string NormalizePath(string proj_file, string file_path)
   {
     if(Path.IsPathRooted(file_path))
@@ -248,62 +269,72 @@ public partial class ProjectConf
     return file_path;
   }
 
-  //NOTE: replaces each `include` entry with the JSON file's own entries, recursively,
-  //      anchored to that file's own directory
-  static List<BindingsEntryConf> ExpandBindingsIncludes(List<BindingsEntryConf> raw, string anchor_file, HashSet<string> visiting)
+  //NOTE: recursively folds each included bhl.proj into 'proj'. 'visiting' is the current
+  //      chain (cycle detection); 'already_included' is 'proj.included_files' itself, so a
+  //      diamond-shaped include graph is folded in only once
+  static void ExpandIncludes(ProjectConf proj, string anchor_file, HashSet<string> visiting, HashSet<string> already_included)
   {
-    var result = new List<BindingsEntryConf>();
+    if(proj.includes.Count == 0)
+      return;
 
-    foreach(var b in raw)
+    var patterns = proj.includes;
+    proj.includes = new List<string>();
+
+    foreach(var pattern_raw in patterns)
     {
-      if(string.IsNullOrEmpty(b.include))
-      {
-        result.Add(b);
-        continue;
-      }
-
-      if(!string.IsNullOrEmpty(b.name) || b.sources.Count > 0 || !string.IsNullOrEmpty(b.dll))
-        throw new Exception($"Bindings entry with 'include' ('{b.include}') must not set 'name'/'sources'/'dll'");
-
-      string pattern = NormalizePath(anchor_file, b.include);
+      string pattern = NormalizePath(anchor_file, pattern_raw);
       var matches = BuildUtils.Glob(pattern).Where(File.Exists).ToList();
 
       if(matches.Count == 0)
-        throw new Exception($"Bindings include '{b.include}' did not match any existing file");
+        throw new Exception($"Include '{pattern_raw}' did not match any existing file");
       if(matches.Count > 1)
-        throw new Exception($"Bindings include '{b.include}' matched more than one file: {string.Join(", ", matches)}");
+        throw new Exception($"Include '{pattern_raw}' matched more than one file: {string.Join(", ", matches)}");
 
       string included_file = matches[0];
       string canon = BuildUtils.NormalizeFilePath(included_file);
       if(!visiting.Add(canon))
-        throw new Exception($"Bindings include cycle detected at '{included_file}'");
+        throw new Exception($"Include cycle detected at '{included_file}'");
 
-      var included_entries = ParseBindingsJson(File.ReadAllText(included_file), included_file);
-      foreach(var e in included_entries)
+      if(already_included.Add(canon))
       {
-        for(int i = 0; i < e.sources.Count; ++i)
-          e.sources[i] = NormalizePath(included_file, e.sources[i]);
-        if(!string.IsNullOrEmpty(e.dll))
-          e.dll = NormalizePath(included_file, e.dll);
+        var included = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(included_file)) ?? new ProjectConf();
+        ExpandIncludes(included, included_file, visiting, already_included);
+
+        if(included.defines.Count > 0)
+          throw new Exception(
+            $"Included bhl.proj '{included_file}' must not declare 'defines' - " +
+            "defines only apply to the including project"
+          );
+
+        //NOTE: legacy bindings_sources/bindings_dll only get folded into 'bindings' by the
+        //      root's own Setup() - an included file's legacy fields would otherwise be
+        //      silently dropped (never read), so reject them outright instead
+        if(included.bindings_sources.Count > 0 || !string.IsNullOrEmpty(included.bindings_dll) || included.bindings_manual_build)
+          throw new Exception(
+            $"Included bhl.proj '{included_file}' must not use the legacy 'bindings_sources'/" +
+            "'bindings_dll'/'bindings_manual_build' fields - use the 'bindings' array instead"
+          );
+
+        included.CheckNoPostproc(included_file);
+
+        foreach(var src_dir in included.src_dirs)
+          proj.src_dirs.Add(NormalizePath(included_file, src_dir));
+
+        foreach(var inc_dir in included.inc_dirs)
+          proj.inc_dirs.Add(NormalizePath(included_file, inc_dir));
+
+        foreach(var b in included.bindings)
+        {
+          for(int i = 0; i < b.sources.Count; ++i)
+            b.sources[i] = NormalizePath(included_file, b.sources[i]);
+          if(!string.IsNullOrEmpty(b.dll))
+            b.dll = NormalizePath(included_file, b.dll);
+          proj.bindings.Add(b);
+        }
       }
 
-      result.AddRange(ExpandBindingsIncludes(included_entries, included_file, visiting));
       visiting.Remove(canon);
     }
-
-    return result;
-  }
-
-  static List<BindingsEntryConf> ParseBindingsJson(string json_text, string source_path)
-  {
-    var token = JToken.Parse(json_text);
-
-    if(token.Type == JTokenType.Array)
-      return token.Select(t => t.ToObject<BindingsEntryConf>()).ToList();
-    if(token.Type == JTokenType.Object)
-      return new List<BindingsEntryConf> { token.ToObject<BindingsEntryConf>() };
-
-    throw new Exception($"Bindings include '{source_path}' must be a JSON object or array, got {token.Type}");
   }
 
   static string DefaultProjectTempDir(string proj_file)
@@ -354,7 +385,7 @@ public partial class ProjectConf
     return bindings_scripts.Count > 0 || !string.IsNullOrEmpty(bindings_bytecode_file);
   }
 
-  //NOTE: a name already self-registered in this process (e.g. Unity Editor) resolves to
+  //NOTE: a name already discoverable in this process (e.g. Unity Editor) resolves to
   //      that live binding; otherwise falls back to sources/dll (e.g. a separate LSP/CLI)
   IUserBindings LoadBindingsEntry(BindingsEntryConf b)
   {
@@ -382,8 +413,23 @@ public partial class ProjectConf
     var versions = new List<(string name, string version)>();
     for(int i = 0; i < bindings.Count; ++i)
     {
+      //NOTE: legacy entries predate 'name'/BindingInfo() entirely and were never required to
+      //      declare either - but if one has opted in anyway (e.g. adding BindingInfo() to an
+      //      existing legacy script without migrating to the newer 'bindings' array shape),
+      //      pick it up. This is best-effort only: unlike the required/matched case below,
+      //      a failed discovery attempt (e.g. bindings_dll not built yet) must stay a
+      //      harmless no-op, exactly like a legacy entry with no BindingInfo() at all
       if(bindings[i].is_legacy)
+      {
+        try
+        {
+          versions.AddRange(DiscoverDeclaredBindings(loaded[i]));
+        }
+        catch
+        {
+        }
         continue;
+      }
 
       var declared = DiscoverDeclaredBindings(loaded[i]).ToList();
       if(declared.Count == 0)
@@ -407,13 +453,18 @@ public partial class ProjectConf
     return new UserBindingsWithInfo(combined, versions);
   }
 
-  //NOTE: a dll's names come off each class's own [BhlBinding] attribute; anything else
-  //      (chiefly a .bhl-scripted entry) is run once on a scratch Types() and diffed against
-  //      its baseline ("prelude" is always there) to see what its own RegisterVersion(...) added
+  //NOTE: a dll's names come off each class's own [BhlBinding] attribute, a scripted binding's
+  //      off its optional 'BindingInfo' function (see ScriptedBindings.GetDeclaredBindings) -
+  //      both without running the real registration. Anything else is run once on a scratch
+  //      Types() and diffed against its baseline ("prelude" is always there) to see what its
+  //      own RegisterBindingsVersion(...) added (e.g. a reflection-discovered C# binding)
   static IEnumerable<(string name, string version)> DiscoverDeclaredBindings(IUserBindings b)
   {
     if(b is DllBindings dll)
       return dll.GetDeclaredBindings();
+
+    if(b is ScriptedBindings scripted)
+      return scripted.GetDeclaredBindings();
 
     if(b is EmptyUserBindings)
       return Enumerable.Empty<(string, string)>();

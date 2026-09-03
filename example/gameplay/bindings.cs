@@ -3,7 +3,7 @@ using System.IO;
 
 namespace bhl {
 
-//NOTE: "example" must match bindings.bhl's RegisterVersion("example", ...) call (its
+//NOTE: "example" must match bindings.bhl's BindingInfo() return value (its
 //      compile-time stand-in). Discovered by reflection (see BindingsRegistry) - [Preserve]
 //      keeps IL2CPP/Mono's stripper from removing it, since nothing references it directly
 #if UNITY_5_3_OR_NEWER
