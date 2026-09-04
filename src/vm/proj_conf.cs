@@ -413,21 +413,29 @@ public partial class ProjectConf
     var versions = new List<(string name, string version)>();
     for(int i = 0; i < bindings.Count; ++i)
     {
-      //NOTE: legacy entries predate 'name'/BindingInfo() entirely and were never required to
-      //      declare either - but if one has opted in anyway (e.g. adding BindingInfo() to an
-      //      existing legacy script without migrating to the newer 'bindings' array shape),
-      //      pick it up. This is best-effort only: unlike the required/matched case below,
-      //      a failed discovery attempt (e.g. bindings_dll not built yet) must stay a
-      //      harmless no-op, exactly like a legacy entry with no BindingInfo() at all
+      //NOTE: legacy entries have no 'name' in bhl.proj to verify a declared (name, version)
+      //      against, so declaring one via BindingInfo()/[BhlBinding] is rejected outright
+      //      instead of silently baked in unverified - migrate to the 'bindings' array to
+      //      declare a name/version. A failed discovery attempt (e.g. bindings_dll not built
+      //      yet) stays a harmless no-op, same as a legacy entry with no BindingInfo() at all
       if(bindings[i].is_legacy)
       {
+        List<(string name, string version)> legacy_declared;
         try
         {
-          versions.AddRange(DiscoverDeclaredBindings(loaded[i]));
+          legacy_declared = DiscoverDeclaredBindings(loaded[i]).ToList();
         }
         catch
         {
+          legacy_declared = new List<(string name, string version)>();
         }
+
+        if(legacy_declared.Count > 0)
+          throw new Exception(
+            $"Legacy bindings entry declares a version via BindingInfo()/[BhlBinding] " +
+            $"({string.Join(", ", legacy_declared.Select(d => d.name))}) - migrate it to the 'bindings' array instead"
+          );
+
         continue;
       }
 

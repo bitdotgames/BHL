@@ -135,10 +135,10 @@ func RegisterBindings(std.bind.Types types) {{
     Assert.Empty(bindings.info);
   }
 
-  //NOTE: legacy entries are never required to declare a version, but if one opts in anyway
-  //      (e.g. adding BindingInfo() without migrating off bindings_sources) it gets picked up
+  //NOTE: legacy entries have no 'name' in bhl.proj to verify a declared version against, so
+  //      BindingInfo() on a legacy script is rejected outright instead of silently baked in
   [Fact]
-  public void LegacyFlatFieldsWithBindingInfoGetPickedUpOptionally()
+  public void LegacyFlatFieldsWithBindingInfoThrows()
   {
     var dir = MakeTempDir();
     try
@@ -154,10 +154,7 @@ func RegisterBindings(std.bind.Types types) {{
       Assert.Single(proj.bindings);
       Assert.True(proj.bindings[0].is_legacy);
 
-      var bindings = (UserBindingsWithInfo)proj.LoadBindings();
-      Assert.Single(bindings.info);
-      Assert.Equal("legacy_opted_in", bindings.info[0].name);
-      Assert.Equal("2.0.0", bindings.info[0].version);
+      Assert.Throws<Exception>(() => proj.LoadBindings());
     }
     finally
     {
