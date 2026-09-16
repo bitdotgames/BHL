@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace bhl
 {
@@ -378,12 +379,16 @@ public class ScriptedBindings : IUserBindings
   {
 #if (BHL_PARSER || UNITY_EDITOR)
     //var sw = System.Diagnostics.Stopwatch.StartNew();
-    var vm = CompilationExecutor.CompileAndLoadVM(
+    //NOTE: run on a pool thread so none of CompileAndLoadVM's internal awaits capture
+    //      the caller's SynchronizationContext (e.g. Unity's main thread) - otherwise
+    //      GetResult() below blocks that very thread forever waiting for a continuation
+    //      that was posted back onto it
+    var vm = Task.Run(() => CompilationExecutor.CompileAndLoadVM(
       script_paths,
       use_cache: use_cache,
       bytecode_result_file: bytecode_file,
       tmp_dir: tmp_dir
-    ).GetAwaiter().GetResult();
+    )).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("Failed to initialize scripted bindings");
     //for quick debug
@@ -412,12 +417,13 @@ public class ScriptedBindings : IUserBindings
   public IEnumerable<(string name, string version)> GetDeclaredBindings()
   {
 #if (BHL_PARSER || UNITY_EDITOR)
-    var vm = CompilationExecutor.CompileAndLoadVM(
+    //NOTE: see the matching comment in Register() above
+    var vm = Task.Run(() => CompilationExecutor.CompileAndLoadVM(
       script_paths,
       use_cache: use_cache,
       bytecode_result_file: bytecode_file,
       tmp_dir: tmp_dir
-    ).GetAwaiter().GetResult();
+    )).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("Failed to initialize scripted bindings");
 
