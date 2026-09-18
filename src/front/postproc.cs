@@ -84,6 +84,7 @@ public class DllPostProcessor : IFrontPostProcessor
 public class AppDomainPostProcessor : IFrontPostProcessor
 {
   readonly IFrontPostProcessor _combined;
+  int _patchCount;
 
   public AppDomainPostProcessor(string assembly_name)
   {
@@ -92,7 +93,15 @@ public class AppDomainPostProcessor : IFrontPostProcessor
     var assembly = AppDomain.CurrentDomain.GetAssemblies()
       .FirstOrDefault(a => a.GetName().Name == assembly_name);
 
-    if(assembly != null)
+    if(assembly == null)
+    {
+      UnityEngine.Debug.LogWarning(
+        $"[BHL] postproc: no loaded assembly named '{assembly_name}' found - " +
+        "postprocessing will be a no-op. Check that postproc_sources compiled into " +
+        "Assets/BHL/Generated/Postproc (see UnityBHL's PostprocBridge)."
+      );
+    }
+    else
     {
       Type[] types;
       try
@@ -112,6 +121,11 @@ public class AppDomainPostProcessor : IFrontPostProcessor
         if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
           found.Add((IFrontPostProcessor)Activator.CreateInstance(type));
       }
+
+      if(found.Count == 0)
+        UnityEngine.Debug.LogWarning($"[BHL] postproc: '{assembly_name}' has no IFrontPostProcessor implementation");
+      else
+        UnityEngine.Debug.Log($"[BHL] postproc: using {string.Join(", ", found.Select(f => f.GetType().Name))} from '{assembly_name}'");
     }
 
     _combined =
@@ -122,11 +136,17 @@ public class AppDomainPostProcessor : IFrontPostProcessor
 
   public ANTLR_Processor.Result Patch(ANTLR_Processor.Result result, string src_file)
   {
+    ++_patchCount;
     return _combined.Patch(result, src_file);
   }
 
+  //NOTE: Tally() is called once per compile, after every file's Patch() - a good spot
+  //      to report whether Patch() ran at all. A count of 0 with unchanged .bhl files
+  //      usually means every file hit the compile cache (see ProjectConf.use_cache) -
+  //      Patch() is only called for files actually recompiled, not cached ones
   public void Tally()
   {
+    UnityEngine.Debug.Log($"[BHL] postproc: Patch() called {_patchCount} time(s) this compile");
     _combined.Tally();
   }
 }
