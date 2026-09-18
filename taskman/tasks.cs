@@ -126,9 +126,12 @@ public static partial class Tasks
     string[] srcs,
     string result,
     List<string> defines,
-    string tmp_dir
+    string tmp_dir,
+    string target_framework = null
   )
   {
+    target_framework ??= TargetFramework;
+
     if(string.IsNullOrEmpty(tmp_dir))
       throw new Exception("'tmp_dir' is not set");
 
@@ -166,7 +169,8 @@ public static partial class Tasks
       files,
       deps,
       pkgs,
-      defines
+      defines,
+      target_framework
     );
 
     string result_dll = result + "/" + Path.GetFileName(result);
@@ -196,13 +200,13 @@ public static partial class Tasks
       {
         try
         {
-          tm.Shell("dotnet", "clean --framework " + TargetFramework + " " + csproj_file);
+          tm.Shell("dotnet", "clean --framework " + target_framework + " " + csproj_file);
         }
         catch(Exception)
         {}
       }
 
-      tm.Shell("dotnet", "build --framework " + TargetFramework + " " + csproj_file + " -o " + result);
+      tm.Shell("dotnet", "build --framework " + target_framework + " " + csproj_file + " -o " + result);
 
       //let's force file modification time since .Net may use result from the cache
       //without changing the file time
@@ -262,8 +266,7 @@ public static partial class Tasks
   //      proj.postproc_dll (if any) is assumed to already be a prebuilt dll
   public static string BuildPostprocDll(Taskman tm, bool force_rebuild, ProjectConf proj)
   {
-    var postproc_sources = proj.postproc_sources.Where(f => f.EndsWith(".cs")).ToList();
-    if(postproc_sources.Count == 0)
+    if(!proj.postproc_sources.Any(f => f.EndsWith(".cs")))
       return null;
 
     if(string.IsNullOrEmpty(proj.postproc_dll))
@@ -272,7 +275,18 @@ public static partial class Tasks
     if(!proj.postproc_dll.EndsWith(".dll"))
       throw new Exception("Resulting 'postproc_dll' invalid extension: " + proj.postproc_dll);
 
-    postproc_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
+    //NOTE: postproc_dll targets proj.postproc_target_framework (netstandard2.1 by
+    //      default), not this repo's own net8.0 - bhl_front itself only targets net8.0
+    //      (see Directory.Build.props) and a netstandard project can't ProjectReference
+    //      a net8.0-only one (NU1201), so it's built separately here and referenced as
+    //      a plain dll instead
+    var bhl_front_dll = BuildBhlFrontDllForPostproc(tm, force_rebuild, proj.tmp_dir);
+
+    //NOTE: unlike net8.0, netstandard has no implicit framework-provided packages
+    //      (e.g. System.Text.Json) - a postproc_sources entry can list one explicitly
+    //      as "Name=Version", same convention as the hardcoded Antlr4 one below
+    var postproc_sources = proj.postproc_sources.Where(f => f.EndsWith(".cs") || f.Contains("=")).ToList();
+    postproc_sources.Add(bhl_front_dll);
     postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
     return DotnetBuildLibrary(
       tm,
@@ -280,8 +294,29 @@ public static partial class Tasks
       postproc_sources.ToArray(),
       proj.postproc_dll,
       new List<string>() { "BHL_FRONT" },
-      proj.tmp_dir
+      proj.tmp_dir,
+      proj.postproc_target_framework
     );
+  }
+
+  //NOTE: always built for net8.0 (this repo's own default), regardless of
+  //      postproc_target_framework - referenced as a plain dll (not a ProjectReference)
+  //      so postproc_dll's own project can target a different, incompatible framework.
+  //      This only fixes typerefs postproc_sources' own code introduces (e.g. a plain
+  //      DirectoryInfo field) - if postproc_sources' code also calls into bhl_front
+  //      members whose own implementation needs net8.0-only facades, that could still
+  //      fail under a stricter host; not something this change can fully rule out
+  static string BuildBhlFrontDllForPostproc(Taskman tm, bool force, string tmp_dir)
+  {
+    var out_dir = tmp_dir + "/bhl_front_for_postproc";
+    var csproj = $"{BHL_ROOT}/src/front/bhl_front.csproj";
+
+    if(force)
+      tm.Shell("dotnet", $"clean \"{csproj}\"");
+
+    tm.Shell("dotnet", $"build \"{csproj}\" -o \"{out_dir}\"");
+
+    return out_dir + "/bhl_front.dll";
   }
 
   public static string MakeLibraryCSProj(
@@ -289,7 +324,8 @@ public static partial class Tasks
     List<string> files,
     List<string> deps,
     List<string> pkgs,
-    List<string> defines
+    List<string> defines,
+    string target_framework
   )
   {
     string csproj_header = @$"
@@ -298,7 +334,8 @@ public static partial class Tasks
   <AssemblyName>{name}</AssemblyName>
   <OutputType>Library</OutputType>
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  <TargetFramework>{TargetFramework}</TargetFramework>
+  <TargetFramework>{target_framework}</TargetFramework>
+  <LangVersion>latest</LangVersion>
   <DefineConstants>{string.Join(';', defines)}</DefineConstants>
 </PropertyGroup>
  ";

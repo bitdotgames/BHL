@@ -74,6 +74,65 @@ public class DllPostProcessor : IFrontPostProcessor
   }
 }
 
+#if UNITY_EDITOR
+//NOTE: Unity compiles bhl (and anything referencing it) from source into its own
+//      assembly, so a postproc_dll built externally (DllPostProcessor) can never share
+//      its IFrontPostProcessor's type identity here - postproc_sources meant to run
+//      inside the Editor must instead be compiled directly into a Unity asmdef that
+//      references "bhl", and get picked up by scanning already-loaded assemblies
+public class AppDomainPostProcessor : IFrontPostProcessor
+{
+  static readonly Type[] BuiltIn =
+  {
+    typeof(EmptyPostProcessor), typeof(DllPostProcessor), typeof(CombinedPostProcessor), typeof(AppDomainPostProcessor)
+  };
+
+  readonly IFrontPostProcessor _combined;
+
+  public AppDomainPostProcessor()
+  {
+    var found = new List<IFrontPostProcessor>();
+
+    foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+    {
+      Type[] types;
+      try
+      {
+        types = assembly.GetTypes();
+      }
+      catch(System.Reflection.ReflectionTypeLoadException e)
+      {
+        types = e.Types.Where(t => t != null).ToArray();
+      }
+
+      foreach(var type in types)
+      {
+        if(type.IsAbstract || type.IsInterface || BuiltIn.Contains(type))
+          continue;
+
+        if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
+          found.Add((IFrontPostProcessor)Activator.CreateInstance(type));
+      }
+    }
+
+    _combined =
+      found.Count == 0 ? new EmptyPostProcessor() :
+      found.Count == 1 ? found[0] :
+      new CombinedPostProcessor(found);
+  }
+
+  public ANTLR_Processor.Result Patch(ANTLR_Processor.Result result, string src_file)
+  {
+    return _combined.Patch(result, src_file);
+  }
+
+  public void Tally()
+  {
+    _combined.Tally();
+  }
+}
+#endif
+
 public class EmptyPostProcessor : IFrontPostProcessor
 {
   public ANTLR_Processor.Result Patch(ANTLR_Processor.Result result, string src_file)
