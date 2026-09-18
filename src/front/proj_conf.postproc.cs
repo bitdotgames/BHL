@@ -48,8 +48,12 @@ public partial class ProjectConf
   public IFrontPostProcessor LoadPostprocessor()
   {
 #if UNITY_EDITOR
-    //NOTE: postproc_dll is never applicable here - see AppDomainPostProcessor
-    return new AppDomainPostProcessor();
+    //NOTE: postproc_dll itself is never loaded here - AppDomainPostProcessor instead
+    //      looks for an already-loaded assembly named after it (see PostprocBridge)
+    if(string.IsNullOrEmpty(postproc_dll))
+      return new EmptyPostProcessor();
+
+    return new AppDomainPostProcessor(System.IO.Path.GetFileNameWithoutExtension(postproc_dll));
 #else
     if(!string.IsNullOrEmpty(postproc_dll))
       return new DllPostProcessor(postproc_dll);

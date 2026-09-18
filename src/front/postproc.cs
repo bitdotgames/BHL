@@ -78,22 +78,21 @@ public class DllPostProcessor : IFrontPostProcessor
 //NOTE: Unity compiles bhl (and anything referencing it) from source into its own
 //      assembly, so a postproc_dll built externally (DllPostProcessor) can never share
 //      its IFrontPostProcessor's type identity here - postproc_sources meant to run
-//      inside the Editor must instead be compiled directly into a Unity asmdef that
-//      references "bhl", and get picked up by scanning already-loaded assemblies
+//      inside the Editor must instead be compiled directly into a Unity asmdef named
+//      after postproc_dll (see UnityBHL's PostprocBridge), so this can find it by that
+//      exact name among already-loaded assemblies, rather than scanning all of them
 public class AppDomainPostProcessor : IFrontPostProcessor
 {
-  static readonly Type[] BuiltIn =
-  {
-    typeof(EmptyPostProcessor), typeof(DllPostProcessor), typeof(CombinedPostProcessor), typeof(AppDomainPostProcessor)
-  };
-
   readonly IFrontPostProcessor _combined;
 
-  public AppDomainPostProcessor()
+  public AppDomainPostProcessor(string assembly_name)
   {
     var found = new List<IFrontPostProcessor>();
 
-    foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+    var assembly = AppDomain.CurrentDomain.GetAssemblies()
+      .FirstOrDefault(a => a.GetName().Name == assembly_name);
+
+    if(assembly != null)
     {
       Type[] types;
       try
@@ -107,7 +106,7 @@ public class AppDomainPostProcessor : IFrontPostProcessor
 
       foreach(var type in types)
       {
-        if(type.IsAbstract || type.IsInterface || BuiltIn.Contains(type))
+        if(type.IsAbstract || type.IsInterface)
           continue;
 
         if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
