@@ -183,6 +183,8 @@ public class CompilationExecutor
 
   async Task _Exec(CompileConf conf, CompileErrors errors, CompileWarnings warnings)
   {
+    conf.logger.Log(1, "BHL checking for changes");
+
     if(!CheckModuleNamesCollision(conf, errors))
       return;
 
