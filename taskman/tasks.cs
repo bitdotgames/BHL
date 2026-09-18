@@ -274,12 +274,15 @@ public static partial class Tasks
 
     postproc_sources.Add($"{BHL_ROOT}/src/front/bhl_front.csproj");
     postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
+    //NOTE: BHL_POSTPROC lets postproc_sources' own code tell "am I compiled as part of
+    //      a postproc build" apart from "am I outside Unity" - the same symbol is also
+    //      defined for Unity's generated postproc asmdef (see UnityBHL's PostprocBridge)
     return DotnetBuildLibrary(
       tm,
       force_rebuild,
       postproc_sources.ToArray(),
       proj.postproc_dll,
-      new List<string>() { "BHL_FRONT" },
+      new List<string>() { "BHL_FRONT", "BHL_POSTPROC" },
       proj.tmp_dir
     );
   }
