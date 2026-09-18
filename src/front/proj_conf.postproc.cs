@@ -21,14 +21,6 @@ public partial class ProjectConf
   //NOTE: same as BindingsEntryConf.manual_build, but for postproc_dll/postproc_sources
   public bool postproc_manual_build = false;
 
-  //NOTE: postproc_dll is loaded via reflection by whatever host runs the compiler
-  //      (e.g. Unity Editor's Mono) - net8.0 (this repo's own default TargetFramework)
-  //      pins typerefs to a System.Runtime version such hosts can't resolve, hence a
-  //      netstandard default here instead. 2.1 rather than 2.0, since Unity's own
-  //      default API compatibility level is netstandard2.1 (since 2021.2) and it adds a
-  //      few conveniences (e.g. Enumerable.ToHashSet) 2.0 lacks
-  public string postproc_target_framework = "netstandard2.1";
-
   partial void SetupPostproc()
   {
     for(int i = 0; i < postproc_sources.Count; ++i)
