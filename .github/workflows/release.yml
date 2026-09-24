@@ -91,6 +91,18 @@ jobs:
 
           git archive HEAD:src | tar -x -C "$stage/src"
 
+      # keeps the bundled Unity package.json (its committed version can lag
+      # this tag - the standalone Unity release pipeline is currently
+      # removed, see git history for release_unity.yml) from shipping a
+      # stale version inside this zip; only patches the staged copy, never
+      # the committed file
+      - name: Sync bundled package.json version to release tag
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          pkg="$RUNNER_TEMP/bhl-bundle/src/package.json"
+          jq --arg v "$ver" '.version = $v' "$pkg" > "$pkg.tmp"
+          mv "$pkg.tmp" "$pkg"
+
       - name: Zip (framework-dependent)
         run: |
           cd "$RUNNER_TEMP/bhl-bundle"
