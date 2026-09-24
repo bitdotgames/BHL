@@ -335,6 +335,10 @@ public class DebugSession
 
   JObject ValToVar(string name, Val v)
   {
+    //NOTE: locals captured by lambdas are boxed into ValRef, showing the boxed value instead
+    if(v.type == Types.ValRef && v._refc is ValRef vref)
+      v = vref.val;
+
     string display;
     string type_name = v.type?.GetName() ?? "";
     var refc = v._refc ?? (v.obj as IRefcounted);
