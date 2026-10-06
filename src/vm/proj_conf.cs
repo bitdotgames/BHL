@@ -286,7 +286,18 @@ public partial class ProjectConf
       var matches = BuildUtils.Glob(pattern).Where(File.Exists).ToList();
 
       if(matches.Count == 0)
+      {
+        //NOTE: a wildcard include is allowed to match nothing (e.g. an optional plugin
+        //      bhl.proj that isn't present in this checkout) - only a literal path is a
+        //      hard error, since that's almost certainly a typo/missing file
+        if(pattern.IndexOf('*') != -1)
+        {
+          ErrorUtils.OutputWarning(anchor_file, 0, 0, $"Include '{pattern_raw}' did not match any existing file, skipping");
+          continue;
+        }
+
         throw new Exception($"Include '{pattern_raw}' did not match any existing file");
+      }
       if(matches.Count > 1)
         throw new Exception($"Include '{pattern_raw}' matched more than one file: {string.Join(", ", matches)}");
 

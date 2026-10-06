@@ -140,13 +140,33 @@ func RegisterBindings(std.bind.Types types) {{
   }
 
   [Fact]
-  public void IncludeWithNoMatchesThrows()
+  public void IncludeWithWildcardNoMatchesWarnsInsteadOfThrowing()
   {
     var dir = MakeTempDir();
     try
     {
       var proj = MakeProj(dir);
       proj.includes.Add(Path.Combine(dir, "nope@*", "bhl.proj"));
+
+      proj.Setup();
+
+      Assert.Empty(proj.bindings);
+      Assert.Empty(proj.src_dirs);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
+  public void IncludeWithLiteralPathNoMatchThrows()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(dir, "nope", "bhl.proj"));
 
       Assert.Throws<Exception>(() => proj.Setup());
     }
