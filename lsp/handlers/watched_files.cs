@@ -66,6 +66,9 @@ public class DidChangeWatchedFilesHandler : DidChangeWatchedFilesHandlerBase
         continue;
       }
 
+      foreach(var w in proj.warnings)
+        _logger.LogWarning("{Warning}", w);
+
       _logger.LogInformation("bhl.proj changed ({Path}), reloading workspace", path);
 
       try

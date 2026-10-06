@@ -140,6 +140,29 @@ func RegisterBindings(std.bind.Types types) {{
   }
 
   [Fact]
+  public void NestedIncludeWildcardWarningBubblesUpToRoot()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+        @"{ ""includes"": [""" + Path.Combine(dir, "nope@*", "bhl.proj").Replace("\\", "\\\\") + @"""] }");
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.Setup();
+
+      Assert.Single(proj.warnings);
+      Assert.Contains("nope@*", proj.warnings[0]);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
   public void IncludeWithWildcardNoMatchesWarnsInsteadOfThrowing()
   {
     var dir = MakeTempDir();
@@ -152,6 +175,8 @@ func RegisterBindings(std.bind.Types types) {{
 
       Assert.Empty(proj.bindings);
       Assert.Empty(proj.src_dirs);
+      Assert.Single(proj.warnings);
+      Assert.Contains("nope@*", proj.warnings[0]);
     }
     finally
     {

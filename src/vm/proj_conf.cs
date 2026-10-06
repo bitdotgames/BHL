@@ -148,6 +148,12 @@ public partial class ProjectConf
   //      caller (e.g. the LSP's file watcher) tell it apart from an unrelated bhl.proj
   [JsonIgnore] public HashSet<string> included_files = new HashSet<string>();
 
+  //NOTE: non-fatal issues found while loading this bhl.proj (e.g. an unresolved wildcard
+  //      include) - collected instead of printed on the spot, so each caller (CLI vs. LSP)
+  //      can report them through whatever's appropriate there rather than a bare
+  //      Console.Error write happening as a side effect of just loading a bhl.proj
+  [JsonIgnore] public List<string> warnings = new List<string>();
+
   //NOTE: every entry is used unconditionally, no per-entry "enabled" flag; every non-legacy
   //      entry must declare a `name` (checked in Setup())
   [JsonConverter(typeof(BindingsListConverter))]
@@ -292,7 +298,7 @@ public partial class ProjectConf
         //      hard error, since that's almost certainly a typo/missing file
         if(pattern.IndexOf('*') != -1)
         {
-          ErrorUtils.OutputWarning(anchor_file, 0, 0, $"Include '{pattern_raw}' did not match any existing file, skipping");
+          proj.warnings.Add($"{anchor_file}: include '{pattern_raw}' did not match any existing file, skipped");
           continue;
         }
 
@@ -310,6 +316,7 @@ public partial class ProjectConf
       {
         var included = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(included_file)) ?? new ProjectConf();
         ExpandIncludes(included, included_file, visiting, already_included);
+        proj.warnings.AddRange(included.warnings);
 
         if(included.defines.Count > 0)
           throw new Exception(

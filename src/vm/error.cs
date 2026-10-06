@@ -100,6 +100,13 @@ public static class ErrorUtils
   {
     Console.Error.WriteLine("BHL: " + file + ":" + line + ":" + char_pos + ": warning: " + text);
   }
+
+  //NOTE: for a warning with no source position (e.g. a bhl.proj issue, not a .bhl
+  //      diagnostic) - mirrors OutputError's own fallback for a generic, non-source error
+  public static void OutputWarning(string text)
+  {
+    Console.Error.WriteLine("BHL: warning: " + text);
+  }
 }
 
 public class SymbolError : Exception

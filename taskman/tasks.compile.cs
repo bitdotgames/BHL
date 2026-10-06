@@ -56,6 +56,7 @@ public static partial class Tasks
     var proj = new ProjectConf();
     if(!string.IsNullOrEmpty(proj_file))
       proj = ProjectConf.ReadFromFile(proj_file);
+    PrintProjWarnings(proj);
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
@@ -150,7 +151,7 @@ public static partial class Tasks
   {
     {
       "p|proj=", "project config file",
-      v => { a.proj = ProjectConf.ReadFromFile(v); }
+      v => { a.proj = ProjectConf.ReadFromFile(v); PrintProjWarnings(a.proj); }
     },
     {
       "dir=", "source directories separated by ;",
@@ -323,6 +324,12 @@ public static partial class Tasks
 
       Environment.Exit(ERROR_EXIT_CODE);
     }
+  }
+
+  static void PrintProjWarnings(ProjectConf proj)
+  {
+    foreach(var w in proj.warnings)
+      ErrorUtils.OutputWarning(w);
   }
 
   public static List<string> GetProjectArg(string[] args, out string proj_file)
