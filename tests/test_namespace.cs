@@ -2068,7 +2068,7 @@ public class TestNamespace : BHL_TestBase
           }
         );
       },
-      @"symbol 'foo.Foo' is already declared in module 'bhl2'",
+      @"symbol 'foo.Foo' declared in module 'bhl2' conflicts with an existing declaration in module 'bhl1'",
       new PlaceAssert(bhl1, @"
       func int Foo() {
 ------^"

@@ -837,9 +837,21 @@ public class CompilationExecutor
 
       var conflict = ns.TryLink(file_ns);
       if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
+      {
+        var other_module = (conflict.other.scope as Namespace)?.module.name;
+        var local_module = (conflict.local.scope as Namespace)?.module.name;
+        //NOTE: conflict.local's own position (used for the error's file/range) can be
+        //      blank if it came from a native/bound origin rather than parsed .bhl
+        //      source - naming its module (and, when available, its origin) here means
+        //      there's still something to go on even then
+        var local_origin = conflict.local.origin != null
+          ? $" ({conflict.local.origin.source_file}:{conflict.local.origin.source_range.start.line})"
+          : "";
+
         return new SymbolError(conflict.local,
-          "symbol '" + conflict.other.GetFullTypePath() + "' is already declared in module '" +
-          (conflict.other.scope as Namespace)?.module.name + "'");
+          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + other_module +
+          "' conflicts with an existing declaration in module '" + local_module + "'" + local_origin);
+      }
     }
 
     return null;
