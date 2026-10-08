@@ -3,7 +3,7 @@ namespace bhl
 
 public static class Version
 {
-  public static string Name = "v3.0.0-beta5";
+  public static string Name = "v3.0.0-beta6";
 }
 
 }

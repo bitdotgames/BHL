@@ -2058,22 +2058,38 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    await AssertErrorAsync<Exception>(
-      async delegate()
-      {
-        await MakeVM(new Dictionary<string, string>()
-          {
-            {"bhl1.bhl", bhl1},
-            {"bhl2.bhl", bhl2},
-          }
-        );
-      },
-      @"symbol 'foo.Foo' declared in module 'bhl2' conflicts with an existing declaration in module 'bhl1'",
+    Exception err = null;
+    try
+    {
+      await MakeVM(new Dictionary<string, string>()
+        {
+          {"bhl1.bhl", bhl1},
+          {"bhl2.bhl", bhl2},
+        }
+      );
+    }
+    catch(Exception e)
+    {
+      err = e;
+    }
+
+    //NOTE: AssertError's substring check runs against err.ToString(), which goes
+    //      through ErrorUtils.MakeMessage's >200-char truncation (keeps only the first
+    //      and last 100 chars) - "declared in module 'bhl2'" sits near the start, so it
+    //      survives that; the fuller checks below go straight to the untruncated
+    //      ICompileError.text instead, to also cover both modules' real file paths
+    AssertError(err, @"declared in module 'bhl2'",
       new PlaceAssert(bhl1, @"
       func int Foo() {
 ------^"
       )
     );
+
+    var cerr = err as CompileErrorsException;
+    ICompileError ierr = cerr != null ? cerr.errors[0] : (ICompileError)err;
+    Assert.Contains("conflicts with an existing declaration in module 'bhl1'", ierr.text);
+    Assert.Contains("bhl1.bhl", ierr.text);
+    Assert.Contains("bhl2.bhl", ierr.text);
   }
 
   [Fact]

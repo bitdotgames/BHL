@@ -316,6 +316,18 @@ public class Workspace
         uri2warns[kv.Key] = kv.Value.result.warnings;
       }
 
+      // A global redeclared across two files isn't caught by any single file's own errors
+      // above (each has its own private Namespace) - recomputed fresh each call so a fixed
+      // conflict doesn't linger.
+      var unique_conflict = Namespace.CheckUniqueSymbols(Path2Proc.Values.Select(p => p.module));
+      if(unique_conflict != null && uri2errs.TryGetValue(unique_conflict.file, out var file_errs))
+      {
+        var merged = new CompileErrors();
+        merged.AddRange(file_errs);
+        merged.Add(unique_conflict);
+        uri2errs[unique_conflict.file] = merged;
+      }
+
       var result = uri2errs.GetDiagnostics(uri2warns);
 
       //NOTE: send empty diagnostics for files that had errors before but now don't

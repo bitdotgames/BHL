@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using bhl.marshall;
 
@@ -594,16 +595,7 @@ public class CompilationExecutor
 
   SymbolError CheckUniqueSymbols(List<ProcAndCompileWorker> compiler_workers)
   {
-    //used as a global namespace for unique symbols check
-    var ns = new Namespace();
-    foreach(var cw in compiler_workers)
-    {
-      var check_err = CheckUniqueSymbols(ns, cw);
-      if(check_err != null)
-        return check_err;
-    }
-
-    return null;
+    return Namespace.CheckUniqueSymbols(compiler_workers.SelectMany(cw => cw.file2module.Values));
   }
 
   void WriteCompilationResultToFile(CompileConf conf, List<ProcAndCompileWorker> compiler_workers, string file_path)
@@ -828,34 +820,6 @@ public class CompilationExecutor
     return lz4_bytes;
   }
 #endif
-
-  SymbolError CheckUniqueSymbols(Namespace ns, ProcAndCompileWorker w)
-  {
-    foreach(var kv in w.file2module)
-    {
-      var file_ns = kv.Value.ns.UnlinkAll();
-
-      var conflict = ns.TryLink(file_ns);
-      if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
-      {
-        var other_module = (conflict.other.scope as Namespace)?.module.name;
-        var local_module = (conflict.local.scope as Namespace)?.module.name;
-        //NOTE: conflict.local's own position (used for the error's file/range) can be
-        //      blank if it came from a native/bound origin rather than parsed .bhl
-        //      source - naming its module (and, when available, its origin) here means
-        //      there's still something to go on even then
-        var local_origin = conflict.local.origin != null
-          ? $" ({conflict.local.origin.source_file}:{conflict.local.origin.source_range.start.line})"
-          : "";
-
-        return new SymbolError(conflict.local,
-          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + other_module +
-          "' conflicts with an existing declaration in module '" + local_module + "'" + local_origin);
-      }
-    }
-
-    return null;
-  }
 
   public class ParseWorker
   {

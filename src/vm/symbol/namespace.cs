@@ -191,6 +191,35 @@ public class Namespace : Symbol, IScope,
     return clean;
   }
 
+  // Each module is parsed against its own private Namespace, so a global redeclared across
+  // two different modules is only caught by merging them together like this. Returns only
+  // the first conflict found (module-local symbols are expected to shadow one another across
+  // modules and are excluded), since TryLink itself only ever reports the first one it hits
+  // within a given module's merge.
+  public static SymbolError CheckUniqueSymbols(IEnumerable<ModuleDeclared> modules)
+  {
+    var ns = new Namespace();
+    foreach(var module in modules)
+    {
+      var conflict = ns.TryLink(module.ns.UnlinkAll());
+      if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
+      {
+        var other_module = (conflict.other.scope as Namespace)?.module.name;
+        var local_module = (conflict.local.scope as Namespace)?.module.name;
+        string OriginSuffix(Symbol s) => s.origin != null
+          ? $" ({s.origin.source_file}:{s.origin.source_range.start.line})"
+          : "";
+
+        return new SymbolError(conflict.local,
+          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + other_module +
+          "'" + OriginSuffix(conflict.other) + " conflicts with an existing declaration in module '" +
+          local_module + "'" + OriginSuffix(conflict.local));
+      }
+    }
+
+    return null;
+  }
+
   public IScope GetFallbackScope()
   {
     return scope;
