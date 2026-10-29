@@ -197,11 +197,13 @@ static class Bindings
   [Fact]
   public void ExplicitDllKeepsBuildingCsSources()
   {
+    //NOTE: a rooted path of the platform ('/tmp/...' gets a drive letter on Windows)
+    string dll = Path.Combine(Path.GetTempPath(), "foo.dll");
     var proj = new ProjectConf();
-    proj.bindings.Add(new BindingsEntryConf { name = "cs_built", sources = new List<string> { "foo.cs" }, dll = "/tmp/foo.dll" });
+    proj.bindings.Add(new BindingsEntryConf { name = "cs_built", sources = new List<string> { "foo.cs" }, dll = dll });
     proj.Setup();
 
-    Assert.Equal("/tmp/foo.dll", proj.bindings[0].dll);
+    Assert.Equal(BuildUtils.NormalizeFilePath(dll), proj.bindings[0].dll);
   }
 
   [Fact]
@@ -223,7 +225,7 @@ static partial class Bindings2
 ");
       var proj = new ProjectConf();
       proj.tmp_dir = dir;
-      proj.bindings.Add(new BindingsEntryConf { name = "globbed", sources = new List<string> { Path.Combine(dir, "*.cs") } });
+      proj.bindings.Add(new BindingsEntryConf { name = "globbed", sources = new List<string> { dir.Replace('\\', '/') + "/*.cs" } });
       proj.Setup();
       var ts = new Types();
       proj.LoadBindings().Register(ts);
