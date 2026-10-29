@@ -44,10 +44,10 @@ public class Workspace
     WatchBindingsPaths(CollectBindingsWatchPaths(conf));
   }
 
-  //NOTE: watches each entry's compiled dll/bhc output, plus (for .bhl-scripted entries,
-  //      which ScriptedBindings compiles itself, unlike a .cs source needing an external
-  //      build tool to produce a new dll first) their resolved source files directly -
-  //      otherwise editing a .bhl binding source has nothing to trigger a reload at all
+  //NOTE: watches each entry's compiled dll/bhc output, plus the resolved source files of
+  //      the entries read without an external build: .bhl ones (ScriptedBindings compiles
+  //      them itself) and .cs ones without a dll (CsSourceBindings reads them as is) -
+  //      otherwise editing such a binding source has nothing to trigger a reload at all
   static IEnumerable<string> CollectBindingsWatchPaths(ProjectConf conf)
   {
     foreach(var b in conf.bindings)
@@ -57,7 +57,8 @@ public class Workspace
 
       foreach(var pattern in b.sources)
       {
-        if(!pattern.EndsWith(".bhl"))
+        bool read_as_is = pattern.EndsWith(".bhl") || (pattern.EndsWith(".cs") && string.IsNullOrEmpty(b.dll));
+        if(!read_as_is)
           continue;
         foreach(var resolved in BuildUtils.Glob(pattern))
           yield return resolved;

@@ -212,16 +212,17 @@ public static partial class Tasks
     return result_dll;
   }
 
-  //NOTE: returns null if the entry has no C# sources, in which case
-  //      b.dll (if any) is assumed to already be a prebuilt dll
+  //NOTE: returns null if the entry has no C# sources (b.dll, if any, is assumed to already be
+  //      a prebuilt dll) or no dll to build them into (they are read as is then)
   public static string BuildBindingsDllForEntry(Taskman tm, bool force_rebuild, ProjectConf proj, BindingsEntryConf b)
   {
     var cs_sources = b.sources.Where(f => f.EndsWith(".cs")).ToList();
     if(cs_sources.Count == 0)
       return null;
 
+    //NOTE: without an explicit dll the sources are read as is (see CsSourceBindings)
     if(string.IsNullOrEmpty(b.dll))
-      throw new Exception("Resulting bindings entry 'dll' is not set");
+      return null;
 
     if(!b.dll.EndsWith(".dll"))
       throw new Exception("Resulting bindings entry 'dll' invalid extension: " + b.dll);

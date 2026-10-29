@@ -276,9 +276,9 @@ func RegisterBindings(std.bind.Types types) {{
     proj.Setup();
 
     Assert.EndsWith(".bhc", proj.bindings[0].dll);
-    Assert.EndsWith(".dll", proj.bindings[1].dll);
     Assert.StartsWith(proj.tmp_dir, proj.bindings[0].dll);
-    Assert.StartsWith(proj.tmp_dir, proj.bindings[1].dll);
+    //NOTE: .cs sources without an explicit dll are read as is (see CsSourceBindings)
+    Assert.Equal("", proj.bindings[1].dll);
   }
 
   [Fact]

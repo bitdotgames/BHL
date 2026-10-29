@@ -142,3 +142,37 @@ Color white = Color.White()
 ```
 
 For the full working example see `example/bindings/bindings.cs`.
+
+## Reading bindings sources without compiling them
+
+A `bindings` entry of `bhl.proj` may list C# registration sources directly. Without an explicit
+`dll` they are **read, not compiled**: the compiler and the LSP build the symbols from the
+sources themselves, so editing them is picked up at once (the LSP watches them) and no .NET
+build is needed. With `dll` set the sources are built into it as before.
+
+```json
+"bindings" : [ { "name" : "game", "sources" : ["../autobind/*.cs"] } ]
+```
+
+The sources are seen as if compiled with `BHL_FRONT` defined, so native code goes into
+`#if !BHL_FRONT` blocks. They are expected in a strict, generated shape, anything else is an
+error naming the file and line:
+
+- **Entry:** exactly one static `Register(Types types)` method across the sources; other static
+  methods may be called from it with plain positional arguments (overloads are not allowed).
+- **Version:** `[BhlBinding("name", "x.y.z")]` on a class declares the entry's (name, version).
+- **Statements:** blocks, local variables (`var`, typed or `const`, always initialized), calls,
+  and the one conditional `if(<scope>.Resolve(<name>) == null) <statement>` (defines a symbol
+  shared by several modules once). No other control flow, no assignments, no lambdas.
+- **Expressions:** literals, casts, `new` of bhl types (`FuncSymbolNative`, `ClassSymbolNative`,
+  `FieldSymbol`, `EnumSymbolNative`…), arrays `new T[] { … }`, `new List<T>() { … }`, the
+  `types.T/TArr/TMap/TTuple/TFunc` helpers, members and methods of bhl objects, enum values
+  and `|` of enum flags or integers.
+- **Native code:** a local function or method name passed where a delegate is expected (a
+  field getter, a class creator) means "there is native code": the symbol gets the front end's
+  placeholder (`FieldSymbol.PendingGetter`, `ClassSymbolNative.PendingCreator`…), `null` means
+  there is none. Local functions themselves are skipped.
+- **Origin:** `new Origin()` points to the line of the registration code it's in.
+
+`tests/cs_bindings/sample_bindings.cs` is a complete sample, read and compiled by the tests.
+

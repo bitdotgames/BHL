@@ -133,4 +133,25 @@ public class TestLSPBindingsWatcher : IDisposable
 
     Assert.True(await wait, "expected BindingsChanged to fire after editing a .bhl-scripted binding's source");
   }
+
+  [Fact]
+  public async Task fires_on_cs_source_change()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    var cs_path = Path.Combine(dir, "bindings.cs");
+    File.WriteAllText(cs_path, "v1");
+
+    var conf = new ProjectConf
+    {
+      bindings = new() { new BindingsEntryConf { sources = new() { cs_path } } }
+    };
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
+    File.WriteAllText(cs_path, "v2 - edited source");
+
+    Assert.True(await wait, "expected BindingsChanged to fire after editing a .cs binding source read without a build");
+  }
 }

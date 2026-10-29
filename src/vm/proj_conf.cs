@@ -16,12 +16,13 @@ public class BindingsEntryConf
   public string name = "";
 
   //NOTE: 1) if there are .bhl scripts they will be built into `dll` (if it's present)
-  //      2) if there are .cs sources they will be built into `dll`
+  //      2) .cs sources are read without compiling them (see CsSourceBindings) unless `dll`
+  //         is set: then they are built into it
   public List<string> sources = new List<string>();
 
   //NOTE: 1) in case of .bhl bindings it's assumed to have a .bhc extension
-  //      2) in case of .cs sources this can be a directory path as well containing an actual dll
-  //         (e.g. bindings.dll/bindings.dll)
+  //      2) in case of .cs sources it opts in to building them into a dll; this can be a
+  //         directory path as well containing an actual dll (e.g. bindings.dll/bindings.dll)
   public string dll = "";
 
   //NOTE: if true, `dll` is never auto-rebuilt from `sources` during a normal compile -
@@ -209,8 +210,9 @@ public partial class ProjectConf
         b.sources[i] = NormalizePath(proj_file, b.sources[i]);
 
       //NOTE: no explicit build target - park one under tmp_dir instead, stable per entry
-      //      name so repeated compiles reuse the same path
-      if(string.IsNullOrEmpty(b.dll) && b.sources.Count > 0)
+      //      name so repeated compiles reuse the same path. Not for .cs sources: without
+      //      an explicit dll they are read as is (see CsSourceBindings)
+      if(string.IsNullOrEmpty(b.dll) && b.sources.Count > 0 && !HasCsSources(b))
         b.dll = AutoBindingsDllPath(b);
       else
         b.dll = NormalizePath(proj_file, b.dll);
@@ -361,9 +363,14 @@ public partial class ProjectConf
     return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetTempPath(), "bhl_" + ShortHash(key)));
   }
 
+  static bool HasCsSources(BindingsEntryConf b)
+  {
+    return b.sources.Any(s => s.EndsWith(".cs"));
+  }
+
   string AutoBindingsDllPath(BindingsEntryConf b)
   {
-    string ext = b.sources.Any(s => s.EndsWith(".cs")) ? ".dll" : ".bhc";
+    string ext = ".bhc";
     string label = string.IsNullOrEmpty(b.name) ? "bindings" : b.name;
     string safe_label = new string(label.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
     return BuildUtils.NormalizeFilePath(Path.Combine(tmp_dir, safe_label + ext));
@@ -412,6 +419,16 @@ public partial class ProjectConf
 
     if(!string.IsNullOrEmpty(b.dll) && b.dll.EndsWith(".dll"))
       return new DllBindings(b.dll);
+
+#if (BHL_PARSER || UNITY_EDITOR)
+    if(HasCsSources(b))
+    {
+      var cs_files = new List<string>();
+      foreach(var s in b.sources.Where(f => f.EndsWith(".cs")))
+        cs_files.AddRange(BuildUtils.Glob(s));
+      return new CsSourceBindings(cs_files);
+    }
+#endif
 
     if(TryGetScriptedBindings(b, out var bindings_scripts, out string func_name, out var bindings_bytecode_file))
       return new ScriptedBindings(bindings_scripts, func_name, use_cache, bindings_bytecode_file, tmp_dir);
@@ -491,6 +508,11 @@ public partial class ProjectConf
 
     if(b is ScriptedBindings scripted)
       return scripted.GetDeclaredBindings();
+
+#if (BHL_PARSER || UNITY_EDITOR)
+    if(b is CsSourceBindings cs)
+      return cs.GetDeclaredBindings();
+#endif
 
     if(b is EmptyUserBindings)
       return Enumerable.Empty<(string, string)>();
