@@ -66,6 +66,21 @@ static class Bindings
     }
   }
 
+  static void ReadSourceInto(Types ts, string src)
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var path = Path.Combine(dir, "bindings.cs");
+      File.WriteAllText(path, src);
+      new CsSourceBindings(new List<string>() { path }).Register(ts);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   static CsBindingsException ReadSourceError(string src)
   {
     return Assert.Throws<CsBindingsException>(() => ReadSource(src));
@@ -256,6 +271,37 @@ static partial class Bindings
 
     Assert.NotNull(ts.ns.Resolve("Front"));
     Assert.Null(ts.ns.Resolve("NotFront"));
+  }
+
+  [Fact]
+  public void SetupTypeResolvesDottedNamesOfNamespaces()
+  {
+    string src = Wrap(@"
+    {
+      var cl = new ClassSymbolNative(new Origin(), ""Base"", new ProxyType(), proxy_implements: null, creator: null);
+      types.ns.Define(cl);
+      cl.Define(new FieldSymbol(new Origin(), ""hp"", types.T(""int""), get_hp, null));
+    }
+    var ui = types.ns.Nest(""UI"");
+    {
+      var cl = new ClassSymbolNative(new Origin(), ""Panel"", types.T(""Base""), proxy_implements: null, creator: ctor_Panel);
+      ui.Define(cl);
+    }
+    types.SetupType(""Base"");
+    types.SetupType(""UI.Panel"");
+");
+
+    string bhl = @"
+    func int test() {
+      UI.Panel p = new UI.Panel
+      return p.hp
+    }
+    ";
+
+    Compile(bhl, ts => ReadSourceInto(ts, src));
+
+    var err = ReadSourceError(Wrap(@"    types.SetupType(""UI.Missing"");"));
+    Assert.Contains("Type 'UI.Missing' not resolved", err.Message);
   }
 
   [Fact]
