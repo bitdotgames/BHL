@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   listing `.cs` sources without a `dll` builds its symbols from the sources as if compiled with
   `BHL_FRONT`; the LSP watches and reloads them. The sources must be in a strict generated
   shape, see `docs/csharp-bindings.md`.
+- The entry of C# bindings sources is `Register` of the class implementing `IUserBindings` (e.g.
+  the project's runtime registration combining several generated modules, read as is), else the
+  only `Register` of the sources.
+- `Types.SetupType(name)`: sets up a native class or interface declared by bindings (used by
+  `std.bind` and by generated C# bindings).
 
 ### Changed
 - **Breaking:** `.cs` bindings sources without an explicit `dll` are read instead of being

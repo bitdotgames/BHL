@@ -103,6 +103,22 @@ public partial class Types : INamedResolver, IProxyTypeCache
     return bindings_versions.TryGetValue(name, out version);
   }
 
+  //NOTE: finishes a type declared by bindings once all of them are defined: resolves it by name
+  //      and sets up a native class or interface (their parents and interfaces)
+  public IType SetupType(string name)
+  {
+    var tmp = this.T(name).Get();
+    if(tmp == null)
+      throw new Exception("Type '" + name + "' not resolved");
+
+    if(tmp is ClassSymbolNative csn)
+      csn.Setup();
+    else if(tmp is InterfaceSymbolNative isn)
+      isn.Setup();
+
+    return tmp;
+  }
+
   //NOTE: lets a caller diff before/after Register() to see what it self-declared
   //      (see ProjectConf.LoadBindings) - never empty, a fresh Types() already has "prelude"
   public IEnumerable<string> BindingsVersionNames => bindings_versions.Keys;

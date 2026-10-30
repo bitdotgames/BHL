@@ -277,14 +277,7 @@ public static partial class std
               string name = exec.stack.Pop();
               exec.stack.Pop(); //for self
 
-              var tmp = types.T(name).Get();
-              if(tmp == null)
-                throw new System.Exception("Type '" + name + "' not resolved");
-
-              if(tmp is ClassSymbolNative csn)
-                csn.Setup();
-              else if(tmp is InterfaceSymbolNative isn)
-                isn.Setup();
+              types.SetupType(name);
 
               return null;
             },

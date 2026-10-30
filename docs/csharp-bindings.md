@@ -158,8 +158,11 @@ The sources are seen as if compiled with `BHL_FRONT` defined, so native code goe
 `#if !BHL_FRONT` blocks. They are expected in a strict, generated shape, anything else is an
 error naming the file and line:
 
-- **Entry:** exactly one static `Register(Types types)` method across the sources; other static
-  methods may be called from it with plain positional arguments (overloads are not allowed).
+- **Entry:** `Register(Types types)` of the class implementing `IUserBindings` — e.g. the
+  project's runtime registration combining several generated modules, read as is — else the
+  only `Register(Types types)` of the sources. Methods are called with plain positional
+  arguments: unqualified within their class, `Class.Method(...)` (short or namespace-qualified)
+  across classes. Overloads are not allowed.
 - **Version:** `[BhlBinding("name", "x.y.z")]` on a class declares the entry's (name, version).
 - **Statements:** blocks, local variables (`var`, typed or `const`, always initialized), calls,
   and the one conditional `if(<scope>.Resolve(<name>) == null) <statement>` (defines a symbol

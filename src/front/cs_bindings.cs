@@ -53,7 +53,8 @@ public class CsBindingsProgram
 {
   public List<(string name, string version)> declared = new List<(string name, string version)>();
 
-  internal Dictionary<string, CsMethod> methods = new Dictionary<string, CsMethod>();
+  //NOTE: by full name; partial classes in several files are one class
+  internal Dictionary<string, CsClass> classes = new Dictionary<string, CsClass>();
 
   public static CsBindingsProgram Read(IList<string> files, IEnumerable<string> defines)
   {
@@ -67,16 +68,30 @@ public class CsBindingsProgram
     return prog;
   }
 
-  //NOTE: runs the only 'Register' method found in the sources, the way the compiled code would
+  //NOTE: runs the entry the way the compiled code would: 'Register' of the class implementing
+  //      IUserBindings (it may combine several generated modules), else the only 'Register'
   public void Run(Types ts)
   {
-    if(!methods.TryGetValue("Register", out var entry))
-      throw new CsBindingsException("C# bindings: no static 'Register' method found in the sources");
+    var entry = FindEntry(classes.Values.Where(c => c.is_user_bindings), "class implementing IUserBindings") ??
+                FindEntry(classes.Values, "class");
+    if(entry == null)
+      throw new CsBindingsException("C# bindings: no 'Register' method found in the sources");
 
     foreach(var d in declared)
       ts.RegisterBindingsVersion(d.name, d.version);
 
     new CsInterpreter(this).Call(entry, new List<object>() { ts }, entry.line);
+  }
+
+  static CsMethod FindEntry(IEnumerable<CsClass> candidates, string what)
+  {
+    var found = candidates.Where(c => c.methods.ContainsKey("Register")).Select(c => c.methods["Register"]).ToList();
+    if(found.Count > 1)
+      throw new CsBindingsException(
+        $"C# bindings: 'Register' is declared in more than one {what} ({string.Join(", ", found.Select(m => m.cls.full_name))}) - " +
+        "the entry is 'Register' of a single class implementing IUserBindings"
+      );
+    return found.Count == 1 ? found[0] : null;
   }
 }
 
@@ -542,8 +557,16 @@ class CsDefineIfAbsent : CsStmt
   public CsStmt body;
 }
 
+class CsClass
+{
+  public string full_name;
+  public bool is_user_bindings;
+  public Dictionary<string, CsMethod> methods = new Dictionary<string, CsMethod>();
+}
+
 class CsMethod
 {
+  public CsClass cls;
   public string file;
   public int line;
   public string name;
@@ -571,6 +594,8 @@ class CsParser
   readonly List<CsToken> toks;
   readonly CsBindingsProgram prog;
   int pos;
+  readonly List<string> namespaces = new List<string>();
+  CsClass cls;
 
   public CsParser(string file, List<CsToken> toks, CsBindingsProgram prog)
   {
@@ -637,7 +662,7 @@ class CsParser
       }
       else if(Accept("namespace"))
       {
-        ParseQualifiedName();
+        namespaces.Add(ParseQualifiedName());
         if(Accept("{"))
           ++ns_depth;
         else
@@ -647,6 +672,7 @@ class CsParser
       {
         Next();
         --ns_depth;
+        namespaces.RemoveAt(namespaces.Count - 1);
       }
       else if(Is("["))
         attrs.AddRange(ParseAttributes());
@@ -701,7 +727,16 @@ class CsParser
     var kw = Next();
     if(kw.text != "class" && kw.text != "struct")
       throw Error(kw, $"expected a class declaration, got {kw}");
-    ExpectIdent();
+    string class_name = ExpectIdent();
+
+    var outer = cls;
+    string full_name = (outer != null ? outer.full_name : string.Join(".", namespaces)).Trim('.');
+    full_name = (full_name.Length > 0 ? full_name + "." : "") + class_name;
+    if(!prog.classes.TryGetValue(full_name, out cls))
+    {
+      cls = new CsClass() { full_name = full_name };
+      prog.classes[full_name] = cls;
+    }
 
     foreach(var a in attrs)
     {
@@ -713,17 +748,24 @@ class CsParser
       prog.declared.Add(((string)a.args[0], (string)a.args[1]));
     }
 
-    //NOTE: base classes and interfaces don't matter
+    //NOTE: of the base classes and interfaces only IUserBindings matters (see Run)
     while(!Is("{"))
     {
-      if(Peek().kind == CsTok.EOF)
-        throw Error(Peek(), "unterminated class declaration");
-      Next();
+      var t = Next();
+      if(t.kind == CsTok.EOF)
+        throw Error(t, "unterminated class declaration");
+      if(t.text == "IUserBindings")
+        cls.is_user_bindings = true;
     }
     Expect("{");
 
-    while(!Accept("}"))
+    while(true)
     {
+      if(Accept("}"))
+      {
+        cls = outer;
+        break;
+      }
       var member_attrs = new List<(string name, List<object> args, int line)>();
       while(Is("["))
         member_attrs.AddRange(ParseAttributes());
@@ -799,7 +841,7 @@ class CsParser
 
   void ParseMethod(string name, CsToken start)
   {
-    var m = new CsMethod() { file = file, line = start.line, name = name };
+    var m = new CsMethod() { cls = cls, file = file, line = start.line, name = name };
     Expect("(");
     if(!Is(")"))
     {
@@ -819,9 +861,9 @@ class CsParser
       throw Error(Peek(), $"method '{name}' must have a body");
     m.body = ParseBlock();
 
-    if(prog.methods.ContainsKey(name))
-      throw Error(start, $"method '{name}' is declared more than once (overloads are not supported)");
-    prog.methods[name] = m;
+    if(cls.methods.ContainsKey(name))
+      throw Error(start, $"method '{cls.full_name}.{name}' is declared more than once (overloads are not supported)");
+    cls.methods[name] = m;
   }
 
   CsBlock ParseBlock()
@@ -1185,6 +1227,7 @@ class CsInterpreter
 
   readonly CsBindingsProgram prog;
   string file;
+  CsClass cls;
   int depth;
 
   public CsInterpreter(CsBindingsProgram prog)
@@ -1256,12 +1299,15 @@ class CsInterpreter
       throw Error(line, "calls are nested too deep");
 
     var caller_file = file;
+    var caller_cls = cls;
     file = m.file;
+    cls = m.cls;
     var scope = new Dictionary<string, object>();
     for(int i = 0; i < args.Count; ++i)
       scope[m.args[i]] = args[i];
     Exec(m.body, scope);
     file = caller_file;
+    cls = caller_cls;
     --depth;
   }
 
@@ -1450,22 +1496,55 @@ class CsInterpreter
 
     if(c.target is CsName fn && !scope.ContainsKey(fn.name))
     {
-      if(!prog.methods.TryGetValue(fn.name, out var method))
+      if(!cls.methods.TryGetValue(fn.name, out var method))
         throw Error(c.line, $"unknown method '{fn.name}'");
-      if(args.Any(a => a.name != null))
-        throw Error(c.line, $"named arguments are not supported for '{fn.name}'");
-      Call(method, args.Select(a => a.value).ToList(), c.line);
-      return null;
+      return CallSource(method, args, c.line);
     }
 
     if(!(c.target is CsMember m))
       throw Error(c.line, "unsupported call");
+
+    //NOTE: a method of another class of the sources, by its full name or a trailing part of it
+    string qualified = Dotted(m.target);
+    if(qualified != null && !scope.ContainsKey(qualified.Split('.')[0]))
+    {
+      var others = prog.classes.Values
+        .Where(k => k.full_name == qualified || k.full_name.EndsWith("." + qualified)).ToList();
+      if(others.Count > 1)
+        throw Error(c.line, $"'{qualified}' is ambiguous: {string.Join(", ", others.Select(k => k.full_name))}");
+      if(others.Count == 1)
+      {
+        if(!others[0].methods.TryGetValue(m.name, out var method))
+          throw Error(c.line, $"unknown method '{qualified}.{m.name}'");
+        return CallSource(method, args, c.line);
+      }
+    }
 
     var target = Eval(m.target, scope);
     if(target is CsNativeRef nr)
       throw Error(c.line, $"unknown name '{nr.name}'");
 
     return InvokeMethod(target, m.name, args, c.line);
+  }
+
+  object CallSource(CsMethod method, List<(string name, object value)> args, int line)
+  {
+    if(args.Any(a => a.name != null))
+      throw Error(line, $"named arguments are not supported for '{method.name}'");
+    Call(method, args.Select(a => a.value).ToList(), line);
+    return null;
+  }
+
+  static string Dotted(CsExpr e)
+  {
+    if(e is CsName n)
+      return n.name;
+    if(e is CsMember m)
+    {
+      var t = Dotted(m.target);
+      return t == null ? null : t + "." + m.name;
+    }
+    return null;
   }
 
   List<(string name, object value)> EvalArgs(List<CsArg> args, Dictionary<string, object> scope)

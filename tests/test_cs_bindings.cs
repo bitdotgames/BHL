@@ -215,12 +215,15 @@ static class Bindings
       File.WriteAllText(Path.Combine(dir, "register.cs"), Wrap("    Register_0(types);").Replace("static class Bindings", "[BhlBinding(\"globbed\", \"1.0.0\")]\nstatic class Bindings"));
       File.WriteAllText(Path.Combine(dir, "register_0.cs"), @"
 using bhl;
-static partial class Bindings2
+namespace test
+{
+static partial class Bindings
 {
   public static void Register_0(Types types)
   {
     types.ns.Define(new FuncSymbolNative(new Origin(), ""FromSecondFile"", types.T(""void""), null));
   }
+}
 }
 ");
       var proj = new ProjectConf();
@@ -341,9 +344,82 @@ static partial class Bindings2
   }
 
   [Fact]
+  public void SeveralModulesAreCombinedByUserBindingsRegister()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      string Module(string ns, string cls, string func) => $@"
+using bhl;
+namespace {ns} {{
+static partial class {cls}
+{{
+  public static void Register(Types types)
+  {{
+    RegisterBegin(types);
+    RegisterEnd(types);
+  }}
+  public static void RegisterBegin(Types types)
+  {{
+    Register_0(types);
+  }}
+  public static void RegisterEnd(Types types)
+  {{
+  }}
+  public static void Register_0(Types types)
+  {{
+    types.ns.Define(new FuncSymbolNative(new Origin(), ""{func}"", types.T(""void""), null));
+  }}
+}}
+}}
+";
+      File.WriteAllText(Path.Combine(dir, "game.cs"), Module("Game.Bind", "GameBindings", "FromGame"));
+      File.WriteAllText(Path.Combine(dir, "m3.cs"), Module("M3.Bind", "M3Bindings", "FromM3"));
+      //NOTE: like the runtime registration of a project, an instance method of IUserBindings
+      File.WriteAllText(Path.Combine(dir, "bind_register.cs"), @"
+using bhl;
+namespace Game.Bind {
+public class Bindings : IUserBindings
+{
+  public void Register(Types types)
+  {
+    GameBindings.RegisterBegin(types);
+    M3.Bind.M3Bindings.RegisterBegin(types);
+    GameBindings.RegisterEnd(types);
+    M3.Bind.M3Bindings.RegisterEnd(types);
+  }
+}
+}
+");
+      var files = Directory.GetFiles(dir, "*.cs").ToList();
+      var ts = new Types();
+      new CsSourceBindings(files).Register(ts);
+      Assert.NotNull(ts.ns.Resolve("FromGame"));
+      Assert.NotNull(ts.ns.Resolve("FromM3"));
+
+      //NOTE: same short names in other namespaces are fine until a call is ambiguous
+      File.WriteAllText(Path.Combine(dir, "types.cs"), @"
+namespace Game.Bind { static class Types_Shared { static public bhl.IType Value; } }
+namespace M3.Bind { static class Types_Shared { static public bhl.IType Value; } }
+");
+      ts = new Types();
+      new CsSourceBindings(Directory.GetFiles(dir, "*.cs").ToList()).Register(ts);
+      Assert.NotNull(ts.ns.Resolve("FromM3"));
+
+      File.Delete(Path.Combine(dir, "bind_register.cs"));
+      var err = Assert.Throws<CsBindingsException>(() => new CsSourceBindings(Directory.GetFiles(dir, "*.cs").ToList()).Register(new Types()));
+      Assert.Contains("'Register' is declared in more than one class", err.Message);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
   public void RegisterMustBeTheOnlyEntry()
   {
-    Assert.Contains("no static 'Register' method",
+    Assert.Contains("no 'Register' method found",
       ReadSourceError(@"
 using bhl;
 static class Bindings
