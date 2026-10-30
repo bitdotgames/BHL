@@ -2,7 +2,8 @@
   "src_dirs" : ["./"],
   "bindings" : [
     {
-      "sources" : ["./bindings.bhl"]
+      "name" : "example",
+      "sources" : ["./bindings.cs"]
     }
   ],
   "result_file" : "./tmp/bhl.bytes",

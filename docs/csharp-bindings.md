@@ -141,7 +141,7 @@ c.Lerp(0.5)
 Color white = Color.White()
 ```
 
-For the full working example see `example/bindings/bindings.cs`.
+For the full working example see `example/gameplay/bindings.cs`.
 
 ## Reading bindings sources without compiling them
 
@@ -171,10 +171,13 @@ error naming the file and line:
   `FieldSymbol`, `EnumSymbolNative`…), arrays `new T[] { … }`, `new List<T>() { … }`, the
   `types.T/TArr/TMap/TTuple/TFunc` helpers, members and methods of bhl objects, enum values
   and `|` of enum flags or integers.
-- **Native code:** a local function or method name passed where a delegate is expected (a
-  field getter, a class creator) means "there is native code": the symbol gets the front end's
-  placeholder (`FieldSymbol.PendingGetter`, `ClassSymbolNative.PendingCreator`…), `null` means
-  there is none. Local functions themselves are skipped.
+- **Native code:** a local function or method name, an anonymous `delegate` or a lambda passed
+  where a delegate is expected (a field getter, a class creator, a function's callback) means
+  "there is native code": the symbol gets the front end's placeholder
+  (`FieldSymbol.PendingGetter`, `ClassSymbolNative.PendingCreator`…), `null` means there is none.
+  `typeof(X)` passed where a `System.Type` is expected is `null`. Native code is allowed only as
+  such arguments and is never parsed further; local functions, constructors and fields of the
+  classes are skipped.
 - **Origin:** `new Origin()` points to the line of the registration code it's in.
 
 `tests/cs_bindings/sample_bindings.cs` is a complete sample, read and compiled by the tests.

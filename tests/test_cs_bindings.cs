@@ -340,13 +340,68 @@ static partial class Bindings
   }
 
   [Fact]
-  public void LambdasAreAnError()
+  public void LambdasAreAllowedOnlyAsArguments()
   {
     var err = ReadSourceError(Wrap(@"
     System.Func<int> f = () => 1;
 "));
-    Assert.Contains("lambdas are not supported", err.Message);
+    Assert.Contains("lambdas are allowed only as arguments", err.Message);
     Assert.Contains("bindings.cs:10:", err.Message);
+  }
+
+  //NOTE: hand-written bindings pass native code inline, it becomes the front end's placeholders
+  [Fact]
+  public void NativeCodeArgumentsAreReadAsPlaceholders()
+  {
+    var ts = ReadSource(@"
+using System;
+namespace bhl {
+[BhlBinding(""hand"", ""1.0.0"")]
+public class HandBindings : IUserBindings
+{
+  public class Point
+  {
+    public float x, y;
+  }
+
+  public HandBindings()
+  {}
+
+  public HandBindings(int unused) : this()
+  {}
+
+  public void Register(Types types)
+  {
+    var cl = new ClassSymbolNative(new Origin(), ""Point"", typeof(Point),
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new Point(), type); }
+    );
+    types.ns.Define(cl);
+    cl.Define(new FieldSymbol(new Origin(), ""x"", Types.Float,
+      (VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) => { v.SetFlt(((Point)ctx.obj).x); },
+      null
+    ));
+    cl.Setup();
+
+    types.ns.Define(new FuncSymbolNative(new Origin(), ""Twice"", Types.Int,
+      static (exec, args_info) => null,
+      new FuncArgSymbol(""n"", Types.Int)
+    ));
+  }
+}
+}
+");
+
+    var point = (ClassSymbolNative)ts.ns.Resolve("Point");
+    Assert.Same(ClassSymbolNative.PendingCreator, point.creator);
+    Assert.Null(point.GetNativeType());
+    var x = (FieldSymbol)point.Resolve("x");
+    Assert.Same(FieldSymbol.PendingGetter, x.getter);
+    Assert.Null(x.setter);
+    Assert.Null(((FuncSymbolNative)ts.ns.Resolve("Twice")).cb);
+
+    //NOTE: native code is not a value of anything else
+    Assert.Contains("no 'FuncArgSymbol' matches",
+      ReadSourceError(Wrap("    types.ns.Define(new FuncSymbolNative(new Origin(), \"F\", Types.Void, null, new FuncArgSymbol(\"n\", delegate() {})));")).Message);
   }
 
   [Fact]

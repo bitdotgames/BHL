@@ -3,7 +3,7 @@
   "bindings" : [
     {
       "name" : "example",
-      "sources" : ["./bindings.bhl"]
+      "sources" : ["./bindings.cs"]
     }
   ],
   "result_file" : "./tmp/bhl.bytes",

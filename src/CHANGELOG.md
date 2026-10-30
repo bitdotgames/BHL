@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Hand-written C# bindings are read as is: anonymous delegates and lambdas passed as native
+  code and `typeof(...)` as native types are accepted as arguments; constructors and fields with
+  several variables are skipped.
+
+### Changed
+- The examples use their C# bindings (`bindings.cs`) as the bindings sources instead of `.bhl`
+  bindings declaring the same symbols.
+
+## [3.0.0-beta7]
+
+### Added
 - C# bindings sources read without compiling them (`CsSourceBindings`): a `bindings` entry
   listing `.cs` sources without a `dll` builds its symbols from the sources as if compiled with
   `BHL_FRONT`; the LSP watches and reloads them. The sources must be in a strict generated

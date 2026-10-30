@@ -3,7 +3,7 @@ using System;
 namespace bhl {
 
 //NOTE: registers a real "unity" module (via Types.RegisterModule) instead of writing
-//      straight into the global namespace - see example/bindings for that flat style.
+//      straight into the global namespace - see example/gameplay for that flat style.
 //      Scripts need `import "unity"` to reach unity.Vector3/unity.Mathf.Floor/etc.
 //      [Preserve] guards against IL2CPP/Mono stripping
 #if UNITY_5_3_OR_NEWER

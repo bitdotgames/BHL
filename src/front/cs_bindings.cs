@@ -508,6 +508,14 @@ class CsNew : CsExpr
   public List<CsExpr> items;
 }
 
+//NOTE: an anonymous delegate or a lambda passed as an argument: native code, never run
+class CsNativeCode : CsExpr
+{}
+
+//NOTE: typeof(...) passed as an argument: a native type, unknown to the front end
+class CsNativeType : CsExpr
+{}
+
 //NOTE: '|' of enum flags or integers
 class CsBitOr : CsExpr
 {
@@ -785,6 +793,14 @@ class CsParser
         continue;
       }
 
+      //NOTE: a constructor does nothing for the bindings
+      if(Is(class_name) && Is("(", 1))
+      {
+        Next();
+        SkipLocalFunction();
+        continue;
+      }
+
       var start = Peek();
       ParseTypeName();
       string name = ExpectIdent();
@@ -793,7 +809,7 @@ class CsParser
         ParseMethod(name, start);
       else if(Accept(";"))
       {}
-      else if(Is("="))
+      else if(Is("=") || Is(","))
         SkipToSemicolon();
       else
         throw Error(Peek(), $"unsupported class member '{name}'");
@@ -965,35 +981,123 @@ class CsParser
 
   void SkipLocalFunction()
   {
-    Expect("(");
-    int depth = 1;
-    while(depth > 0)
+    SkipParens();
+    //NOTE: a constructor initializer
+    if(Accept(":"))
     {
-      var t = Next();
-      if(t.kind == CsTok.EOF)
-        throw Error(t, "unterminated local function");
-      if(t.text == "(")
-        ++depth;
-      else if(t.text == ")")
-        --depth;
+      ExpectIdent();
+      SkipParens();
     }
     if(Accept("=>"))
     {
       SkipToSemicolon();
       return;
     }
-    Expect("{");
-    depth = 1;
+    SkipBraces();
+  }
+
+  void SkipParens()
+  {
+    Expect("(");
+    int depth = 1;
     while(depth > 0)
     {
       var t = Next();
       if(t.kind == CsTok.EOF)
-        throw Error(t, "unterminated local function");
+        throw Error(t, "unterminated parentheses");
+      if(t.text == "(")
+        ++depth;
+      else if(t.text == ")")
+        --depth;
+    }
+  }
+
+  void SkipBraces()
+  {
+    Expect("{");
+    int depth = 1;
+    while(depth > 0)
+    {
+      var t = Next();
+      if(t.kind == CsTok.EOF)
+        throw Error(t, "unterminated block");
       if(t.text == "{")
         ++depth;
       else if(t.text == "}")
         --depth;
     }
+  }
+
+  //NOTE: an argument may be native code - an anonymous delegate or a lambda - or a native type
+  //      (typeof): they are skipped, not parsed, and allowed only here
+  CsExpr TryParseNativeArg()
+  {
+    var t = Peek();
+    if(Is("typeof") && Is("(", 1))
+    {
+      Next();
+      SkipParens();
+      return new CsNativeType() { line = t.line };
+    }
+    if(Is("static") && (Is("delegate", 1) || Is("(", 1)))
+      Next();
+    if(Is("delegate"))
+    {
+      Next();
+      if(Is("("))
+        SkipParens();
+      SkipBraces();
+      return new CsNativeCode() { line = t.line };
+    }
+    bool lambda = false;
+    if(Peek().kind == CsTok.Ident && Is("=>", 1))
+    {
+      Next();
+      lambda = true;
+    }
+    else if(Is("("))
+    {
+      int depth = 0;
+      for(int i = 0; ; ++i)
+      {
+        var p = Peek(i);
+        if(p.kind == CsTok.EOF)
+          break;
+        if(p.text == "(")
+          ++depth;
+        else if(p.text == ")" && --depth == 0)
+        {
+          lambda = Is("=>", i + 1);
+          break;
+        }
+      }
+      if(lambda)
+        SkipParens();
+    }
+    if(!lambda)
+      return null;
+    Expect("=>");
+    if(Is("{"))
+      SkipBraces();
+    else
+    {
+      //NOTE: an expression body ends with the argument
+      int depth = 0;
+      while(true)
+      {
+        var p = Peek();
+        if(p.kind == CsTok.EOF)
+          throw Error(p, "unterminated lambda");
+        if(depth == 0 && (p.text == "," || p.text == ")"))
+          break;
+        if(p.text == "(" || p.text == "{" || p.text == "[")
+          ++depth;
+        else if(p.text == ")" || p.text == "}" || p.text == "]")
+          --depth;
+        Next();
+      }
+    }
+    return new CsNativeCode() { line = t.line };
   }
 
   CsStmt ParseDefineIfAbsent()
@@ -1068,7 +1172,7 @@ class CsParser
     while(true)
     {
       if(Is("=>"))
-        throw Error(Peek(), "lambdas are not supported");
+        throw Error(Peek(), "lambdas are allowed only as arguments (native code)");
       if(Accept("."))
         e = new CsMember() { line = Peek(-1).line, target = e, name = ExpectIdent() };
       else if(Is("("))
@@ -1135,7 +1239,7 @@ class CsParser
       else if(p.text == ")" && --depth == 0)
       {
         if(Is("=>", i + 1))
-          throw Error(t, "lambdas are not supported");
+          throw Error(t, "lambdas are allowed only as arguments (native code)");
         break;
       }
     }
@@ -1181,7 +1285,8 @@ class CsParser
       }
       if(Is("ref") || Is("out") || Is("in"))
         throw Error(Peek(), $"'{Peek().text}' arguments are not supported");
-      args.Add(new CsArg() { name = name, expr = ParseExpr() });
+      var expr = TryParseNativeArg() ?? ParseExpr();
+      args.Add(new CsArg() { name = name, expr = expr });
     }
     while(Accept(","));
     Expect(")");
@@ -1200,6 +1305,16 @@ class CsNativeRef
   public override string ToString()
   {
     return name;
+  }
+}
+
+class CsNativeTypeValue
+{
+  public static readonly CsNativeTypeValue Instance = new CsNativeTypeValue();
+
+  public override string ToString()
+  {
+    return "native type";
   }
 }
 
@@ -1406,6 +1521,12 @@ class CsInterpreter
         }
         return arr;
       }
+
+      case CsNativeCode _:
+        return new CsNativeRef() { name = "<native code>" };
+
+      case CsNativeType _:
+        return CsNativeTypeValue.Instance;
 
       case CsBitOr bo:
       {
@@ -1714,6 +1835,14 @@ class CsInterpreter
       if(!is_delegate)
         return false;
       res = Placeholder(ptype);
+      score = 2;
+      return true;
+    }
+
+    if(arg is CsNativeTypeValue)
+    {
+      if(ptype != typeof(System.Type))
+        return false;
       score = 2;
       return true;
     }

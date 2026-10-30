@@ -3,9 +3,10 @@ using System.IO;
 
 namespace bhl {
 
-//NOTE: "example" must match bindings.bhl's BindingInfo() return value (its
-//      compile-time stand-in). Discovered by reflection (see BindingsRegistry) - [Preserve]
-//      keeps IL2CPP/Mono's stripper from removing it, since nothing references it directly
+//NOTE: "example" must match the bindings entry name in bhl.proj, the compiler reads this file
+//      (without compiling it) as the bindings sources. At runtime discovered by reflection (see
+//      BindingsRegistry) - [Preserve] keeps IL2CPP/Mono's stripper from removing it, since
+//      nothing references it directly
 #if UNITY_5_3_OR_NEWER
 [UnityEngine.Scripting.Preserve]
 #endif
