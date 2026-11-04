@@ -204,16 +204,17 @@ public class Namespace : Symbol, IScope,
       var conflict = ns.TryLink(module.ns.UnlinkAll());
       if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
       {
-        var other_module = (conflict.other.scope as Namespace)?.module.name;
-        var local_module = (conflict.local.scope as Namespace)?.module.name;
+        //NOTE: a namespace the merge root synthesized for itself (see TryLink) belongs to
+        //      no single module, hence the fallback
+        string ModuleName(Symbol s) => (s.scope as Namespace)?.module?.name ?? "?";
         string OriginSuffix(Symbol s) => s.origin != null
           ? $" ({s.origin.source_file}:{s.origin.source_range.start.line})"
           : "";
 
         return new SymbolError(conflict.local,
-          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + other_module +
+          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + ModuleName(conflict.other) +
           "'" + OriginSuffix(conflict.other) + " conflicts with an existing declaration in module '" +
-          local_module + "'" + OriginSuffix(conflict.local));
+          ModuleName(conflict.local) + "'" + OriginSuffix(conflict.local));
       }
     }
 

@@ -2092,6 +2092,48 @@ public class TestNamespace : BHL_TestBase
     Assert.Contains("bhl2.bhl", ierr.text);
   }
 
+  //NOTE: the conflicting 'local' symbol here is a namespace the merge root synthesized
+  //      for itself (it has no module of its own), which used to blow up the diagnostic
+  [Fact]
+  public async Task TestNamespaceVsGlobalSymbolConflict()
+  {
+    string bhl1 = @"
+    namespace foo {
+      class Bar {
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    class foo {
+    }
+    ";
+
+    Exception err = null;
+    try
+    {
+      await MakeVM(new Dictionary<string, string>()
+        {
+          {"bhl1.bhl", bhl1},
+          {"bhl2.bhl", bhl2},
+        }
+      );
+    }
+    catch(Exception e)
+    {
+      err = e;
+    }
+
+    Assert.NotNull(err);
+    Assert.DoesNotContain("NullReferenceException", err.ToString());
+
+    var cerr2 = err as CompileErrorsException;
+    ICompileError ierr2 = cerr2 != null ? cerr2.errors[0] : (ICompileError)err;
+    Assert.Contains("conflicts with an existing declaration", ierr2.text);
+    Assert.Contains("foo", ierr2.text);
+    Assert.Contains("bhl2", ierr2.text);
+  }
+
   [Fact]
   public async Task TestImportedSymbolsInGlobalNamespace()
   {
