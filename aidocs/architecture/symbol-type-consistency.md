@@ -174,6 +174,42 @@ Verified against the CLI: `null`, `(null)` and `(((null)))` are all rejected,
 the expression instead of at `var`, so `TestNullIsNotAllowed`'s `PlaceAssert`
 moved.
 
+### 7. `ProxyType` resolution raced across compile threads — FIXED
+
+**Was missing from this page** — it surfaced in the type-identity analysis and
+got dropped when the findings were first written up.
+
+`Types._proxy_cache` is a `ConcurrentDictionary` whose own comment says
+*"concurrent since Types instance is shared by compile threads"*, so the **same
+mutable `ProxyType` instance** is handed to every parallel worker
+(`src/vm/type/type_system.cs:27-37`). `SetResolved` then performed three
+non-atomic writes — `resolved`, `path`, and `resolver = null`
+(`proxy.cs:93-106`) — while `Get()` dereferenced `resolver` after a separate
+null check.
+
+Not theoretical: 8 threads resolving one shared proxy behind a `Barrier`
+reproduced a `NullReferenceException` within 40 rounds, in ~110ms. Thread A
+passes the check, thread B completes resolution and nulls `resolver`, A
+dereferences null. Under a real compile this would have been a rare,
+unreproducible compile failure.
+
+Fixed by: reading `resolver` into a local before use; **not** nulling it (it
+refers to the `Types` that owns the instance, so nulling it for GC bought
+nothing and caused the race); and writing `path` *before* `resolved`, since
+stores are not reordered with one another, so a thread observing a non-null
+`resolved` is guaranteed a fully written path. Concurrent resolution is
+otherwise harmless — every thread computes the same answer.
+
+Covered by `TestTypesModuleResolve.InternedProxyResolvesSafelyFromManyThreads`,
+verified to fail against the old code.
+
+**Residual, deliberately not addressed:** two threads racing entirely within
+the *unresolved* window can still observe a torn `path`, because `NamePath` is
+a struct wrapping `StackList<string>` (an inline 16-slot buffer plus a
+`List<T>`), so assigning it is a multi-word write. Closing that needs `path`
+published atomically — i.e. restructuring it and its marshalling, where a
+mistake corrupts `.bhc` files. A torn read self-heals on the next `Get()`.
+
 ## Latent / cosmetic
 
 ### `ProxyType` has a mutating hash code

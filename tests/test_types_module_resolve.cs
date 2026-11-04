@@ -141,4 +141,62 @@ func float test() {
       Directory.Delete(dir, true);
     }
   }
+
+  //NOTE: a Types is shared by the compile threads and so are the ProxyType instances it
+  //      interns (Types._proxy_cache), so resolution races. Nulling 'resolver' on resolve
+  //      used to race with another thread about to dereference it
+  [Fact]
+  public void InternedProxyResolvesSafelyFromManyThreads()
+  {
+    const int rounds = 40;
+    const int n = 8;
+
+    for(int round = 0; round < rounds; ++round)
+    {
+      var types = new Types();
+      var module = new ModuleDeclared("testmod");
+      var ns = module.ns.Nest("testmod");
+      var inner = new ClassSymbolNative(new Origin(), "Inner", typeof(object));
+      ns.Define(inner);
+      inner.Setup();
+      types.RegisterModule(module);
+
+      //NOTE: a single shared instance, exactly what each compile thread gets handed
+      var proxy = types.T("testmod.Inner");
+
+      var results = new IType[n];
+      var errors = new Exception[n];
+      var threads = new System.Threading.Thread[n];
+
+      using(var barrier = new System.Threading.Barrier(n))
+      {
+        for(int i = 0; i < n; ++i)
+        {
+          int idx = i;
+          threads[idx] = new System.Threading.Thread(() =>
+          {
+            try
+            {
+              barrier.SignalAndWait();
+              results[idx] = proxy.Get();
+            }
+            catch(Exception e)
+            {
+              errors[idx] = e;
+            }
+          });
+          threads[idx].Start();
+        }
+
+        for(int i = 0; i < n; ++i)
+          threads[i].Join();
+      }
+
+      for(int i = 0; i < n; ++i)
+      {
+        Assert.True(errors[i] == null, $"round {round} thread {i} threw: {errors[i]}");
+        Assert.Same(inner, results[i]);
+      }
+    }
+  }
 }

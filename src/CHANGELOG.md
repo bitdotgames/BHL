@@ -5,6 +5,14 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta13]
+
+### Fixed
+- Resolving a type no longer races with the other compile threads: a `Types` hands the same
+  interned `ProxyType` to all of them, and resolving one nulled its resolver reference while
+  another thread was about to use it, so a compile could fail with a `NullReferenceException`
+  that never reproduced. The reference is kept now and read once.
+
 ## [3.0.0-beta12]
 
 ### Changed

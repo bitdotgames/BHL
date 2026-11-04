@@ -83,8 +83,11 @@ public class ProxyType : IMarshallable, IEquatable<ProxyType>
     if(resolved != null)
       return resolved;
 
-    if(path.Count > 0)
-      SetResolved(resolver.ResolveNamedByPath(path) as IType);
+    //NOTE: read into a local - a Types is shared by the compile threads and so are the
+    //      ProxyType instances it interns, so the field must not be re-read after the check
+    var r = resolver;
+    if(path.Count > 0 && r != null)
+      SetResolved(r.ResolveNamedByPath(path) as IType);
 
     return resolved;
   }
@@ -92,17 +95,22 @@ public class ProxyType : IMarshallable, IEquatable<ProxyType>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void SetResolved(IType resolved)
   {
-    this.resolved = resolved;
+    if(resolved == null)
+    {
+      this.resolved = null;
+      return;
+    }
+
     //TODO: some smelly code below - after resolving we re-write the original path
     //      with the normalized one, this is useful for cases when comparing proxies
     //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
-    if(resolved != null)
-    {
-      path = GetNormalizedTypePath(resolved);
-      //NOTE: once resolving is done let's nullify the reference to resolver
-      //      so it can be GC'ed
-      resolver = null;
-    }
+    //NOTE: written before 'resolved' on purpose: stores aren't reordered with each other,
+    //      so a thread seeing a non-null 'resolved' is guaranteed a fully written path.
+    //      Concurrent resolution is otherwise harmless - every thread computes the same
+    //      answer - and 'resolver' is deliberately kept (nulling it for GC used to race
+    //      with the read above; it refers to the Types that owns this instance anyway)
+    path = GetNormalizedTypePath(resolved);
+    this.resolved = resolved;
   }
 
   static NamePath GetNormalizedTypePath(IType obj)
