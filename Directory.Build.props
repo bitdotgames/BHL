@@ -4,6 +4,8 @@
     <BaseOutputPath>$(RepoRoot)\build\$(MSBuildProjectName)\</BaseOutputPath>
     <BaseIntermediateOutputPath>$(BaseOutputPath)obj\</BaseIntermediateOutputPath>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- use net8.0 when it's installed, fall back to a newer major rather than refusing to run -->
+    <RollForward>Major</RollForward>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <NoWarn>VSTHRD200</NoWarn>
