@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `ValMap.GetEnumerator()` returns a struct enumerator, `foreach` over a `ValMap` in C# doesn't allocate.
+- The message of a `VM.Error` starts with the message of the error itself, followed by the BHL stack
+  trace; it used to be the stack trace alone.
+- An item written into an array (`Add`, `Insert`, `a[i] = ..`) and an entry put into a map are
+  checked against the item, key and value types at runtime, by `Types.IsStorableAs`: a typed
+  container written through a variable of a wider type (`[]any`, `[any]any`) used to accept
+  anything, so `[]int` could end up holding a string. Scalars are checked as scalars only, values
+  without a type or of `any` (made by native code) are not checked.
 
 ### Fixed
 - A value overwritten during a `foreach` over its map (`m[k] = ..`) no longer throws "Collection was

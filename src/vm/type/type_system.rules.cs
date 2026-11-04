@@ -158,6 +158,29 @@ public partial class Types : INamedResolver, IProxyTypeCache
   {
     return type == String;
   }
+
+  //NOTE: whether a value can be stored as an item of a container of dest_type, checked at runtime
+  //      since a typed container can be written through a variable of a wider type ([]any, [any]any).
+  //      Coarser than the compiler's checks on purpose: the type of a scalar value isn't exact
+  //      (arithmetic keeps the type of the left operand), a value without a type or of 'any'
+  //      is made by native code and isn't checked
+  static public bool IsStorableAs(Val val, IType dest_type)
+  {
+    var type = val.type;
+    if(type == dest_type || type == null || type == Any || dest_type == null || dest_type == Any)
+      return true;
+
+    if(IsScalar(dest_type))
+      return IsScalar(type);
+
+    if(dest_type == String)
+      return type == String;
+
+    if(dest_type is IInstantiable)
+      return type == Null || Is(val, dest_type);
+
+    return true;
+  }
 }
 
 }

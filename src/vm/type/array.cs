@@ -169,6 +169,15 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     refs.Index(item_type);
   }
 
+  //NOTE: an array can be written through a variable of a wider type ([]any), the item is checked here
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  protected void CheckItem(Val val)
+  {
+    var it = item_type.Get();
+    if(val.type != it && !Types.IsStorableAs(val, it))
+      throw new Exception("Invalid array item: '" + val.type?.GetName() + "' can't be stored in '" + GetName() + "'");
+  }
+
   public abstract void ArrCreate(VM.ExecState exec, ref Val arr);
   public abstract int ArrCount(Val arr);
   public abstract void ArrAdd(Val arr, Val val);
@@ -218,6 +227,7 @@ public class GenericArrayTypeSymbol :
 
   public override void ArrAdd(Val arr, Val val)
   {
+    CheckItem(val);
     var lst = AsValList(arr);
     lst.Add(val.Clone());
   }
@@ -249,6 +259,7 @@ public class GenericArrayTypeSymbol :
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
+    CheckItem(val);
     var lst = AsValList(arr);
     //NOTE: ReplaceAt manages ownership
     lst.ReplaceAt(idx, val);
@@ -268,6 +279,7 @@ public class GenericArrayTypeSymbol :
 
   public override void ArrInsert(Val arr, int idx, Val val)
   {
+    CheckItem(val);
     var lst = AsValList(arr);
     lst.Insert(idx, val.Clone());
   }
@@ -497,12 +509,14 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
   public override void ArrAdd(Val arr, Val val)
   {
+    CheckItem(val);
     var lst = (IList<T>)arr.obj;
     lst.Add(val2native(val));
   }
 
   public override void ArrInsert(Val arr, int idx, Val val)
   {
+    CheckItem(val);
     var lst = (IList<T>)arr.obj;
     lst.Insert(idx, val2native(val));
   }
@@ -515,6 +529,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
+    CheckItem(val);
     var lst = (IList<T>)arr.obj;
     lst[idx] = val2native(val);
   }

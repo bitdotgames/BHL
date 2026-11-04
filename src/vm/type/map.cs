@@ -312,6 +312,10 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override void MapSet(Val map, Val key, Val val)
   {
+    //NOTE: a map can be written through a variable of a wider type ([any]any)
+    if((key.type != key_type.Get() && !Types.IsStorableAs(key, key_type.Get())) ||
+       (val.type != val_type.Get() && !Types.IsStorableAs(val, val_type.Get())))
+      throw new Exception("Invalid map entry: '" + key.type?.GetName() + "' => '" + val.type?.GetName() + "' can't be stored in '" + GetName() + "'");
     var dict = AsMap(map);
     //NOTE: ReplaceAt manages ownership
     dict.ReplaceAt(key, val);

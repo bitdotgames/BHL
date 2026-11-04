@@ -18,8 +18,9 @@ public partial class VM
   {
     public List<TraceItem> trace;
 
+    //NOTE: the message of the error itself goes first, the BHL stack trace after it
     public Error(List<TraceItem> trace, Exception e)
-      : base(ToString(trace), e)
+      : base(e?.Message + ToString(trace), e)
     {
       this.trace = trace;
     }

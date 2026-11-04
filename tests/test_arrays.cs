@@ -1001,6 +1001,111 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
+  string RunError(string bhl, Action<Types> ts_fn = null)
+  {
+    var vm = MakeVM(bhl, ts_fn);
+    return Assert.Throws<VM.Error>(() => Execute(vm, "test")).Message;
+  }
+
+  [Fact]
+  public void TestRuntimeErrorMessageGoesFirst()
+  {
+    var msg = RunError(@"
+    class Foo {}
+    class Bar {}
+    func test()
+    {
+      any a = new Bar
+      Foo f = (Foo)a
+    }
+    ");
+    Assert.StartsWith("Invalid type cast: type 'Bar' can't be cast to 'Foo'", msg);
+    Assert.Contains("at test(..)", msg);
+  }
+
+  [Fact]
+  public void TestArrayWrittenThroughWiderTypeChecksItems()
+  {
+    Assert.StartsWith("Invalid array item: 'string' can't be stored in '[]int'", RunError(@"
+    func test()
+    {
+      []int a = [1]
+      []any b = a
+      b.Add(""x"")
+    }
+    "));
+
+    Assert.StartsWith("Invalid array item: 'string' can't be stored in '[]int'", RunError(@"
+    func test()
+    {
+      []int a = [1]
+      []any b = a
+      b[0] = ""x""
+    }
+    "));
+
+    Assert.StartsWith("Invalid array item: 'string' can't be stored in '[]int'", RunError(@"
+    func test()
+    {
+      []int a = [1]
+      []any b = a
+      b.Insert(0, ""x"")
+    }
+    "));
+
+    Assert.StartsWith("Invalid array item: 'Bar' can't be stored in '[]Foo'", RunError(@"
+    class Foo {}
+    class Bar {}
+    func test()
+    {
+      []Foo a = []
+      []any b = a
+      b.Add(new Bar)
+    }
+    "));
+
+    Assert.StartsWith("Invalid array item: 'string' can't be stored in 'List_int'", RunError(@"
+    func test()
+    {
+      []any b = new List_int
+      b.Add(""x"")
+    }
+    ", ts => NativeListTypeSymbol.DefineOnce<int>(ts.ns, "List_int", (v) => (int)v.num, (itype, n) => Val.NewInt(n), Types.Int)));
+  }
+
+  [Fact]
+  public void TestArrayWrittenThroughWiderTypeAcceptsCompatibleItems()
+  {
+    string bhl = @"
+    class Foo {}
+    class Bar : Foo {}
+    func int test()
+    {
+      []int ints = [1]
+      []any any_ints = ints
+      any_ints.Add(2)
+      any_ints[0] = 3
+
+      []float floats = []
+      int i = 1
+      floats.Add(i + 1)
+      []any any_floats = floats
+      any_floats.Add(i)
+
+      []Foo foos = []
+      []any any_foos = foos
+      any_foos.Add(new Bar)
+      any_foos.Add(null)
+
+      return ints[0] * 100 + ints[1] * 10 + floats.Count + foos.Count
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(322 + 2, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
   [Fact]
   public void TestNativeListDefineOnce()
   {

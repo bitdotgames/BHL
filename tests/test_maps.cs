@@ -933,6 +933,35 @@ public class TestMaps : BHL_TestBase
   }
 
   [Fact]
+  public void TestMapWrittenThroughWiderTypeChecksEntries()
+  {
+    string bhl = @"
+    func test()
+    {
+      [string]int m = []
+      [any]any k = m
+      k[1] = 2
+    }
+    ";
+    var vm = MakeVM(bhl);
+    var err = Assert.Throws<VM.Error>(() => Execute(vm, "test"));
+    Assert.StartsWith("Invalid map entry: 'int' => 'int' can't be stored in '[string]int'", err.Message);
+
+    bhl = @"
+    func int test()
+    {
+      [string]int m = []
+      [any]any k = m
+      k[""a""] = 2
+      return m[""a""]
+    }
+    ";
+    vm = MakeVM(bhl);
+    Assert.Equal(2, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestValMapScalarKeyNeverEqualsNonScalar()
   {
     var cmp = ValMap.DefaultComparer.Instance;
