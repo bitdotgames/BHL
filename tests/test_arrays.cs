@@ -880,6 +880,43 @@ public class TestArrays : BHL_TestBase
 
     Assert.True(ArrayInts1.Equals(ArrayInts2));
     Assert.False(ArrayString.Equals(ArrayInts1));
+
+    //NOTE: equal instances must hash alike, or a HashSet<IInstantiable> (see
+    //      CollectAllRelatedTypesSet, used by Types.Is) silently misses them
+    Assert.Equal(ArrayInts1.GetHashCode(), ArrayInts2.GetHashCode());
+  }
+
+  //NOTE: two native lists agreeing on the item type are still distinct types - they are
+  //      backed by different native containers and conversions - and used to compare equal
+  //      while hashing apart, which broke the Equals/GetHashCode contract
+  [Fact]
+  public void TestNativeListsWithSameItemTypeButDifferentNamesDiffer()
+  {
+    var list_a = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_a",
+      (v) => v,
+      (itype, n) => n,
+      Types.Int
+    );
+    list_a.Setup();
+
+    var list_b = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_b",
+      (v) => v,
+      (itype, n) => n,
+      Types.Int
+    );
+    list_b.Setup();
+
+    Assert.False(list_a.Equals(list_b));
+    Assert.False(Types.Is(list_a, list_b));
+
+    var set = new HashSet<IInstantiable>();
+    set.Add(list_a);
+    Assert.True(set.Contains(list_a));
+    Assert.False(set.Contains(list_b));
   }
 
   [Fact]

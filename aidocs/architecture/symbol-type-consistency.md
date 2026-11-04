@@ -68,9 +68,7 @@ alongside the CLI path. Fixed via a `ModuleName` helper using
 `?.module?.name ?? "?"` — the fallback is honest, a synthesized namespace
 belongs to no single module.
 
-## Open defects
-
-### 4. Composite type `name` is not canonical, so hashing can disagree with `Equals`
+### 4. `NativeListTypeSymbol` broke the `Equals`/`GetHashCode` contract — FIXED
 
 **Corrected framing.** This was first written up as "array's `Equals`/
 `GetHashCode` are inverted", which is misleading. All five composite types
@@ -124,15 +122,22 @@ in-tree hash consumer, `Types.Is` → `IsSupersetOf`
 (`type_system.rules.cs:74`), is shortcut by the `type.Equals(dest_type)` test
 at `:57`. No `Dictionary<IType,…>`/`HashSet<IType>` exists anywhere else.
 
-Fixing it is a semantic decision, not a mechanical repair:
+Fixed by including identity in `Equals` — `name == o.name &&
+item_type.Equals(o.item_type)` — so equal ⟹ same name ⟹ same hash. The
+alternative (hashing `item_type` instead of `name`) would have restored the
+contract while leaving two differently-backed native lists mutually
+substitutable; the conflation was judged the more dangerous half.
 
-- include identity in `NativeListTypeSymbol.Equals` so `List_a != List_b` —
-  arguably the correct meaning, since their native backings differ, but it
-  makes `Types.Is(List_a, List_b)` false and could reject code that compiles
-  today; or
-- hash on `item_type` instead of `name` — preserves today's lenient
-  assignability and restores the contract, but keeps two differently-backed
-  native lists mutually substitutable.
+**This is a behaviour change:** `Types.Is(List_a, List_b)` was true and is now
+false, so assigning between two differently-named native lists over the same
+item type no longer compiles. Nothing in-tree relied on it — the pre-existing
+`TestNativeListEquality` compares two lists *both* named `List_int` and still
+passes untouched — but external Unity-side bindings might.
+
+`GenericArrayTypeSymbol` was deliberately left alone: its `name` is derived
+from `item_type`, so it is already self-consistent.
+
+## Open defects
 
 ### 5. `HasDefaultArgAt` is a tautology
 

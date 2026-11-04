@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The symbol factory no longer reads the class id of a native list type as a generic array: a native
   list type is written by its name and never by a class id, a module with it is an error now instead
   of a different type.
+- Two native list types with the same item type but different names are different types now: they
+  are backed by different native containers and conversions, so one is not assignable to the other
+  any more. They used to compare equal while hashing apart, so a set of types missed them as well.
 - An inheritance cycle longer than one step is a compile error, "inheritance cycle is not allowed":
   only direct self-inheritance was caught before, so `class A : B` with `class B : A` recursed until
   the stack overflowed and took the process down with it, while the interface equivalent was accepted

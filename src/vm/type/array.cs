@@ -427,13 +427,19 @@ public abstract class NativeListTypeSymbol :
     return this.Equals((NativeListTypeSymbol)o);
   }
 
+  //NOTE: unlike GenericArrayTypeSymbol, whose name is derived from its item type, a native
+  //      list's name is supplied by whoever defines it and says nothing about the item type,
+  //      so comparing item types alone would both break the GetHashCode() contract below
+  //      (equal instances hashing apart, i.e. a HashSet missing them) and conflate two lists
+  //      that merely agree on the item type while being backed by different native
+  //      containers and conversions
   public bool Equals(NativeListTypeSymbol o)
   {
     if(ReferenceEquals(o, null))
       return false;
     if(ReferenceEquals(this, o))
       return true;
-    return item_type.Equals(o.item_type);
+    return name == o.name && item_type.Equals(o.item_type);
   }
 
   public override int GetHashCode()
