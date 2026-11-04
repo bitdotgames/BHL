@@ -6,35 +6,49 @@ the code wins — re-verify before acting.
 
 Audited 2026-11-04 against `8d3c0abf`.
 
-## Open defects
+## Fixed
 
-### 1. Indirect class-inheritance cycle → StackOverflow (process death)
+### 1. Indirect class-inheritance cycle → StackOverflow (process death) — FIXED
 
 `ClassSymbol.GetAllRelatedTypesSet` (`src/vm/symbol/class.cs:370-374`) assigns
 the `related_types` memo **after** `CollectAllRelatedTypesSet()` returns, so a
 cycle re-enters with the field still `null` and recurses unbounded.
 `DoSetupMembers` (`:272-276`) walks `super_class` with no cycle guard either.
 
-The frontend rejects only *direct* self-inheritance
-(`src/front/antlr_proc.pass.cs:637,895`), never an indirect cycle, so
-`class A : B {} class B : A {}` reaches this code. `StackOverflowException` is
-uncatchable in .NET → the whole process dies. The `bhl lsp` server therefore
-exits outright when a user types a two-class cycle, and the CLI cannot report
-it as a normal compile error.
+The frontend rejected only *direct* self-inheritance, never an indirect cycle,
+so `class A : B {} class B : A {}` reached this code. `StackOverflowException`
+is uncatchable in .NET → the whole process died: the `bhl lsp` server exited
+outright, and the CLI could not report it as a normal compile error.
 
-### 2. Interface sibling silently *accepts* the same cycle
+**Both classes must be in the same module** to reproduce — across two modules
+with no `import`, neither name resolves and you get "not a class or an
+interface" instead.
+
+Fixed by `InheritsFrom` walks in `src/front/antlr_proc.pass.cs`, which reject
+the cycle as a normal `inheritance cycle is not allowed` compile error.
+Whichever symbol of the cycle is processed last sees the already established
+links and trips the check. The underlying `DoSetupMembers` /
+`CollectAllRelatedTypesSet` recursion is still unguarded — it's simply no
+longer reachable from source. A hand-corrupted `.bhc` could still hit it.
+
+### 2. Interface sibling silently *accepted* the same cycle — FIXED
 
 `InterfaceSymbol.GetAllRelatedTypesSet` (`src/vm/symbol/interface.cs:85-100`)
 publishes `related_types` into the field **before** recursing, so a cycle
 re-enters, sees non-null, and returns a partially-built set.
-`interface IA : IB {} interface IB : IA {}` compiles with no error at all.
+`interface IA : IB {} interface IB : IA {}` compiled with no error at all
+(verified: produced a valid 208-byte `.bhc`).
 
-Same method shape as #1, same input shape, opposite outcome — class crashes,
-interface accepts. Whichever is intended, both can't be right. Fixing #1 and
-#2 together (cycle detection in the frontend + one shared memoization
-strategy) is the coherent move.
+Same method shape as #1, same input shape, opposite outcome — class crashed,
+interface accepted. Fixed together with #1; both now report `inheritance cycle
+is not allowed`. The interface walk carries an explicit `seen` set because
+`inherits` is a graph (diamonds are legal).
 
-### 3. NullReferenceException in `Namespace.CheckUniqueSymbols`
+Note the memoization asymmetry itself was left as-is — with cycles rejected
+upfront it is no longer load-bearing, but it remains a latent trap for anyone
+constructing these symbols programmatically.
+
+### 3. NullReferenceException in `Namespace.CheckUniqueSymbols` — FIXED
 
 `src/vm/symbol/namespace.cs:206-207`:
 
@@ -49,8 +63,12 @@ unguarded chain. `TryLink` synthesizes namespaces whose `module` is null
 `Namespace` (`src/vm/scope/extension.cs:195-203`), so the guard at `:205`
 doesn't stop it. Throws instead of producing the intended conflict diagnostic.
 
-Fix: `?.module?.name` on both lines. Introduced/widened by `8d3c0abf`, which
-added a second caller in `lsp/workspace.cs:319` alongside the CLI path.
+Widened by `8d3c0abf`, which added a second caller in `lsp/workspace.cs:319`
+alongside the CLI path. Fixed via a `ModuleName` helper using
+`?.module?.name ?? "?"` — the fallback is honest, a synthesized namespace
+belongs to no single module.
+
+## Open defects
 
 ### 4. `Equals`/`GetHashCode` are inverted on array types
 

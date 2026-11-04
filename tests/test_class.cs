@@ -246,6 +246,45 @@ public class TestClass : BHL_TestBase
     );
   }
 
+  //NOTE: used to recurse until StackOverflow in ClassSymbol.DoSetupMembers, which is
+  //      uncatchable - it took the whole process down instead of reporting an error
+  [Fact]
+  public void TestIndirectInheritanceCycleIsNotAllowed()
+  {
+    string bhl = @"
+    class Foo : Bar {}
+    class Bar : Foo {}
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "inheritance cycle is not allowed",
+      new PlaceAssert(bhl, @"
+    class Bar : Foo {}
+----------------^"
+      )
+    );
+  }
+
+  [Fact]
+  public void TestLongerInheritanceCycleIsNotAllowed()
+  {
+    string bhl = @"
+    class Foo : Bar {}
+    class Bar : Baz {}
+    class Baz : Foo {}
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "inheritance cycle is not allowed",
+      new PlaceAssert(bhl, @"
+    class Baz : Foo {}
+----------------^"
+      )
+    );
+  }
+
   [Fact]
   public void TestUserClassWithSimpleMembers()
   {

@@ -29,3 +29,19 @@ never used at all.
 Also recorded the verified-sound list (Sync↔IndexTypeRefs pairing, no
 Equals-without-GetHashCode, Setup idempotence) so future sessions don't
 re-derive it.
+
+## [2026-11-04] ingest | Fixed audit findings #1-#3
+
+`CheckUniqueSymbols` NRE fixed (`faf873d8`), then the inheritance cycles:
+`InheritsFrom` walks added to `antlr_proc.pass.cs` for both classes (linear
+`super_class` chain) and interfaces (`inherits` graph, with a `seen` set), so
+an indirect cycle is now a normal `inheritance cycle is not allowed` compile
+error instead of a process-killing StackOverflow / a silent accept.
+
+Repro note worth keeping: a class cycle only reproduces when both classes live
+in the **same module** — split across two modules with no `import`, neither
+name resolves and you get "not a class or an interface" instead. An earlier
+cross-module repro attempt wrongly suggested the bug wasn't real.
+
+Page updated: findings #1-#3 moved to a "Fixed" section; #4-#6 and the latent
+items remain open.

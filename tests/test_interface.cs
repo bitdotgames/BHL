@@ -390,6 +390,31 @@ public class TestInterface : BHL_TestBase
     );
   }
 
+  //NOTE: the class equivalent crashed the process while this one was silently accepted -
+  //      both are rejected the same way now
+  [Fact]
+  public void TestIndirectInheritanceCycleIsNotAllowed()
+  {
+    string bhl = @"
+    interface IFoo : IBar {
+      func foo()
+    }
+
+    interface IBar : IFoo {
+      func bar()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "inheritance cycle is not allowed",
+      new PlaceAssert(bhl, @"
+    interface IBar : IFoo {
+---------------------^"
+      )
+    );
+  }
+
   [Fact]
   public void TestClassImplementsInterface()
   {

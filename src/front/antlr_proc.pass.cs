@@ -617,6 +617,40 @@ public partial class ANTLR_Processor
     }
   }
 
+  //NOTE: the 'ext == symb' checks in the passes below only catch a direct self-inheritance;
+  //      a longer chain (class A : B, class B : A) has to be rejected here too, since nothing
+  //      downstream guards against it - ClassSymbol.DoSetupMembers would recurse until the
+  //      stack blows (an uncatchable StackOverflowException, i.e. the whole process dies),
+  //      while the interface side would silently accept it instead. Whichever symbol of the
+  //      cycle is processed last sees the already established links and trips the check.
+  static bool InheritsFrom(ClassSymbol start, ClassSymbol target)
+  {
+    for(var curr = start; curr != null; curr = curr.super_class)
+    {
+      if(curr == target)
+        return true;
+    }
+    return false;
+  }
+
+  //NOTE: 'inherits' is a graph (a diamond is legal), hence the explicit 'seen' set - it also
+  //      keeps this terminating regardless of the state it's handed
+  static bool InheritsFrom(InterfaceSymbol start, InterfaceSymbol target, HashSet<InterfaceSymbol> seen)
+  {
+    if(start == target)
+      return true;
+
+    if(!seen.Add(start))
+      return false;
+
+    for(int i = 0; i < start.inherits.Count; ++i)
+    {
+      if(InheritsFrom(start.inherits[i], target, seen))
+        return true;
+    }
+    return false;
+  }
+
   void Pass_AddInterfaceExtensions(ParserPass pass)
   {
     if(pass.iface_ctx?.NAME() == null)
@@ -635,6 +669,12 @@ public partial class ANTLR_Processor
           if(ext == pass.iface_symb)
           {
             AddError(ext_name, "self inheritance is not allowed");
+            return;
+          }
+
+          if(InheritsFrom(ifs, pass.iface_symb, new HashSet<InterfaceSymbol>()))
+          {
+            AddError(ext_name, "inheritance cycle is not allowed");
             return;
           }
 
@@ -893,6 +933,12 @@ public partial class ANTLR_Processor
           if(ext == pass.class_symb)
           {
             AddError(ext_name, "self inheritance is not allowed");
+            return;
+          }
+
+          if(InheritsFrom(cs, pass.class_symb))
+          {
+            AddError(ext_name, "inheritance cycle is not allowed");
             return;
           }
 
