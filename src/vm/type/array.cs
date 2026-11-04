@@ -481,6 +481,20 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
     return new List<T>();
   }
 
+  //NOTE: a native list of this type, or the BHL array itself when the list is an adapter of one
+  //      (a native function returning its array argument): BHL gets its own array back
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetList(ref Val v, IList<T> list)
+  {
+    if(list is ValList<T> adapter && adapter.SourceType != null)
+    {
+      adapter.Source.Retain();
+      v.SetObj(adapter.Source, adapter.SourceType);
+    }
+    else
+      v.SetObj(list, this);
+  }
+
   public override void ArrAdd(Val arr, Val val)
   {
     var lst = (IList<T>)arr.obj;

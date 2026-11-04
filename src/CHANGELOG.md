@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NativeListTypeSymbol.DefineOnce<T>(ns, name, val2native, native2val, item_type)` defines a native
   list type unless it's already defined and returns it; `DefineOnce(ns, name, item_type)` is the one
   for C# bindings sources read by the compiler.
+- `NativeListTypeSymbol<T>.SetList(ref val, list)` sets a native list of the type, or the BHL array
+  itself when the list is a `ValList<T>` adapter of one; `ValList<T>.New(..)` takes the array's type
+  for that, `Source`/`SourceType` expose them.
 
 ### Changed
 - The examples use their C# bindings (`bindings.cs`) as the bindings sources instead of `.bhl`

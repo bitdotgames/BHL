@@ -15,6 +15,12 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
 
   ValList val_list;
 
+  IType source_type;
+
+  //NOTE: the BHL array it adapts and its type (null if not known), to pass the array back to BHL as is
+  public ValList Source => val_list;
+  public IType SourceType => source_type;
+
   public int Count => val_list.Count;
 
   public bool IsReadOnly => false;
@@ -35,7 +41,7 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
     return _pool;
   }
 
-  static public ValList<T> New(ValList val_list, Func<Val, T> val2native)
+  static public ValList<T> New(ValList val_list, Func<Val, T> val2native, IType source_type = null)
   {
     var pool = GetPool();
 
@@ -54,6 +60,7 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
     vls._refs = 1;
     vls.val_list = val_list;
     vls.val2native = val2native;
+    vls.source_type = source_type;
     vls.pool = pool;
 
     return vls;

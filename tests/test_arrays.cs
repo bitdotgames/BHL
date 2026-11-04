@@ -954,6 +954,54 @@ public class TestArrays : BHL_TestBase
   }
 
   [Fact]
+  public void TestNativeFuncReturnsItsArrayArg()
+  {
+    string bhl = @"
+    func int test()
+    {
+      []int a = [1, 2]
+      []int b = Pick(a)
+      b.Add(3)
+      return a.Count * 10 + b[2]
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      var list_int = NativeListTypeSymbol.DefineOnce<int>(ts.ns, "List_int", (v) => (int)v.num, (itype, n) => Val.NewInt(n), Types.Int);
+
+      //NOTE: as generated bindings do: the array argument is adapted, the result is set by SetList,
+      //      the argument is released after the result is pushed
+      var fn = new FuncSymbolNative(new Origin(), "Pick", ts.TArr("int"),
+        (exec, args_info) =>
+        {
+          var dv = exec.stack.Pop();
+          IList<int> xs;
+          if(dv.obj is ValList vl)
+            xs = ValList<int>.New(vl, list_int.Val2Native, dv.type);
+          else
+            xs = (IList<int>)dv.obj;
+          dv._refc?.Retain();
+          dv._refc?.Release();
+
+          var rv = new Val();
+          list_int.SetList(ref rv, xs);
+          exec.stack.Push(rv);
+
+          (xs as IRefcounted)?.Release();
+          return null;
+        },
+        new FuncArgSymbol("xs", ts.TArr("int"))
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(33, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestNativeListDefineOnce()
   {
     var ts = new Types();
