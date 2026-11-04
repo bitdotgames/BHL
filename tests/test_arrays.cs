@@ -954,6 +954,67 @@ public class TestArrays : BHL_TestBase
   }
 
   [Fact]
+  public void TestValListTypedAdapaterCopyTo()
+  {
+    var ArrayInts = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_int",
+      (v) => v,
+      (itype, n) => n,
+      Types.Int
+    );
+    ArrayInts.Setup();
+
+    var vm = new VM();
+
+    var vals = ValList.New(vm);
+    vals.Add(10);
+    vals.Add(20);
+
+    var vals_typed = ValList<int>.New(vals, ArrayInts.Val2Native);
+
+    var arr = new int[4];
+    vals_typed.CopyTo(arr, 1);
+    Assert.Equal(new int[] { 0, 10, 20, 0 }, arr);
+
+    Assert.Throws<ArgumentException>(() => vals_typed.CopyTo(new int[2], 1));
+
+    vals_typed.Release();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestValListTypedAdapaterIndexOfNull()
+  {
+    var ArrayStrings = new NativeListTypeSymbol<string>(
+      new Origin(),
+      "List_string",
+      (v) => v.str,
+      (itype, s) => Val.NewStr(s),
+      Types.String
+    );
+    ArrayStrings.Setup();
+
+    var vm = new VM();
+
+    var vals = ValList.New(vm);
+    vals.Add(Val.NewStr("a"));
+    vals.Add(Val.NewStr(null));
+    vals.Add(Val.NewStr("b"));
+
+    var vals_typed = ValList<string>.New(vals, ArrayStrings.Val2Native);
+
+    Assert.Equal(1, vals_typed.IndexOf(null));
+    Assert.Equal(2, vals_typed.IndexOf("b"));
+    Assert.Equal(-1, vals_typed.IndexOf("c"));
+
+    vals_typed.Release();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestRefcList()
   {
     {

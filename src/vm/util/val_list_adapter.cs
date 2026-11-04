@@ -159,14 +159,14 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
     return IndexOf(item) != -1;
   }
 
-  public void CopyTo(T[] array, int start_idx)
+  //NOTE: as ICollection<T> defines it, the index is the one in the target array
+  public void CopyTo(T[] array, int array_idx)
   {
-    int target_size = Count - start_idx;
-    if(target_size > array.Length)
-      throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, target_size));
+    if(array_idx < 0 || array.Length - array_idx < Count)
+      throw new ArgumentException(string.Format("Array size {0} from index {1} is less than size {2}", array.Length, array_idx, Count));
 
-    for(int i = start_idx, j = 0; i < Count; i++, j++)
-      array[j] = this[i];
+    for(int i = 0; i < Count; i++)
+      array[array_idx + i] = this[i];
   }
 
   public bool Remove(T item)
@@ -180,9 +180,11 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
 
   public int IndexOf(T item)
   {
+    //NOTE: no boxing of a struct and a null item is fine, unlike this[i].Equals(item)
+    var cmp = EqualityComparer<T>.Default;
     for(int i = 0; i < Count; ++i)
     {
-      if(this[i].Equals(item))
+      if(cmp.Equals(this[i], item))
         return i;
     }
 

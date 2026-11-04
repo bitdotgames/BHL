@@ -12,8 +12,8 @@ GOTO :RUN
 :BUILD
 set "VERBOSITY=--verbosity q -nologo"
 IF "%BHL_SILENT%"=="0" set "VERBOSITY="
-dotnet clean "%PROJECT%" %VERBOSITY% 1>&2
-dotnet publish "%PROJECT%" %VERBOSITY% 1>&2 || GOTO :ERROR
+dotnet clean "%PROJECT%" -c Release %VERBOSITY% 1>&2
+dotnet publish "%PROJECT%" -c Release %VERBOSITY% 1>&2 || GOTO :ERROR
 
 :RUN
 dotnet "%BHL_DLL%" %* || GOTO :ERROR

@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The examples use their C# bindings (`bindings.cs`) as the bindings sources instead of `.bhl`
   bindings declaring the same symbols.
+- `BHL_REBUILD` cleans the Release build of the `bhl` tool, the one it runs, instead of Debug,
+  so the tool is rebuilt from scratch.
+
+### Fixed
+- `ValList<T>.IndexOf`/`Contains` compare by `EqualityComparer<T>.Default`: no boxing of a struct
+  item, a null item no longer throws.
+- `ValList<T>.CopyTo(array, index)` copies to `array` from `index`, as `ICollection<T>` defines it,
+  instead of copying the items from `index` to the start of `array`.
 
 ## [3.0.0-beta7]
 
