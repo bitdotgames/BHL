@@ -2844,11 +2844,6 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(vd_type, "unexpected expression");
           return false;
         }
-        else if(is_auto_var && assign_exp?.GetText() == "=null")
-        {
-          AddError(vd_type, "unexpected expression");
-          return false;
-        }
 
         var vd_name = vproxy.LocalNameAt(i);
         var var_decl_ast = ProcDeclVar(
@@ -3189,6 +3184,14 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       else if(auto_type == Types.Void)
       {
         AddError(assign_exp, "void expression type");
+        return false;
+      }
+      //NOTE: 'null' carries no type to infer from. Checked here, against the evaluated type,
+      //      so that every spelling is caught - it used to be a text comparison against
+      //      "=null" upstream, which 'var x = (null)' walked straight past
+      else if(auto_type == Types.Null)
+      {
+        AddError(assign_exp, "unexpected expression");
         return false;
       }
 

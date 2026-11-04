@@ -317,7 +317,28 @@ public class TestImplicit : BHL_TestBase
       "unexpected expression",
       new PlaceAssert(bhl, @"
       var bar = null
-------^"
+--------------^"
+      )
+    );
+  }
+
+  //NOTE: the check used to compare the expression's source text against "=null", so any other
+  //      spelling of the same thing slipped through and the var silently got the 'null' type
+  [Fact]
+  public void TestParenthesizedNullIsNotAllowed()
+  {
+    string bhl = @"
+    func test() {
+      var bar = (null)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "unexpected expression",
+      new PlaceAssert(bhl, @"
+      var bar = (null)
+--------------^"
       )
     );
   }

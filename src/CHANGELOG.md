@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   silently. Both are rejected the same way now, for a chain of any length.
 
 ### Fixed
+- `var a = null` is rejected whatever the expression looks like: the check compared the source text
+  against "=null", so `var a = (null)` went through and the variable silently got the `null` type.
+  It is checked against the type of the expression now, and the error points at the expression
+  rather than at `var`.
 - The check for a symbol declared in two modules no longer throws a `NullReferenceException` when the
   conflicting symbol is a namespace the check merged for itself, which belongs to no single module:
   it reports the conflict as intended, naming such a module `?`.

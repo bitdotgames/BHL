@@ -137,9 +137,7 @@ passes untouched — but external Unity-side bindings might.
 `GenericArrayTypeSymbol` was deliberately left alone: its `name` is derived
 from `item_type`, so it is already self-consistent.
 
-## Open defects
-
-### 5. `HasDefaultArgAt` is a tautology
+### 5. `HasDefaultArgAt` was a tautology — FIXED
 
 `src/vm/symbol/func.cs:356-361`:
 
@@ -152,7 +150,10 @@ GetDefaultArgsNum()` — evidently what was meant. Latent: the only caller
 (`src/front/antlr_proc.cs:716`) is already range-guarded, so correct and buggy
 expressions coincide there. Any new caller inherits a silently-true predicate.
 
-### 6. `var x = (null)` bypasses the null-assignment guard
+Fixed to `return i >= GetRequiredArgsNum();`. No behaviour change at the single
+existing call site, which is why nothing in the suite moved.
+
+### 6. `var x = (null)` bypassed the null-assignment guard — FIXED
 
 `src/front/antlr_proc.cs:2847` matches **source text**:
 
@@ -164,6 +165,14 @@ else if(is_auto_var && assign_exp?.GetText() == "=null")
 0 errors (local type becomes `Types.Null`). Module-level globals and fields are
 rejected by a separate, correct path. Harmless for marshalling today — local
 var types aren't serialized — but the guard plainly intends to reject this.
+
+Fixed by dropping the text comparison and checking the *evaluated* type where
+the auto type is resolved (`ProcAssignToVar`), next to the existing `null`-type
+and `void` checks: `auto_type == Types.Null` → "unexpected expression".
+Verified against the CLI: `null`, `(null)` and `(((null)))` are all rejected,
+`var a = 1` still infers. The message is unchanged but the caret now points at
+the expression instead of at `var`, so `TestNullIsNotAllowed`'s `PlaceAssert`
+moved.
 
 ## Latent / cosmetic
 

@@ -5999,6 +5999,34 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  //NOTE: the predicate used to read 'GetDefaultArgsNum() - GetDefaultArgsNum()', always 0, so it
+  //      answered true for every index in range. Its only caller is already range guarded, which
+  //      is why nothing broke, but any new caller would have inherited a silently true predicate
+  public void TestHasDefaultArgAt()
+  {
+    string bhl = @"
+
+    func int foo(int k0, int k1 = 1, int k2 = 10)
+    {
+      return k0+k1+k2
+    }
+    ";
+
+    var c = Compile(bhl);
+    var foo = (FuncSymbolScript)c.ns.Resolve("foo");
+
+    Assert.Equal(3, foo.GetTotalArgsNum());
+    Assert.Equal(2, foo.GetDefaultArgsNum());
+    Assert.Equal(1, foo.GetRequiredArgsNum());
+
+    Assert.False(foo.HasDefaultArgAt(0));
+    Assert.True(foo.HasDefaultArgAt(1));
+    Assert.True(foo.HasDefaultArgAt(2));
+    //out of range
+    Assert.False(foo.HasDefaultArgAt(3));
+  }
+
+  [Fact]
   public void TestFuncDefaultArg()
   {
     string bhl = @"

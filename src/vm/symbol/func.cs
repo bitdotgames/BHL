@@ -357,7 +357,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   {
     if(i >= GetTotalArgsNum())
       return false;
-    return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
+    return i >= GetRequiredArgsNum();
   }
 
   public FuncArgSymbol TryGetArg(int idx)

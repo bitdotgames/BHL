@@ -45,3 +45,24 @@ cross-module repro attempt wrongly suggested the bug wasn't real.
 
 Page updated: findings #1-#3 moved to a "Fixed" section; #4-#6 and the latent
 items remain open.
+
+## [2026-11-04] ingest | Fixed audit findings #4-#6
+
+Finding #4 was reframed twice before it was right, worth remembering: it was
+first written as "array Equals/GetHashCode are inverted", then as "composite
+names aren't canonical", and both were wrong. A probe showed names *are*
+normalized (the frontend resolves the proxy before building the composite), so
+generic arrays/maps/tuples/refs/signatures are self-consistent. The real defect
+was `NativeListTypeSymbol` alone, whose name is caller-supplied: measured a
+`HashSet` missing an object its own `Equals` called equal. Fixed by including
+the name in `Equals` - a behaviour change, `Types.Is(List_a, List_b)` is false
+now.
+
+#5 `HasDefaultArgAt` -> `i >= GetRequiredArgsNum()`, no behaviour change at its
+one guarded call site. #6 dropped the `GetText() == "=null"` text comparison
+for a check on the evaluated type, so `(null)` and deeper nestings are caught;
+the caret moved from `var` to the expression.
+
+Lesson recorded for future audits: a finding's *framing* deserves as much
+verification as its existence. Two of the six here were real but described
+wrongly, and acting on the first description would have made the code worse.
