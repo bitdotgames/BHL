@@ -5,12 +5,9 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-beta11]
+## [3.0.0-beta12]
 
 ### Changed
-- The symbol factory no longer reads the class id of a native list type as a generic array: a native
-  list type is written by its name and never by a class id, a module with it is an error now instead
-  of a different type.
 - Two native list types with the same item type but different names are different types now: they
   are backed by different native containers and conversions, so one is not assignable to the other
   any more. They used to compare equal while hashing apart, so a set of types missed them as well.
@@ -27,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The check for a symbol declared in two modules no longer throws a `NullReferenceException` when the
   conflicting symbol is a namespace the check merged for itself, which belongs to no single module:
   it reports the conflict as intended, naming such a module `?`.
+
+## [3.0.0-beta11]
+
+### Changed
+- The symbol factory no longer reads the class id of a native list type as a generic array: a native
+  list type is written by its name and never by a class id, a module with it is an error now instead
+  of a different type.
 
 ## [3.0.0-beta10]
 
