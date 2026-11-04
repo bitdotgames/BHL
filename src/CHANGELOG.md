@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The symbol factory no longer reads the class id of a native list type as a generic array: a native
   list type is written by its name and never by a class id, a module with it is an error now instead
   of a different type.
+- An inheritance cycle longer than one step is a compile error, "inheritance cycle is not allowed":
+  only direct self-inheritance was caught before, so `class A : B` with `class B : A` recursed until
+  the stack overflowed and took the process down with it, while the interface equivalent was accepted
+  silently. Both are rejected the same way now, for a chain of any length.
+
+### Fixed
+- The check for a symbol declared in two modules no longer throws a `NullReferenceException` when the
+  conflicting symbol is a namespace the check merged for itself, which belongs to no single module:
+  it reports the conflict as intended, naming such a module `?`.
 
 ## [3.0.0-beta10]
 

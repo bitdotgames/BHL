@@ -139,6 +139,13 @@ Two IDs are absent from `SymbolFactory.CreateById`
   in no namespace.
 - `NativeListTypeSymbol` = 24 (`src/vm/type/array.cs:331`) — the class is
   `abstract`, so the factory could never construct it. Effectively dead code.
+  **History:** the factory did briefly carry a `case
+  NativeListTypeSymbol.CLASS_ID: return new GenericArrayTypeSymbol();` — worse
+  than a plain omission, since reading that id silently produced the *wrong
+  type*. Removed in `49344ad7`, which also added a test in
+  `tests/test_marshall.cs` asserting each class id builds its own class and
+  that no native list id is in the factory. A native list type is written by
+  its name, never by a class id.
 
 Why they can't currently reach the stream: `ProxyType.Sync` (`proxy.cs:119-133`)
 writes types **by name/path** unless `IEphemeralType`, and all 5 ephemeral types
