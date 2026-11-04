@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hand-written C# bindings are read as is: anonymous delegates and lambdas passed as native
   code and `typeof(...)` as native types are accepted as arguments; constructors and fields with
   several variables are skipped.
+- `NativeListTypeSymbol.DefineOnce<T>(ns, name, val2native, native2val, item_type)` defines a native
+  list type unless it's already defined and returns it; `DefineOnce(ns, name, item_type)` is the one
+  for C# bindings sources read by the compiler.
 
 ### Changed
 - The examples use their C# bindings (`bindings.cs`) as the bindings sources instead of `.bhl`

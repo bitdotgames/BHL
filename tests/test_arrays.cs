@@ -954,6 +954,20 @@ public class TestArrays : BHL_TestBase
   }
 
   [Fact]
+  public void TestNativeListDefineOnce()
+  {
+    var ts = new Types();
+
+    var lst = NativeListTypeSymbol.DefineOnce<int>(ts.ns, "List_int", (v) => v, (itype, n) => n, Types.Int);
+    Assert.Same(lst, ts.ns.Resolve("List_int"));
+    //NOTE: already defined, e.g. by other bindings, it's returned as is
+    Assert.Same(lst, NativeListTypeSymbol.DefineOnce<int>(ts.ns, "List_int", (v) => v, (itype, n) => n, Types.Int));
+
+    var err = Assert.Throws<Exception>(() => NativeListTypeSymbol.DefineOnce<float>(ts.ns, "List_int", (v) => v, (itype, n) => n, Types.Float));
+    Assert.Contains("not a native list of Single", err.Message);
+  }
+
+  [Fact]
   public void TestValListTypedAdapaterCopyTo()
   {
     var ArrayInts = new NativeListTypeSymbol<int>(

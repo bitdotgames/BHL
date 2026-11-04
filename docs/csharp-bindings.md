@@ -171,6 +171,10 @@ error naming the file and line:
   `FieldSymbol`, `EnumSymbolNative`…), arrays `new T[] { … }`, `new List<T>() { … }`, the
   `types.T/TArr/TMap/TTuple/TFunc` helpers, members and methods of bhl objects, enum values
   and `|` of enum flags or integers.
+- **Native lists:** `NativeListTypeSymbol.DefineOnce(types.ns, "List_X", types.T("X"))` defines
+  the native list type of an array argument or result once, whichever bindings come first; its
+  runtime counterpart `NativeListTypeSymbol.DefineOnce<X>(…)` with the conversions goes under
+  `#if !BHL_FRONT`. Its origin is not the registration code.
 - **Native code:** a local function or method name, an anonymous `delegate` or a lambda passed
   where a delegate is expected (a field getter, a class creator, a function's callback) means
   "there is native code": the symbol gets the front end's placeholder

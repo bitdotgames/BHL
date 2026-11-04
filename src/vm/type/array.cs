@@ -324,6 +324,35 @@ public abstract class NativeListTypeSymbol :
   {
   }
 
+  //NOTE: defines the native list type unless it's already defined (e.g. by other bindings
+  //      with the same item type) and returns it, a defined one must be of the same T
+  public static NativeListTypeSymbol<T> DefineOnce<T>(
+    Namespace ns, string name,
+    Func<Val, T> val2native,
+    Func<ProxyType, T, Val> native2val,
+    ProxyType item_type
+  )
+  {
+    var defined = ns.Resolve(name);
+    if(defined != null)
+    {
+      if(defined is NativeListTypeSymbol<T> typed)
+        return typed;
+      throw new Exception($"'{name}' is already defined and it's not a native list of {typeof(T).Name}");
+    }
+
+    var lst = new NativeListTypeSymbol<T>(new Origin(), name, val2native, native2val, item_type);
+    lst.Setup();
+    ns.Define(lst);
+    return lst;
+  }
+
+  //NOTE: the one for C# bindings sources read by the compiler (BHL_FRONT): no native type and conversions
+  public static void DefineOnce(Namespace ns, string name, ProxyType item_type)
+  {
+    DefineOnce<object>(ns, name, null, null, item_type);
+  }
+
   //NOTE: making it sort of 'inherit' from the base GenericArrayTypeSymbol
   protected override HashSet<IInstantiable> CollectAllRelatedTypesSet()
   {

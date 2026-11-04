@@ -532,4 +532,20 @@ static class Bindings
     Assert.Contains("declared more than once",
       ReadSourceError(Wrap("", "  public static void Register(Types types, int i) {}")).Message);
   }
+
+  [Fact]
+  public void NativeListIsDefinedOnce()
+  {
+    //NOTE: as generated bindings do, a second definition of the same native list is skipped
+    var ts = ReadSource(Wrap(@"
+    NativeListTypeSymbol.DefineOnce(types.ns, ""List_int"", types.T(""int""));
+    NativeListTypeSymbol.DefineOnce(types.ns, ""List_int"", types.T(""int""));
+    types.ns.Define(new FuncSymbolNative(new Origin(), ""Sum"", types.T(""int""), null,
+      new FuncArgSymbol(""ns"", types.TArr(types.T(""int"")))));
+"));
+
+    var lst = ts.ns.Resolve("List_int");
+    Assert.IsType<NativeListTypeSymbol<object>>(lst);
+    Assert.Equal("int", ((NativeListTypeSymbol)lst).item_type.Get().GetName());
+  }
 }
