@@ -236,4 +236,42 @@ public class TestMarshall : BHL_TestBase
       Assert.Equal(Types.Int, Test.GetArg(1).type.Get());
     }
   }
+
+  //NOTE: symbols and types which are never written into a compiled module, native ones come from bindings
+  static readonly HashSet<Type> NOT_PERSISTED = new HashSet<Type>()
+  {
+    typeof(ClassSymbolNative),
+    typeof(EnumSymbolNative),
+    typeof(FieldSymbol),
+    typeof(FuncSymbolNative),
+    typeof(FuncSymbolVirtual),
+    typeof(InterfaceSymbolNative),
+    typeof(LambdaSymbol),
+    typeof(NativeListTypeSymbol<>),
+    //NOTE: 'null' is written by its name, 'var' is resolved before
+    typeof(NullSymbol),
+    typeof(VarSymbol),
+  };
+
+  [Fact]
+  public void TestClassIdCreatesTheSameClass()
+  {
+    //NOTE: a class written with its ClassId() is read back by the factory: a subclass not overriding
+    //      ClassId() would be read as its base, a class missing in the factory fails only on loading
+    var factory = new SymbolFactory(new Types(), null);
+    var persisted = typeof(VM).Assembly.GetTypes()
+      .Where(t => typeof(IMarshallableGeneric).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+      .Where(t => !NOT_PERSISTED.Contains(t.IsGenericType ? t.GetGenericTypeDefinition() : t))
+      .ToList();
+
+    Assert.NotEmpty(persisted);
+    foreach(var t in persisted)
+    {
+      var ctor = t.GetConstructor(Type.EmptyTypes);
+      Assert.True(ctor != null, $"{t.Name} has no default constructor, the factory can't create it");
+      var obj = (IMarshallableGeneric)ctor.Invoke(null);
+      var created = factory.CreateById(obj.ClassId());
+      Assert.True(created?.GetType() == t, $"{t.Name} has class id {obj.ClassId()} but the factory creates {created?.GetType().Name ?? "nothing"}");
+    }
+  }
 }

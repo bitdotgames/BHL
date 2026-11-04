@@ -5,6 +5,13 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- The symbol factory no longer reads the class id of a native list type as a generic array: a native
+  list type is written by its name and never by a class id, a module with it is an error now instead
+  of a different type.
+
 ## [3.0.0-beta10]
 
 ### Added

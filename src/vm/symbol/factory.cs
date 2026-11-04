@@ -38,8 +38,6 @@ public class SymbolFactory : marshall.IFactory
         return new FieldSymbolScript();
       case GenericArrayTypeSymbol.CLASS_ID:
         return new GenericArrayTypeSymbol();
-      case NativeListTypeSymbol.CLASS_ID:
-        return new GenericArrayTypeSymbol();
       case GenericMapTypeSymbol.CLASS_ID:
         return new GenericMapTypeSymbol();
       case ClassSymbolScript.CLASS_ID:
