@@ -89,33 +89,50 @@ The design intends `name` to *be* the structural key — it's derived from the
 components (`"[]" + item_type`, `"ref " + subj`). So changing one type's
 `GetHashCode` in isolation would introduce a new inconsistency, not remove one.
 
-The actual defect is narrower: `name` is baked at construction from the
-**as-written** spelling. `ArrayTypeSymbol(origin, item_type)` does `"[]" +
-item_type` (`array.cs:85-87`), and `ProxyType.ToString()` (`proxy.cs:136-141`)
-returns the raw path *without resolving* when `path.Count > 0`. So `[]Item`
-written inside namespace `fns` and `[]fns.Item` are `Equals`-equal but carry
-different names, hence different hashes. On unmarshall `name` is recomputed
-from the already-normalized path, so an in-memory type can hash differently
-from the identical type loaded from a `.bhc`.
+**The "name isn't canonical" theory was tested and is wrong.** Composite names
+*are* normalized in practice: the frontend resolves a type proxy before
+building the composite, and `ProxyType.SetResolved` rewrites `path` to the full
+path, so `[]Item` written inside namespace `fns` comes out named `[]fns.Item`,
+matching a `[]fns.Item` written elsewhere. Measured: identical names, identical
+hashes, `Types.Is` true, source compiles clean.
 
-**Known reachability is narrow.** The only consumer of these hashes is
-`HashSet<IInstantiable>` in `Types.Is()` via `IsSupersetOf`
-(`type_system.rules.cs:74`) — and `Is()` tests `type.Equals(dest_type)` *first*
-(`:57`), returning early, so the hash path only runs when `Equals` is already
-false. No `Dictionary<IType,…>`/`HashSet<IType>` exists anywhere else.
+For `GenericArrayTypeSymbol` the convention is therefore *self-consistent*:
+`name` is derived from `item_type`, so `Equals`-equal ⟹ same name ⟹ same hash.
+Same for map/tuple/ref/func-signature.
 
-Verified: ordinary qualified-vs-unqualified BHL source
-(`[]fns.Item a = fns.make()` against a `[]Item` inside `fns`) compiles clean —
-the early `Equals` covers it. The remaining live path is
-`NativeListTypeSymbol` vs a plain `[]T`, where `CollectAllRelatedTypesSet`
-(`array.cs:369-377`) builds a fresh `GenericArrayTypeSymbol`: if the native
-binding's item-type proxy is spelled differently from the BHL source's, the two
-hash apart and `IsSupersetOf` fails, giving a spurious "incompatible types".
-**Not yet demonstrated** — needs a C# binding to construct.
+**The real defect is `NativeListTypeSymbol` alone**, because its `name` is
+**caller-supplied** (`DefineOnce(ns, "List_a", …)`, `array.cs:341`) and
+unrelated to `item_type`, while `Equals` (`:431-447`) still compares *only*
+`item_type`. So two native lists over the same item type but with different
+names — and genuinely different native backings, i.e. different
+`Val2Native`/`Native2Val`/creator — are `Equals`-equal yet hash apart.
 
-Fix direction is a decision, not a mechanical change: canonicalize `name`
-(e.g. recompute in `Setup()` from the resolved path) rather than touch any
-single type's `GetHashCode`.
+Measured with two lists over `int`:
+
+```
+a.name=List_a hash=1670586340
+b.name=List_b hash=-1599090102
+a.Equals(b)    : True
+hashes agree   : False      <-- contract broken
+set.Add(a); set.Contains(b) : False   <-- HashSet genuinely misses an equal object
+Types.Is(a,b)  : True
+```
+
+So it is both a `Equals`/`GetHashCode` contract violation *and* a conflation of
+operationally distinct types. It stays invisible today only because the one
+in-tree hash consumer, `Types.Is` → `IsSupersetOf`
+(`type_system.rules.cs:74`), is shortcut by the `type.Equals(dest_type)` test
+at `:57`. No `Dictionary<IType,…>`/`HashSet<IType>` exists anywhere else.
+
+Fixing it is a semantic decision, not a mechanical repair:
+
+- include identity in `NativeListTypeSymbol.Equals` so `List_a != List_b` —
+  arguably the correct meaning, since their native backings differ, but it
+  makes `Types.Is(List_a, List_b)` false and could reject code that compiles
+  today; or
+- hash on `item_type` instead of `name` — preserves today's lenient
+  assignability and restores the contract, but keeps two differently-backed
+  native lists mutually substitutable.
 
 ### 5. `HasDefaultArgAt` is a tautology
 
