@@ -70,18 +70,52 @@ belongs to no single module.
 
 ## Open defects
 
-### 4. `Equals`/`GetHashCode` are inverted on array types
+### 4. Composite type `name` is not canonical, so hashing can disagree with `Equals`
 
-`src/vm/type/array.cs:312-324` (`GenericArrayTypeSymbol`) and `:431-447`
-(`NativeListTypeSymbol`):
+**Corrected framing.** This was first written up as "array's `Equals`/
+`GetHashCode` are inverted", which is misleading. All five composite types
+follow the *same uniform convention*:
 
-- `Equals(o)` → `item_type.Equals(o.item_type)` — compares **only item type**
-- `GetHashCode()` → `name.GetHashCode()` — hashes **only name**
+| type | `Equals` compares | `GetHashCode` |
+|---|---|---|
+| `GenericArrayTypeSymbol` (`array.cs:312-324`) | `item_type` | `name` |
+| `NativeListTypeSymbol` (`array.cs:431-447`) | `item_type` | `name` |
+| `GenericMapTypeSymbol` (`map.cs:368-380`) | `key_type`+`val_type` | `name` |
+| `FuncSignature` (`func.cs:127-168`) | return+args | `name` |
+| `TupleType` (`tuple.cs:85-101`) | `items` | `name` |
+| `RefType` (`ref.cs:59-70`) | `subj` | `name` |
 
-Exactly inverted, so equal objects can hash differently. Reachable: these land
-in `HashSet<IInstantiable>` via `CollectAllRelatedTypesSet` (`:369-377`), which
-`Types.Is()` consumes through `IsSupersetOf`
-(`src/vm/type/type_system.rules.cs:71-74`).
+The design intends `name` to *be* the structural key — it's derived from the
+components (`"[]" + item_type`, `"ref " + subj`). So changing one type's
+`GetHashCode` in isolation would introduce a new inconsistency, not remove one.
+
+The actual defect is narrower: `name` is baked at construction from the
+**as-written** spelling. `ArrayTypeSymbol(origin, item_type)` does `"[]" +
+item_type` (`array.cs:85-87`), and `ProxyType.ToString()` (`proxy.cs:136-141`)
+returns the raw path *without resolving* when `path.Count > 0`. So `[]Item`
+written inside namespace `fns` and `[]fns.Item` are `Equals`-equal but carry
+different names, hence different hashes. On unmarshall `name` is recomputed
+from the already-normalized path, so an in-memory type can hash differently
+from the identical type loaded from a `.bhc`.
+
+**Known reachability is narrow.** The only consumer of these hashes is
+`HashSet<IInstantiable>` in `Types.Is()` via `IsSupersetOf`
+(`type_system.rules.cs:74`) — and `Is()` tests `type.Equals(dest_type)` *first*
+(`:57`), returning early, so the hash path only runs when `Equals` is already
+false. No `Dictionary<IType,…>`/`HashSet<IType>` exists anywhere else.
+
+Verified: ordinary qualified-vs-unqualified BHL source
+(`[]fns.Item a = fns.make()` against a `[]Item` inside `fns`) compiles clean —
+the early `Equals` covers it. The remaining live path is
+`NativeListTypeSymbol` vs a plain `[]T`, where `CollectAllRelatedTypesSet`
+(`array.cs:369-377`) builds a fresh `GenericArrayTypeSymbol`: if the native
+binding's item-type proxy is spelled differently from the BHL source's, the two
+hash apart and `IsSupersetOf` fails, giving a spurious "incompatible types".
+**Not yet demonstrated** — needs a C# binding to construct.
+
+Fix direction is a decision, not a mechanical change: canonicalize `name`
+(e.g. recompute in `Setup()` from the resolved path) rather than touch any
+single type's `GetHashCode`.
 
 ### 5. `HasDefaultArgAt` is a tautology
 
