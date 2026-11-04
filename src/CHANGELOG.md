@@ -5,6 +5,21 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- `ValMap.GetEnumerator()` returns a struct enumerator, `foreach` over a `ValMap` in C# doesn't allocate.
+
+### Fixed
+- A value overwritten during a `foreach` over its map (`m[k] = ..`) no longer throws "Collection was
+  modified" on Unity's Mono (.NET Core never did): `ValMap` replaces values in its entries, not in the
+  dictionary.
+- A BHL `foreach` over a map no longer boxes each key and value (about 144 bytes per entry).
+- `ValMap.DefaultComparer` never finds a scalar key equal to a non scalar one: in an `[any]T` map
+  `0` was equal to `"x"` but not the other way round.
+- `ValMap.Remove` releases the key stored in the map, not the given one (they differ for keys equal
+  by a native comparer).
+
 ## [3.0.0-beta8]
 
 ### Added

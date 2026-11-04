@@ -288,7 +288,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override IEnumerator MapGetEnumerator(Val map)
   {
-    return ((IEnumerable)AsMap(map)).GetEnumerator();
+    return AsMap(map).GetEnumerator();
   }
 
   public override bool MapEnumeratorNext(Val en)
@@ -298,9 +298,10 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override void MapEnumeratorCurrent(Val en, out Val key, out Val val)
   {
-    var _en = (IDictionaryEnumerator)en.obj;
-    key = (Val)_en.Key;
-    val = (Val)_en.Value;
+    //NOTE: not IDictionaryEnumerator, its Key and Value box a Val on each entry
+    var kv = ((IEnumerator<KeyValuePair<Val, Val>>)en.obj).Current;
+    key = kv.Key;
+    val = kv.Value;
   }
 
   public override bool MapTryGet(Val map, Val key, out Val val)

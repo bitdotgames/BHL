@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using bhl;
 using Xunit;
@@ -875,6 +876,105 @@ public class TestMaps : BHL_TestBase
 
     map.Release();
 
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestForeachOverwritesValues()
+  {
+    //NOTE: Unity's Mono used to throw 'Collection was modified' here, .NET Core never did
+    string bhl = @"
+    func string test()
+    {
+      [string]int m = [[""a"", 1], [""b"", 2]]
+      foreach(string k,int v in m) {
+        m[k] = v * 10
+      }
+      return (string)m[""a""] + "";"" + (string)m[""b""]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal("10;20", Execute(vm, "test").Stack.Pop().str);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestMapEnumerationDoesNotAllocatePerEntry()
+  {
+    var vm = new VM();
+    var map_type = new GenericMapTypeSymbol(new Origin(), Types.Int, Types.Int);
+    var map = ValMap.New(vm);
+    for(int i = 0; i < 1000; ++i)
+      map.ReplaceAt(Val.NewInt(i), Val.NewInt(i * 2));
+    var mv = Val.NewObj(map, map_type);
+
+    //NOTE: as BHL foreach does, only the enumerator itself is boxed
+    double sum = 0;
+    long Iterate()
+    {
+      long before = GC.GetAllocatedBytesForCurrentThread();
+      var en = Val.NewObj(map_type.MapGetEnumerator(mv), null);
+      while(map_type.MapEnumeratorNext(en))
+      {
+        map_type.MapEnumeratorCurrent(en, out var k, out var v);
+        sum += k.num + v.num;
+      }
+      return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+    Iterate();
+    var allocated = Iterate();
+    Assert.Equal(2 * 3 * 999 * 1000 / 2, sum);
+    //NOTE: about 144 bytes per entry when Key and Value were boxed
+    Assert.True(allocated < 1000, $"allocated {allocated} bytes");
+
+    map.Release();
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestValMapScalarKeyNeverEqualsNonScalar()
+  {
+    var cmp = ValMap.DefaultComparer.Instance;
+    Assert.False(cmp.Equals(Val.NewInt(0), Val.NewStr("x")));
+    Assert.False(cmp.Equals(Val.NewStr("x"), Val.NewInt(0)));
+    Assert.True(cmp.Equals(Val.NewInt(1), Val.NewInt(1)));
+    Assert.True(cmp.Equals(Val.NewStr("x"), Val.NewStr("x")));
+  }
+
+  class Key : IRefcounted
+  {
+    public int id;
+    public int refs { get; private set; } = 1;
+    public Key(int id) { this.id = id; }
+    public void Retain() { ++refs; }
+    public void Release() { --refs; }
+  }
+
+  class KeyById : IEqualityComparer<Val>
+  {
+    public bool Equals(Val a, Val b) => ((Key)a.obj).id == ((Key)b.obj).id;
+    public int GetHashCode(Val v) => ((Key)v.obj).id;
+  }
+
+  [Fact]
+  public void TestValMapRemoveReleasesTheStoredKey()
+  {
+    var vm = new VM();
+    var map = ValMap.New(vm);
+    map.KeyComparer = new KeyById();
+
+    var stored = new Key(1);
+    map.ReplaceAt(Val.NewObj(stored, null), Val.NewInt(10));
+    Assert.Equal(2, stored.refs);
+
+    //NOTE: another object equal to the stored key
+    var other = new Key(1);
+    Assert.True(map.Remove(Val.NewObj(other, null)));
+    Assert.Equal(1, stored.refs);
+    Assert.Equal(1, other.refs);
+
+    map.Release();
     CommonChecks(vm);
   }
 }

@@ -8,7 +8,18 @@ namespace bhl
 
 public class ValMap : IDictionary<Val, Val>, IRefcounted
 {
-  Dictionary<Val, Val> map;
+  //NOTE: a value is replaced in the entry, not in the dictionary: Unity's Mono treats overwriting a value
+  //      of the dictionary as a modification which breaks an ongoing enumeration (.NET Core doesn't);
+  //      the entry also keeps the stored key, it's the one released on removal
+  internal class Entry
+  {
+    public Val key;
+    public Val val;
+  }
+
+  Dictionary<Val, Entry> map;
+
+  Stack<Entry> free_entries = new Stack<Entry>();
 
   Comparer comparer = new Comparer();
 
@@ -63,9 +74,10 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     var en = map.GetEnumerator();
     while(en.MoveNext())
     {
-      var current = en.Current;
-      current.Key.ReleaseData();
-      current.Value.ReleaseData();
+      var e = en.Current.Value;
+      e.key.ReleaseData();
+      e.val.ReleaseData();
+      FreeEntry(e);
     }
 
     map.Clear();
@@ -73,9 +85,30 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
   public Val this[Val k]
   {
-    get { return map[k]; }
+    get { return map[k].val; }
     //NOTE: no refcounting happens here
-    set { map[k] = value; }
+    set
+    {
+      if(map.TryGetValue(k, out var e))
+        e.val = value;
+      else
+        AddEntry(k, value);
+    }
+  }
+
+  void AddEntry(Val k, Val v)
+  {
+    var e = free_entries.Count > 0 ? free_entries.Pop() : new Entry();
+    e.key = k;
+    e.val = v;
+    map.Add(k, e);
+  }
+
+  void FreeEntry(Entry e)
+  {
+    e.key = default;
+    e.val = default;
+    free_entries.Push(e);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,20 +117,27 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     //NOTE: we are going to re-use the existing k/v,
     //      thus we need to decrease/increase user payload
     //      refcounts properly
-    if(map.TryGetValue(k, out var curr))
+    if(map.TryGetValue(k, out var e))
     {
-      map[k] = v.Clone();
+      var curr = e.val;
+      e.val = v.Clone();
       curr._refc?.Release();
     }
     else
     {
-      map[k.Clone()] = v.Clone();
+      AddEntry(k.Clone(), v.Clone());
     }
   }
 
   public bool TryGetValue(Val k, out Val v)
   {
-    return map.TryGetValue(k, out v);
+    if(map.TryGetValue(k, out var e))
+    {
+      v = e.val;
+      return true;
+    }
+    v = default;
+    return false;
   }
 
   public bool Contains(KeyValuePair<Val, Val> p)
@@ -112,15 +152,15 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
   public bool Remove(Val k)
   {
-    bool existed = map.TryGetValue(k, out var prev);
-    bool removed = map.Remove(k);
-    if(existed)
-    {
-      k.ReleaseData();
-      prev.ReleaseData();
-    }
+    if(!map.TryGetValue(k, out var e))
+      return false;
 
-    return removed;
+    map.Remove(k);
+    //NOTE: the stored key, k may be another object equal to it
+    e.key.ReleaseData();
+    e.val.ReleaseData();
+    FreeEntry(e);
+    return true;
   }
 
   public bool Remove(KeyValuePair<Val, Val> p)
@@ -133,14 +173,48 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     throw new NotImplementedException();
   }
 
-  public IEnumerator<KeyValuePair<Val, Val>> GetEnumerator()
+  public Enumerator GetEnumerator()
   {
-    return map.GetEnumerator();
+    return new Enumerator(map);
+  }
+
+  IEnumerator<KeyValuePair<Val, Val>> IEnumerable<KeyValuePair<Val, Val>>.GetEnumerator()
+  {
+    return GetEnumerator();
   }
 
   IEnumerator IEnumerable.GetEnumerator()
   {
-    return map.GetEnumerator();
+    return GetEnumerator();
+  }
+
+  public struct Enumerator : IEnumerator<KeyValuePair<Val, Val>>
+  {
+    Dictionary<Val, Entry> map;
+    Dictionary<Val, Entry>.Enumerator en;
+
+    internal Enumerator(Dictionary<Val, Entry> map)
+    {
+      this.map = map;
+      en = map.GetEnumerator();
+    }
+
+    public KeyValuePair<Val, Val> Current
+    {
+      get
+      {
+        var e = en.Current.Value;
+        return new KeyValuePair<Val, Val>(e.key, e.val);
+      }
+    }
+
+    object IEnumerator.Current => Current;
+
+    public bool MoveNext() => en.MoveNext();
+
+    public void Reset() => en = map.GetEnumerator();
+
+    public void Dispose() => en.Dispose();
   }
 
   ///////////////////////////////////////
@@ -169,7 +243,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
   //NOTE: use New() instead
   internal ValMap(VM vm)
   {
-    map = new Dictionary<Val, Val>(comparer);
+    map = new Dictionary<Val, Entry>(comparer);
 
     this.vm = vm;
   }
@@ -217,7 +291,11 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     public readonly static DefaultComparer Instance = new DefaultComparer();
     public bool Equals(Val a, Val b)
     {
-      if(Types.IsScalar(a.type))
+      //NOTE: by both keys, a scalar is never equal to a non scalar (e.g. keys of [any]T)
+      bool scalar = Types.IsScalar(a.type);
+      if(scalar != Types.IsScalar(b.type))
+        return false;
+      if(scalar)
         return a.num == b.num;
       else
         return a.obj?.Equals(b.obj) ?? null == b.obj;
