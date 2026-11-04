@@ -1106,6 +1106,122 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //NOTE: a list kept in a struct, like HList<T>: it must be updated through a ref
+  struct StructList : IList<int>
+  {
+    int[] items;
+    public int Count { get; private set; }
+    public bool IsReadOnly => false;
+    public int this[int i] { get => items[i]; set => items[i] = value; }
+    public void Add(int v)
+    {
+      if(items == null)
+        items = new int[8];
+      if(Count == items.Length)
+        Array.Resize(ref items, Count * 2);
+      items[Count++] = v;
+    }
+    public void RemoveAt(int i)
+    {
+      Array.Copy(items, i + 1, items, i, Count - i - 1);
+      --Count;
+    }
+    public void Clear() => Count = 0;
+    public bool Contains(int v) => IndexOf(v) != -1;
+    public int IndexOf(int v) => items == null ? -1 : Array.IndexOf(items, v, 0, Count);
+    public void Insert(int i, int v) => throw new NotImplementedException();
+    public bool Remove(int v) => throw new NotImplementedException();
+    public void CopyTo(int[] arr, int idx) => throw new NotImplementedException();
+    public IEnumerator<int> GetEnumerator() { for(int i = 0; i < Count; ++i) yield return items[i]; }
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+  }
+
+  [Fact]
+  public void TestNativeListCopyTo()
+  {
+    var ts = new Types();
+    var list_int = NativeListTypeSymbol.DefineOnce<int>(ts.ns, "List_int", (v) => (int)v.num, (itype, n) => Val.NewInt(n), Types.Int);
+    var arr_type = ts.TArr("int").Get();
+
+    var vm = new VM(ts);
+    var vals = ValList.New(vm);
+    vals.Add(Val.NewInt(1));
+    vals.Add(Val.NewInt(2));
+    var src = Val.NewObj(vals, arr_type);
+
+    //NOTE: a null class list is created
+    List<int> lst = null;
+    list_int.CopyTo(src, ref lst);
+    Assert.Equal(new List<int>() { 1, 2 }, lst);
+
+    //NOTE: an existing one is updated in place and trimmed
+    var same = lst;
+    same.AddRange(new[] { 7, 8, 9 });
+    list_int.CopyTo(src, ref lst);
+    Assert.Same(same, lst);
+    Assert.Equal(new List<int>() { 1, 2 }, lst);
+
+    //NOTE: a list assigned to itself is left as is
+    var self = Val.NewObj(lst, list_int);
+    list_int.CopyTo(self, ref lst);
+    Assert.Same(same, lst);
+    Assert.Equal(new List<int>() { 1, 2 }, lst);
+
+    //NOTE: a struct list is updated through the ref
+    var st = new StructList();
+    st.Add(5);
+    st.Add(6);
+    st.Add(7);
+    list_int.CopyTo(src, ref st);
+    Assert.Equal(2, st.Count);
+    Assert.Equal(1, st[0]);
+    Assert.Equal(2, st[1]);
+
+    //NOTE: an IList<T> one gets a List<T>
+    IList<int> ilst = null;
+    list_int.CopyTo(src, ref ilst);
+    Assert.Equal(new List<int>() { 1, 2 }, ilst);
+
+    //NOTE: null makes it null or an empty struct
+    list_int.CopyTo(new Val(), ref lst);
+    Assert.Null(lst);
+    list_int.CopyTo(new Val(), ref st);
+    Assert.Equal(0, st.Count);
+
+    vals.Release();
+    CommonChecks(vm);
+  }
+
+  class RefcItem : IRefcounted
+  {
+    public int refs { get; private set; } = 1;
+    public void Retain() { ++refs; }
+    public void Release() { --refs; }
+  }
+
+  [Fact]
+  public void TestNativeListCopyToReleasesItems()
+  {
+    var ts = new Types();
+    var list_obj = NativeListTypeSymbol.DefineOnce<object>(ts.ns, "List_obj", (v) => v.obj, (itype, n) => Val.NewObj(n, Types.Any), Types.Any);
+    var arr_type = ts.TArr("any").Get();
+
+    var vm = new VM(ts);
+    var item = new RefcItem();
+    var vals = ValList.New(vm);
+    vals.Add(Val.NewObj(item, Types.Any));
+    int refs_before = item.refs;
+
+    List<object> lst = null;
+    list_obj.CopyTo(Val.NewObj(vals, arr_type), ref lst);
+    Assert.Same(item, lst[0]);
+    //NOTE: the item read from the array is released after its conversion
+    Assert.Equal(refs_before, item.refs);
+
+    vals.Release();
+    CommonChecks(vm);
+  }
+
   [Fact]
   public void TestNativeListDefineOnce()
   {

@@ -5,6 +5,13 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `NativeListTypeSymbol<T>.CopyTo(src, ref list)` copies a BHL array into a native list kept by the
+  caller, a class (`List<T>`, `IList<T>`) or a struct (`HList<T>`): updated in place, created if
+  null, null for a null array; the items read from the array are released after their conversion.
+
 ## [3.0.0-beta9]
 
 ### Changed

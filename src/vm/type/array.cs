@@ -507,6 +507,58 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
       v.SetObj(list, this);
   }
 
+  //NOTE: copies a BHL array (a native list or a BHL one) into a native list kept by the caller,
+  //      e.g. a field, which can be a class (List<T>) or a struct (HList<T>): it's updated in place,
+  //      created if null; null makes it default (null or an empty struct)
+  public void CopyTo<TList>(Val src, ref TList dst) where TList : IList<T>, new()
+  {
+    if(src.obj == null)
+    {
+      dst = default;
+      return;
+    }
+    //NOTE: always false for a struct
+    if(dst == null)
+      dst = new TList();
+    else if(!typeof(TList).IsValueType && ReferenceEquals(src.obj, dst))
+      return;
+    CopyItems(src, ref dst);
+  }
+
+  //NOTE: the one for a list kept as IList<T>, a List<T> is made if it's null
+  public void CopyTo(Val src, ref IList<T> dst)
+  {
+    if(src.obj == null)
+    {
+      dst = null;
+      return;
+    }
+    if(dst == null)
+      dst = new List<T>();
+    else if(ReferenceEquals(src.obj, dst))
+      return;
+    CopyItems(src, ref dst);
+  }
+
+  void CopyItems<TList>(Val src, ref TList dst) where TList : IList<T>
+  {
+    var src_type = (ArrayTypeSymbol)src.type;
+    int count = src_type.ArrCount(src);
+    int before = dst.Count;
+    for(int i = 0; i < count; ++i)
+    {
+      var item = src_type.ArrGetAt(src, i);
+      var native = val2native(item);
+      item.ReleaseData();
+      if(i < before)
+        dst[i] = native;
+      else
+        dst.Add(native);
+    }
+    while(dst.Count > count)
+      dst.RemoveAt(dst.Count - 1);
+  }
+
   public override void ArrAdd(Val arr, Val val)
   {
     CheckItem(val);
