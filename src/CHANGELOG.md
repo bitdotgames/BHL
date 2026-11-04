@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   container written through a variable of a wider type (`[]any`, `[any]any`) used to accept
   anything, so `[]int` could end up holding a string. Scalars are checked as scalars only, values
   without a type or of `any` (made by native code) are not checked.
+- A cast to `int`, `float`, `bool`, an enum or `string` checks the value is a scalar: `(int)a` of an
+  `any` holding a string or an object used to give `0` (`(float)a` left the string as is), now it's
+  an "Invalid type cast" error. Values without a type or of `any` (made by native code) are not
+  checked.
+- `(bool)x` is a `bool` (`x != 0`), it used to keep the number and its type, so `(bool)5 == true` was
+  false; `(float)x` is tagged `float`.
 
 ### Fixed
 - A value overwritten during a `foreach` over its map (`m[k] = ..`) no longer throws "Collection was

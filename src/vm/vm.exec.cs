@@ -360,6 +360,15 @@ public partial class VM
       InitOpcodeHandlers();
     }
 
+    //NOTE: a scalar is cast only from a scalar, e.g. an 'any' holding a string or an object isn't
+    //      turned into 0; a value without a type or of 'any' (made by native code) isn't checked
+    static void CheckScalarCast(Val val, IType cast_type)
+    {
+      var type = val.type;
+      if(type != null && type != Types.Any && !Types.IsScalar(type))
+        throw new Exception("Invalid type cast: type '" + type.GetName() + "' can't be cast to '" + cast_type.GetName() + "'");
+    }
+
     public ExecState(
       int regions_capacity = 32,
       int frames_capacity = 16,
@@ -2318,11 +2327,31 @@ public partial class VM
 
           if(cast_type == Types.Int)
           {
+            CheckScalarCast(val, cast_type);
             val._refc?.Release();
             val = Val.NewNum((long)val.num);
           }
+          else if(cast_type == Types.Float)
+          {
+            CheckScalarCast(val, cast_type);
+            val._refc?.Release();
+            val = Val.NewFlt(val.num);
+          }
+          else if(cast_type == Types.Bool)
+          {
+            CheckScalarCast(val, cast_type);
+            val._refc?.Release();
+            val = Val.NewBool(val.num != 0);
+          }
+          else if(cast_type is EnumSymbol)
+          {
+            CheckScalarCast(val, cast_type);
+            if(force_type)
+              val.type = cast_type;
+          }
           else if(cast_type == Types.String && val.type != Types.String)
           {
+            CheckScalarCast(val, cast_type);
             val._refc?.Release();
             val = Val.NewStr(
               val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)

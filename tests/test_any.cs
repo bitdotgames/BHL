@@ -421,4 +421,64 @@ public class TestAny : BHL_TestBase
       "incompatible types: '[string]int' and '[any]any'"
     );
   }
+
+  string CastError(string body)
+  {
+    var vm = MakeVM(@"
+    class Foo {}
+    enum E {
+      A = 1
+    }
+    func test() {
+    " + body + @"
+    }
+    ");
+    return Assert.Throws<VM.Error>(() => Execute(vm, "test")).Message;
+  }
+
+  [Fact]
+  public void TestCastAnyToScalarChecksTheValue()
+  {
+    Assert.StartsWith("Invalid type cast: type 'string' can't be cast to 'int'", CastError("any a = \"x\"\n int i = (int)a"));
+    Assert.StartsWith("Invalid type cast: type 'string' can't be cast to 'float'", CastError("any a = \"x\"\n float f = (float)a"));
+    Assert.StartsWith("Invalid type cast: type 'string' can't be cast to 'bool'", CastError("any a = \"x\"\n bool b = (bool)a"));
+    Assert.StartsWith("Invalid type cast: type 'string' can't be cast to 'E'", CastError("any a = \"x\"\n E e = (E)a"));
+    Assert.StartsWith("Invalid type cast: type 'Foo' can't be cast to 'int'", CastError("any a = new Foo\n int i = (int)a"));
+    Assert.StartsWith("Invalid type cast: type 'Foo' can't be cast to 'string'", CastError("any a = new Foo\n string s = (string)a"));
+  }
+
+  [Fact]
+  public void TestCastAnyToScalarFromScalar()
+  {
+    string bhl = @"
+    func string test() {
+      any i = 5
+      any f = 2.5
+      any b = true
+      any s = ""x""
+      return (string)(int)f + "";"" + (string)(float)i + "";"" + (string)(int)b + "";"" + (string)i + "";"" + (string)s
+    }
+    ";
+    var vm = MakeVM(bhl);
+    Assert.Equal("2;5;1;5;x", Execute(vm, "test").Stack.Pop().str);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCastToBoolIsBool()
+  {
+    string bhl = @"
+    func string test() {
+      int i = 5
+      float f = 0.5
+      bool a = (bool)i
+      bool b = (bool)f
+      bool c = (bool)0
+      return (string)(a == true) + (string)(b == true) + (string)(c == false)
+    }
+    ";
+    var vm = MakeVM(bhl);
+    Assert.Equal("111", Execute(vm, "test").Stack.Pop().str);
+    CommonChecks(vm);
+  }
 }
