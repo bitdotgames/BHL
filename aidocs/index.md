@@ -6,7 +6,7 @@ get ingested.
 
 ## architecture/
 
-_(none yet)_
+- [Symbol/type system — known inconsistencies](architecture/symbol-type-consistency.md) — audit of symbol/type/scope: inheritance-cycle crash, Equals/GetHashCode inversions, CLASS_ID registry gaps, plus what's verified sound.
 
 ## lsp/
 
