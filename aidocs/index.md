@@ -6,7 +6,8 @@ get ingested.
 
 ## architecture/
 
-- [Symbol/type system — known inconsistencies](architecture/symbol-type-consistency.md) — audit of symbol/type/scope: inheritance-cycle crash, Equals/GetHashCode inversions, CLASS_ID registry gaps, plus what's verified sound.
+- [Why a function is capped at 26 default arguments](architecture/default-args-limit.md) — FuncArgsInfo's 32 bits, why lifting it is a bytecode format change, three options costed, and why it was left alone.
+- [Symbol/type system — known inconsistencies](architecture/symbol-type-consistency.md) — audit of symbol/type/scope: inheritance-cycle crash, a ProxyType race across compile threads, native-list equality, plus what's verified sound.
 
 ## lsp/
 

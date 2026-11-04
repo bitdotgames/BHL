@@ -66,3 +66,20 @@ the caret moved from `var` to the expression.
 Lesson recorded for future audits: a finding's *framing* deserves as much
 verification as its existence. Two of the six here were real but described
 wrongly, and acting on the first description would have made the code worse.
+
+## [2026-11-04] query | Default-arguments limit
+
+Asked whether the default-args cap could be lifted. New page:
+`architecture/default-args-limit.md`. Decided no, for now.
+
+Two things worth not re-deriving: the cap is **26**, not 28
+(`32 - ARGS_NUM_BITS`), and it is not a constant to raise — `cargs_bits` is a
+declared 4-byte operand on ~12 call opcodes, so any change bumps
+`COMPILE_FMT` and invalidates every `.bhc`, and `FuncArgsInfo` is public API
+reaching every native binding.
+
+Costed three options. Widening the operand pipeline is out: 677 explicit
+`new int[]{…}` literals in tests don't convert to `long[]`. Of the rest, the
+smaller diff (two 4-byte operands) was rejected in favour of wide call-opcode
+variants, which keep the hot path and all 42 existing call-opcode assertions
+untouched — smallest permanent cost beats smallest diff.
