@@ -224,9 +224,9 @@ public class VarSymbol : Symbol
   {
   }
 
-  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {
+    throw new NotImplementedException();
   }
 }
 

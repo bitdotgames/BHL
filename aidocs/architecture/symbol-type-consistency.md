@@ -187,7 +187,20 @@ dictionary/set key anywhere (only as a `Func<ProxyType,T,Val>` parameter). A
 landmine for whoever first keys on it. The `//TODO: some smelly code below` at
 `:96` already flags the underlying normalization hack.
 
-### `CLASS_ID` registry gaps are signaling-only
+### `CLASS_ID` registry gaps — RESOLVED, by design and now test-enforced
+
+**Corrected.** This section originally framed the factory omissions as a
+consistency defect. They are not: `tests/test_marshall.cs` now carries a
+`NOT_PERSISTED` set naming every symbol/type deliberately never written into a
+compiled module — `NullSymbol` and `VarSymbol` among them, with the note
+*"'null' is written by its name, 'var' is resolved before"* — and
+`TestClassIdCreatesTheSameClass` reflects over every other
+`IMarshallableGeneric`, asserting it has a default ctor and that the factory
+builds back its own class from its `ClassId()`. So the invariant is stated and
+enforced; absence from the factory is the intended signal for a
+written-by-name type, not an oversight.
+
+Original notes kept below for the reasoning they record.
 
 IDs run 1–24 with **23 never used** (confirmed via `git log -G` — a skipped
 number, not a retired ID; contiguity is not required, only uniqueness and
@@ -219,7 +232,7 @@ writes types **by name/path** unless `IEphemeralType`, and all 5 ephemeral types
 `SymbolsStorage.Sync` (`storage.cs:120`), only ever sees a module's own `ns`
 (`module_declared.cs:202`); the global `types.ns` is `Link`ed at load.
 
-### `VarSymbol` pairs a throwing `ClassId()` with a silent `Sync()`
+### `VarSymbol` paired a throwing `ClassId()` with a silent `Sync()` — FIXED
 
 `src/vm/symbol/builtins.cs:211-230`. Every other never-serialized symbol
 (`ClassSymbolNative`, `FuncSymbolNative`, `InterfaceSymbolNative`,
@@ -227,6 +240,11 @@ writes types **by name/path** unless `IEphemeralType`, and all 5 ephemeral types
 only throwing-`ClassId` symbol actually `Define`d into a namespace
 (`src/vm/type/type_system.builtins.cs:46`) — safe only because that namespace
 is never written.
+
+Fixed: `Sync()` throws `NotImplementedException` like its siblings, so a
+misuse is loud instead of silently writing nothing. `NullSymbol` was left
+alone — it is in `NOT_PERSISTED` with its own rationale, and its `ClassId()`
+is simply never consulted.
 
 ## Verified sound (don't re-investigate)
 
