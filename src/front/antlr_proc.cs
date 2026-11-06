@@ -528,12 +528,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       if(chain_ast[i] is AST_Call call)
       {
-        if(call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC)
+        if(call is AST_CallFunc || call is AST_CallMethod)
         {
           if(call.symbol is FuncSymbol fs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, fs.signature, yielded);
         }
-        else if(call.type == EnumCall.FUNC_PTR_VAR || call.type == EnumCall.FUNC_PTR_MVAR)
+        else if(call is AST_CallFuncPtrVar || call is AST_CallFuncPtrMVar)
         {
           if(call.symbol is VariableSymbol vs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, vs.type.Get() as FuncSignature, yielded);
@@ -596,7 +596,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       type = arr_type.item_type.Get();
 
-      var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
+      var ast = new AST_Index(line, is_map: false, is_write: write);
       PeekAST().AddChild(ast);
     }
     else if(type is MapTypeSymbol map_type)
@@ -610,7 +610,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       type = map_type.val_type.Get();
 
-      var ast = new AST_Call(write ? EnumCall.MAP_IDXW : EnumCall.MAP_IDX, line, null);
+      var ast = new AST_Index(line, is_map: true, is_write: write);
       PeekAST().AddChild(ast);
     }
     else
@@ -629,7 +629,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     public bool variadic;
   }
 
-  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call)
+  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, AST_Invoke call)
   {
     int total_args_num = func_symb.GetTotalArgsNum();
     int default_args_num = func_symb.GetDefaultArgsNum();
@@ -881,7 +881,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call)
+  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, AST_Invoke call)
   {
     var func_args = func_type.arg_types;
     var call_args_list = cargs.callArgsList();
@@ -965,12 +965,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   static bool HasFuncCalls(AST_Tree ast)
   {
     if(ast is AST_Call call &&
-       (call.type == EnumCall.FUNC ||
-        call.type == EnumCall.MFUNC ||
-        call.type == EnumCall.FUNC_PTR_VAR ||
-        call.type == EnumCall.FUNC_PTR_MVAR ||
-        call.type == EnumCall.FUNC_PTR_RES
-       ))
+       call is AST_Invoke)
       return true;
 
     for(int i = 0; i < ast.children.Count; ++i)
@@ -2055,7 +2050,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i = 0; i < ast.children.Count; ++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_overload, 2 /*cargs bits*/);
+      var op_call = new AST_CallFunc(ctx.Start.Line, op_overload, 2 /*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
@@ -2881,7 +2876,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         var_ann.eval_type = var_symb.type.Get();
         LSP_SetSymbol(vd_name, var_symb);
 
-        var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
+        var ast = new AST_VarWrite(start_line, var_symb);
         var_ast.AddChild(ast);
       }
       else if(vproxy.VarAccessAt(i) is {} var_exp)
@@ -3087,7 +3082,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_SetSymbol(name, symb);
 
     if(write)
-      return new AST_Call(EnumCall.VARWDCL, name.Symbol.Line, symb, 0, name);
+      return new AST_VarWrite(name.Symbol.Line, symb, name, is_decl: true);
     return new AST_VarDecl(symb, name.Symbol.Line);
   }
 
@@ -3704,7 +3699,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         curr_scope.Define(arr_cnt_symb);
       }
 
-      PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
+      PeekAST().AddChild(new AST_VarWrite(ctx.Start.Line, arr_tmp_symb));
       //declaring counter var
       PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, ctx.Start.Line));
 
@@ -3718,9 +3713,9 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       //while condition
       var cond = new AST_Block(BlockType.SEQ);
       var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
-      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_type.Resolve("Count")));
+      bin_op.AddChild(new AST_VarRead(ctx.Start.Line, arr_cnt_symb));
+      bin_op.AddChild(new AST_VarRead(ctx.Start.Line, arr_tmp_symb));
+      bin_op.AddChild(new AST_VarRead(ctx.Start.Line, arr_type.Resolve("Count")));
       cond.AddChild(bin_op);
       ast.AddChild(cond);
 
@@ -3730,11 +3725,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(block == null)
         goto Bail;
       //prepending filling of the iterator var
-      block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-      var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
+      block.children.Insert(0, new AST_VarWrite(ctx.Start.Line, iter_symb));
+      var arr_at = new AST_Index(ctx.Start.Line, is_map: false, is_write: false);
       block.children.Insert(0, arr_at);
-      block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-      block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+      block.children.Insert(0, new AST_VarRead(ctx.Start.Line, arr_cnt_symb));
+      block.children.Insert(0, new AST_VarRead(ctx.Start.Line, arr_tmp_symb));
 
       block.AddChild(new AST_Continue(jump_marker: true));
       //appending counter increment
@@ -3864,8 +3859,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
 
       //let's call GetEnumerator
-      PeekAST().AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_type.Resolve("$Enumerator")));
-      PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, map_tmp_en_symb));
+      PeekAST().AddChild(new AST_VarRead(ctx.Start.Line, map_type.Resolve("$Enumerator")));
+      PeekAST().AddChild(new AST_VarWrite(ctx.Start.Line, map_tmp_en_symb));
 
       //declaring iterating val
       if(key_iter_ast_decl != null)
@@ -3879,8 +3874,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       //while condition
       var cond = new AST_Block(BlockType.SEQ);
-      cond.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_tmp_en_symb));
-      cond.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_type.enumerator_type.Resolve("Next")));
+      cond.AddChild(new AST_VarRead(ctx.Start.Line, map_tmp_en_symb));
+      cond.AddChild(new AST_VarRead(ctx.Start.Line, map_type.enumerator_type.Resolve("Next")));
       ast.AddChild(cond);
 
       //while body
@@ -3889,11 +3884,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(block == null)
         goto Bail;
       //prepending filling of k/v
-      block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, val_iter_symb));
-      block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, key_iter_symb));
+      block.children.Insert(0, new AST_VarWrite(ctx.Start.Line, val_iter_symb));
+      block.children.Insert(0, new AST_VarWrite(ctx.Start.Line, key_iter_symb));
       block.children.Insert(0,
-        new AST_Call(EnumCall.MFUNC, ctx.Start.Line, map_type.enumerator_type.Resolve("Current")));
-      block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, map_tmp_en_symb));
+        new AST_CallMethod(ctx.Start.Line, map_type.enumerator_type.Resolve("Current")));
+      block.children.Insert(0, new AST_VarRead(ctx.Start.Line, map_tmp_en_symb));
 
       block.AddChild(new AST_Continue(jump_marker: true));
       PopAST();

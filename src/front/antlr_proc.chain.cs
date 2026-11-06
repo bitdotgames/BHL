@@ -193,7 +193,7 @@ public partial class ANTLR_Processor
       ++_offset;
 
       var func_decl = _proc.PeekFuncDecl();
-      _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, _curr_name.Symbol.Line, func_decl.Resolve("this")));
+      _proc.PeekAST().AddChild(new AST_VarRead(_curr_name.Symbol.Line, func_decl.Resolve("this")));
       _proc.PeekAST().AddChild(new AST_TypeCast(cs.super_class, force_type: true, line_num: _curr_name.Symbol.Line));
     }
 
@@ -378,14 +378,16 @@ public partial class ANTLR_Processor
           {
             if(!(_scope is IInstantiable))
             {
-              ast = new AST_Call(EnumCall.FUNC_PTR_VAR, line, var_symb, 0, _curr_name);
-              _proc.AddCallArgs(ftype, cargs, ref ast);
+              var fp_var = new AST_CallFuncPtrVar(line, var_symb, 0, _curr_name);
+              _proc.AddCallArgs(ftype, cargs, fp_var);
+              ast = fp_var;
             }
             else
             {
-              _proc.PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, var_symb, 0, _curr_name));
-              ast = new AST_Call(EnumCall.FUNC_PTR_MVAR, line, var_symb, 0, _curr_name);
-              _proc.AddCallArgs(ftype, cargs, ref ast);
+              _proc.PeekAST().AddChild(new AST_VarRead(line, var_symb, _curr_name));
+              var fp_mvar = new AST_CallFuncPtrMVar(line, var_symb, 0, _curr_name);
+              _proc.AddCallArgs(ftype, cargs, fp_mvar);
+              ast = fp_mvar;
             }
             _curr_type = ftype.return_type.Get();
             if(_curr_type == null)
@@ -393,15 +395,22 @@ public partial class ANTLR_Processor
           }
           else if(func_symb != null)
           {
-            var call_type = _scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static)
-              ? EnumCall.MFUNC : EnumCall.FUNC;
-            ast = new AST_Call(call_type, line, func_symb, 0, _curr_name);
-            //NOTE: attach receiver variable for proper MFUNC dispatch
-            if(call_type == EnumCall.MFUNC && prev_symb is VariableSymbol var_symbol)
-              ast.ctx_var = var_symbol;
+            bool is_method = _scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static);
+            AST_Invoke call;
+            if(is_method)
+            {
+              var mcall = new AST_CallMethod(line, func_symb, 0, _curr_name);
+              //NOTE: attach receiver variable for proper method dispatch
+              if(prev_symb is VariableSymbol var_symbol)
+                mcall.ctx_var = var_symbol;
+              call = mcall;
+            }
+            else
+              call = new AST_CallFunc(line, func_symb, 0, _curr_name);
+            ast = call;
             _proc.LSP_AddSemanticToken(_curr_name,
               func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);
-            _proc.AddCallArgs(func_symb, cargs, ref ast);
+            _proc.AddCallArgs(func_symb, cargs, call);
             _curr_type = func_symb.GetReturnType();
           }
           else
@@ -427,17 +436,18 @@ public partial class ANTLR_Processor
             if(!var_symb._is_ref && pass_as_ref)
               var_symb._is_ref_decl = true;
 
-            ast = new AST_Call(is_write ? EnumCall.VARW : EnumCall.VAR,
-              line, var_symb, 0, _curr_name, pass_as_ref);
+            ast = is_write
+              ? (AST_Call)new AST_VarWrite(line, var_symb, _curr_name, pass_as_ref: pass_as_ref)
+              : new AST_VarRead(line, var_symb, _curr_name, pass_as_ref);
 
             if(fld_symb != null && _scope is ClassSymbolNative)
             {
-              if(ast.type == EnumCall.VAR && fld_symb.getter == null)
+              if(ast is AST_VarRead && fld_symb.getter == null)
               {
                 _proc.AddError(_curr_name, "get operation is not defined");
                 return;
               }
-              else if(ast.type == EnumCall.VARW && fld_symb.setter == null)
+              else if(ast is AST_VarWrite && fld_symb.setter == null)
               {
                 _proc.AddError(_curr_name, "set operation is not defined");
                 return;
@@ -450,7 +460,7 @@ public partial class ANTLR_Processor
           }
           else if(func_symb != null)
           {
-            ast       = new AST_Call(EnumCall.GET_ADDR, line, func_symb, 0, _curr_name);
+            ast       = new AST_GetFuncAddr(line, func_symb, _curr_name);
             _curr_type = func_symb.signature;
           }
           else if(name_symb is EnumSymbol enum_symb)
@@ -495,8 +505,9 @@ public partial class ANTLR_Processor
           _proc.AddError(cargs, $"cannot call expression of type '{_curr_type?.GetName() ?? "?"}'");
           return;
         }
-        ast       = new AST_Call(EnumCall.FUNC_PTR_RES, line, null);
-        _proc.AddCallArgs(ftype, cargs, ref ast);
+        var fp_res = new AST_CallFuncPtrRes(line, null);
+        _proc.AddCallArgs(ftype, cargs, fp_res);
+        ast = fp_res;
         _curr_type = ftype.return_type.Get();
         if(_curr_type == null)
           _proc.AddError(_curr_name, "type '" + ftype.return_type + "' not found");

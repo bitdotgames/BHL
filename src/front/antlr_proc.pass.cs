@@ -1077,7 +1077,7 @@ public partial class ANTLR_Processor
 
     AST_Tree ast = assign_exp != null
       ?
-      new AST_Call(EnumCall.VARWDCL, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME())
+      new AST_VarWrite(vd.NAME().Symbol.Line, pass.gvar_symb, vd.NAME(), is_decl: true)
       : new AST_VarDecl(pass.gvar_symb, vd.NAME().Symbol.Line);
 
     if(exp_ast != null)

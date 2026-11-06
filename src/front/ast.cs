@@ -36,7 +36,15 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_TypeAs ast);
   public abstract void DoVisit(AST_TypeIs ast);
   public abstract void DoVisit(AST_Typeof ast);
-  public abstract void DoVisit(AST_Call ast);
+  public abstract void DoVisit(AST_VarRead ast);
+  public abstract void DoVisit(AST_VarWrite ast);
+  public abstract void DoVisit(AST_CallFunc ast);
+  public abstract void DoVisit(AST_CallMethod ast);
+  public abstract void DoVisit(AST_CallFuncPtrVar ast);
+  public abstract void DoVisit(AST_CallFuncPtrMVar ast);
+  public abstract void DoVisit(AST_CallFuncPtrRes ast);
+  public abstract void DoVisit(AST_Index ast);
+  public abstract void DoVisit(AST_GetFuncAddr ast);
   public abstract void DoVisit(AST_Return ast);
   public abstract void DoVisit(AST_Break ast);
   public abstract void DoVisit(AST_Continue ast);
@@ -347,36 +355,12 @@ public class AST_TypeIs : AST_Tree
   }
 }
 
-public enum EnumCall
-{
-  VAR             = 1,
-  VARW            = 2,
-  //TODO: do we really need this special case when we declare a var and write to it?
-  //      (currently it's used for declaration of refs)
-  VARWDCL         = 10,
-  FUNC            = 3,
-  MFUNC           = 30,
-  ARR_IDX         = 4,
-  ARR_IDXW        = 40,
-  MAP_IDX         = 9,
-  MAP_IDXW        = 90,
-  GET_ADDR        = 5,
-  FUNC_PTR_VAR    = 6, //func pointer from existing named variable
-  //TODO: do we really need to designate these 2 below?
-  FUNC_PTR_MVAR   = 7, //func pointer from class member
-  FUNC_PTR_RES    = 8  //func pointer from any operation return result
-}
 
-public class AST_Call  : AST_Tree
+public abstract class AST_Call : AST_Tree
 {
-  public override void Accept(AST_Visitor v) => v.DoVisit(this);
-
-  public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symbol;
-  public bool pass_as_ref; //e.g. foo(ref a)
   public ITerminalNode node;
-  public VariableSymbol ctx_var = null; //currently used to mark local 'self' variable index for invoked methods
 
   public int symb_idx
   {
@@ -394,24 +378,131 @@ public class AST_Call  : AST_Tree
     }
   }
 
-  public uint cargs_bits;
-
-  public AST_Call(
-    EnumCall type,
-    int line_num,
-    Symbol symbol,
-    uint cargs_bits = 0,
-    ITerminalNode node = null,
-    bool pass_as_ref = false
-  )
+  protected AST_Call(int line_num, Symbol symbol, ITerminalNode node)
   {
-    this.type = type;
     this.line_num = line_num;
     this.symbol = symbol;
-    this.cargs_bits = cargs_bits;
-    this.pass_as_ref = pass_as_ref;
     this.node = node;
   }
+}
+
+public abstract class AST_VarAccess : AST_Call
+{
+  public bool pass_as_ref; //e.g. foo(ref a)
+
+  protected AST_VarAccess(int line_num, Symbol symbol, ITerminalNode node, bool pass_as_ref)
+    : base(line_num, symbol, node)
+  {
+    this.pass_as_ref = pass_as_ref;
+  }
+}
+
+public class AST_VarRead : AST_VarAccess
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_VarRead(int line_num, Symbol symbol, ITerminalNode node = null, bool pass_as_ref = false)
+    : base(line_num, symbol, node, pass_as_ref)
+  {}
+}
+
+public class AST_VarWrite : AST_VarAccess
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  //NOTE: a write that also declares the variable, e.g. a 'ref' declaration
+  public bool is_decl;
+
+  public AST_VarWrite(int line_num, Symbol symbol, ITerminalNode node = null, bool is_decl = false, bool pass_as_ref = false)
+    : base(line_num, symbol, node, pass_as_ref)
+  {
+    this.is_decl = is_decl;
+  }
+}
+
+//NOTE: anything that invokes something, which is what the frontend keeps asking about
+public abstract class AST_Invoke : AST_Call
+{
+  public uint cargs_bits;
+
+  protected AST_Invoke(int line_num, Symbol symbol, uint cargs_bits, ITerminalNode node)
+    : base(line_num, symbol, node)
+  {
+    this.cargs_bits = cargs_bits;
+  }
+}
+
+public class AST_CallFunc : AST_Invoke
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_CallFunc(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+    : base(line_num, symbol, cargs_bits, node)
+  {}
+}
+
+public class AST_CallMethod : AST_Invoke
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  //NOTE: marks the local 'self' variable index for an invoked method
+  public VariableSymbol ctx_var;
+
+  public AST_CallMethod(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+    : base(line_num, symbol, cargs_bits, node)
+  {}
+}
+
+public class AST_CallFuncPtrVar : AST_Invoke
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_CallFuncPtrVar(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+    : base(line_num, symbol, cargs_bits, node)
+  {}
+}
+
+public class AST_CallFuncPtrMVar : AST_Invoke
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_CallFuncPtrMVar(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+    : base(line_num, symbol, cargs_bits, node)
+  {}
+}
+
+public class AST_CallFuncPtrRes : AST_Invoke
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_CallFuncPtrRes(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+    : base(line_num, symbol, cargs_bits, node)
+  {}
+}
+
+//NOTE: container kind and direction are orthogonal, and each of the four is a single opcode
+public class AST_Index : AST_Call
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public bool is_map;
+  public bool is_write;
+
+  public AST_Index(int line_num, bool is_map, bool is_write)
+    : base(line_num, null, null)
+  {
+    this.is_map = is_map;
+    this.is_write = is_write;
+  }
+}
+
+public class AST_GetFuncAddr : AST_Call
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
+  public AST_GetFuncAddr(int line_num, Symbol symbol, ITerminalNode node = null)
+    : base(line_num, symbol, node)
+  {}
 }
 
 public class AST_Return  : AST_Tree
@@ -698,10 +789,20 @@ public class AST_Dumper : AST_Visitor
     writer.Write(")");
   }
 
-  public override void DoVisit(AST_Call node)
+  public override void DoVisit(AST_VarRead node) => DumpCall(node);
+  public override void DoVisit(AST_VarWrite node) => DumpCall(node);
+  public override void DoVisit(AST_CallFunc node) => DumpCall(node);
+  public override void DoVisit(AST_CallMethod node) => DumpCall(node);
+  public override void DoVisit(AST_CallFuncPtrVar node) => DumpCall(node);
+  public override void DoVisit(AST_CallFuncPtrMVar node) => DumpCall(node);
+  public override void DoVisit(AST_CallFuncPtrRes node) => DumpCall(node);
+  public override void DoVisit(AST_Index node) => DumpCall(node);
+  public override void DoVisit(AST_GetFuncAddr node) => DumpCall(node);
+
+  void DumpCall(AST_Call node)
   {
     writer.Write("(CALL ");
-    writer.Write(node.type + " " + node.symbol?.name);
+    writer.Write(node.GetType().Name + " " + node.symbol?.name);
     VisitChildren(node);
     writer.Write(")");
   }

@@ -1435,71 +1435,38 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  public override void DoVisit(AST_Call ast)
-  {
-    var ci = new CallInfo(ast);
+  public override void DoVisit(AST_VarRead ast)   => EmitVarRead(ast, new CallInfo(ast));
+  public override void DoVisit(AST_VarWrite ast)  => EmitVarWrite(ast, new CallInfo(ast));
+  public override void DoVisit(AST_CallFunc ast)  => EmitCallFunc(ast, new CallInfo(ast));
+  public override void DoVisit(AST_CallMethod ast)=> EmitCallMethod(ast, new CallInfo(ast));
+  public override void DoVisit(AST_GetFuncAddr ast) => EmitGetFuncAddr(ast);
 
-    switch(ast.type)
-    {
-      case EnumCall.VAR:
-        EmitVarRead(ast, ci);
-        break;
-      case EnumCall.VARW:
-      case EnumCall.VARWDCL:
-        EmitVarWrite(ast, ci);
-        break;
-      case EnumCall.FUNC:
-        EmitCallFunc(ast, ci);
-        break;
-      case EnumCall.MFUNC:
-        EmitCallMethod(ast, ci);
-        break;
-      case EnumCall.ARR_IDX:
-      {
-        Emit(Opcodes.ArrIdx, null, ast.line_num);
-      }
-        break;
-      case EnumCall.ARR_IDXW:
-      {
-        Emit(Opcodes.ArrIdxW, null, ast.line_num);
-      }
-        break;
-      case EnumCall.MAP_IDX:
-      {
-        Emit(Opcodes.MapIdx, null, ast.line_num);
-      }
-        break;
-      case EnumCall.MAP_IDXW:
-      {
-        Emit(Opcodes.MapIdxW, null, ast.line_num);
-      }
-        break;
-      case EnumCall.FUNC_PTR_VAR:
-      {
-        VisitChildren(ast);
-        Emit(ast.symbol is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
-        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
-      }
-        break;
-      case EnumCall.FUNC_PTR_RES:
-      case EnumCall.FUNC_PTR_MVAR:
-      {
-        VisitChildren(ast);
-        //if there are no args let's just call the regular opcode
-        Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
-      }
-        break;
-      case EnumCall.GET_ADDR:
-      {
-        EmitGetFuncAddr(ast);
-      }
-        break;
-      default:
-        throw new Exception("Not supported call: " + ast.type);
-    }
+  public override void DoVisit(AST_Index ast)
+  {
+    Emit(ast.is_map
+          ? (ast.is_write ? Opcodes.MapIdxW : Opcodes.MapIdx)
+          : (ast.is_write ? Opcodes.ArrIdxW : Opcodes.ArrIdx),
+      null, ast.line_num);
   }
 
-  void EmitVarRead(AST_Call ast, in CallInfo ci)
+  public override void DoVisit(AST_CallFuncPtrVar ast)
+  {
+    VisitChildren(ast);
+    Emit(ast.symbol is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+    Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+  }
+
+  public override void DoVisit(AST_CallFuncPtrMVar ast) => EmitCallFuncPtrInv(ast);
+  public override void DoVisit(AST_CallFuncPtrRes ast)  => EmitCallFuncPtrInv(ast);
+
+  void EmitCallFuncPtrInv(AST_Invoke ast)
+  {
+    VisitChildren(ast);
+    //if there are no args let's just call the regular opcode
+    Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
+  }
+
+  void EmitVarRead(AST_VarRead ast, in CallInfo ci)
   {
           if(ci.is_global)
           {
@@ -1550,12 +1517,12 @@ public class ModuleCompiler : AST_Visitor
               new int[] {ast.symb_idx}, ast.line_num);
   }
 
-  void EmitVarWrite(AST_Call ast, in CallInfo ci)
+  void EmitVarWrite(AST_VarWrite ast, in CallInfo ci)
   {
-          if(add_debug_info && ast.type == EnumCall.VARWDCL &&
+          if(add_debug_info && ast.is_decl &&
              func_decls.Count > 0 && func_decls.Peek() is FuncSymbolScript fss_varwdcl && fss_varwdcl._ip_addr >= 0)
             _local_var_table.Add(fss_varwdcl._ip_addr, ast.symb_idx, ast.symbol.name);
-          if(ast.type == EnumCall.VARWDCL && ci.is_ref_origin)
+          if(ast.is_decl && ci.is_ref_origin)
             Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
 
           if(ci.is_global)
@@ -1606,7 +1573,7 @@ public class ModuleCompiler : AST_Visitor
               new int[] {ast.symb_idx}, ast.line_num);
   }
 
-  void EmitCallFunc(AST_Call ast, in CallInfo ci)
+  void EmitCallFunc(AST_CallFunc ast, in CallInfo ci)
   {
           VisitChildren(ast);
           var instr = EmitGetFuncAddr(ast);
@@ -1664,7 +1631,7 @@ public class ModuleCompiler : AST_Visitor
             Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
   }
 
-  void EmitCallMethod(AST_Call ast, in CallInfo ci)
+  void EmitCallMethod(AST_CallMethod ast, in CallInfo ci)
   {
           var instance_type = ast.symbol.scope as IInstantiable;
           if(instance_type == null)
