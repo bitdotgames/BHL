@@ -255,6 +255,71 @@ func void foo() {
   }
 
   [Fact]
+  public void TestStepStopsOnBreakAndContinue()
+  {
+    string bhl = @"
+func void foo() {
+  int i = 0
+  while(i < 3) {
+    i = i + 1
+    if(i == 1) {
+      continue
+    }
+    break
+  }
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => {
+      hit_lines.Add(b.line);
+      d.StartStep(VMDebugger.StepMode.Over, b.exec, b.ip);
+    };
+    d.AddBreakpoint(module, line: 3);
+
+    Execute(vm, "foo");
+
+    //'continue' is line 7, 'break' is line 9
+    Assert.Contains(7, hit_lines);
+    Assert.Contains(9, hit_lines);
+  }
+
+  //NOTE: same root cause as stepping - a line with no opcode mapped to it can't resolve an IP
+  [Fact]
+  public void TestBreakpointOnBreakAndContinueLines()
+  {
+    string bhl = @"
+func void foo() {
+  int i = 0
+  while(i < 3) {
+    i = i + 1
+    if(i == 1) {
+      continue
+    }
+    break
+  }
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    Assert.True(d.AddBreakpoint(module, line: 7), "no opcode mapped to the 'continue' line");
+    Assert.True(d.AddBreakpoint(module, line: 9), "no opcode mapped to the 'break' line");
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => hit_lines.Add(b.line);
+
+    Execute(vm, "foo");
+
+    Assert.Contains(7, hit_lines);
+    Assert.Contains(9, hit_lines);
+  }
+
+  [Fact]
   public void TestStepOverSkipsCallees()
   {
     string bhl = @"

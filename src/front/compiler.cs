@@ -1770,7 +1770,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
+    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/}, ast.line_num);
     non_patched_breaks.Add(
       new BlockJump()
       {
@@ -1789,7 +1789,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
+      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/}, ast.line_num);
       non_patched_continues.Add(
         new BlockJump()
         {

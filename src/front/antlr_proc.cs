@@ -2537,7 +2537,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    PeekAST().AddChild(new AST_Break());
+    PeekAST().AddChild(new AST_Break(ctx.Start.Line));
 
     return null;
   }
@@ -2560,7 +2560,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    PeekAST().AddChild(new AST_Continue());
+    PeekAST().AddChild(new AST_Continue(line_num: ctx.Start.Line));
 
     return null;
   }

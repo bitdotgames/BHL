@@ -465,15 +465,23 @@ public class AST_Typeof : IAST
 
 public class AST_Break : IAST
 {
+  public int line_num;
+
+  public AST_Break(int line_num = 0)
+  {
+    this.line_num = line_num;
+  }
 }
 
 public class AST_Continue : IAST
 {
   public bool jump_marker;
+  public int line_num;
 
-  public AST_Continue(bool jump_marker = false)
+  public AST_Continue(bool jump_marker = false, int line_num = 0)
   {
     this.jump_marker = jump_marker;
+    this.line_num = line_num;
   }
 }
 
