@@ -1413,229 +1413,46 @@ public class ModuleCompiler : AST_Visitor
     Emit(Opcodes.Dec, new int[] { ast.symbol.scope_idx });
   }
 
+  //NOTE: everything the cases below derive from ast.symbol, computed once. Read only:
+  //      nothing past this reassigns any of it
+  readonly struct CallInfo
+  {
+    public readonly bool is_global;
+    public readonly bool is_static;
+    public readonly bool is_ref;
+    public readonly bool is_ref_origin;
+    public readonly FieldSymbol field_symb;
+    public readonly VariableSymbol vs;
+
+    public CallInfo(AST_Call ast)
+    {
+      field_symb = ast.symbol as FieldSymbol;
+      is_static = field_symb != null && field_symb.attribs.HasFlag(FieldAttrib.Static);
+      is_global = is_static || ast.symbol?.scope is Namespace;
+      vs = ast.symbol as VariableSymbol;
+      is_ref_origin = vs?._is_ref_decl ?? false;
+      is_ref = vs?._is_ref ?? false;
+    }
+  }
+
   public override void DoVisit(AST_Call ast)
   {
-    bool is_global = ast.symbol?.scope is Namespace;
-    var field_symb = ast.symbol as FieldSymbol;
-    bool is_static = field_symb != null && field_symb.attribs.HasFlag(FieldAttrib.Static);
-    if(is_static)
-      is_global = true;
-    var vs = ast.symbol as VariableSymbol;
-    bool is_ref_origin = vs?._is_ref_decl ?? false;
-    bool is_ref = vs?._is_ref ?? false;
+    var ci = new CallInfo(ast);
 
     switch(ast.type)
     {
       case EnumCall.VAR:
-      {
-        if(is_global)
-        {
-          //NOTE: native static fields are implemented as native functions
-          if(is_static && field_symb.scope is ClassSymbolNative cs)
-          {
-            var cs_mod = cs.GetModule();
-            var get_var_op = Emit(Opcodes.CallNative,
-              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(field_symb)), 0 }, ast.line_num);
-            TrySetFuncInstructionImportModule(get_var_op, cs_mod);
-          }
-          else
-            //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
-                Opcodes.GetGVarScalar : Opcodes.GetGVar,
-              new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
-        }
-        else if(field_symb != null)
-        {
-          if(ast.symb_idx == -1)
-            throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
-          VisitChildren(ast);
-          var prev = Peek();
-          if(prev.op == Opcodes.GetVar)
-          {
-            Pop();
-            Emit(Opcodes.GetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else if(prev.op == Opcodes.GetRef)
-          {
-            Pop();
-            Emit(Opcodes.GetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else if(prev.op == Opcodes.GetGVar)
-          {
-            Pop();
-            Emit(Opcodes.GetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else
-            Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
-        }
-        else if(is_ref && !ast.pass_as_ref)
-          Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
-        else
-          //Emit(Opcodes.GetVar, //safe general version
-          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ?
-              Opcodes.GetVarScalar : Opcodes.GetVar,
-            new int[] {ast.symb_idx}, ast.line_num);
-      }
+        EmitVarRead(ast, ci);
         break;
       case EnumCall.VARW:
       case EnumCall.VARWDCL:
-      {
-        if(add_debug_info && ast.type == EnumCall.VARWDCL &&
-           func_decls.Count > 0 && func_decls.Peek() is FuncSymbolScript fss_varwdcl && fss_varwdcl._ip_addr >= 0)
-          _local_var_table.Add(fss_varwdcl._ip_addr, ast.symb_idx, ast.symbol.name);
-        if(ast.type == EnumCall.VARWDCL && is_ref_origin)
-          Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
-
-        if(is_global)
-        {
-          //NOTE: native static fields are implemented as native functions
-          if(is_static && field_symb.scope is ClassSymbolNative cs)
-          {
-            var cs_mod = cs.GetModule();
-            var set_var_op = Emit(Opcodes.CallNative,
-              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(field_symb)), 0 }, ast.line_num);
-            TrySetFuncInstructionImportModule(set_var_op, cs_mod);
-          }
-          else
-            //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
-                Opcodes.SetGVarScalar : Opcodes.SetGVar,
-              new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
-        }
-        else if(field_symb != null)
-        {
-          if(ast.symb_idx == -1)
-            throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
-          VisitChildren(ast);
-          var prev = Peek();
-          if(prev.op == Opcodes.GetVar)
-          {
-            Pop();
-            Emit(Opcodes.SetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else if(prev.op == Opcodes.GetRef)
-          {
-            Pop();
-            Emit(Opcodes.SetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else if(prev.op == Opcodes.GetGVar)
-          {
-            Pop();
-            Emit(Opcodes.SetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
-          }
-          else
-            Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
-        }
-        else if(is_ref)
-          Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
-        else
-          //Emit(Opcodes.SetVar, //safe general version
-          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
-            new int[] {ast.symb_idx}, ast.line_num);
-      }
+        EmitVarWrite(ast, ci);
         break;
       case EnumCall.FUNC:
-      {
-        VisitChildren(ast);
-        var instr = EmitGetFuncAddr(ast);
-        //let's optimize some primitive calls
-        if(instr.op == Opcodes.GetFuncLocalPtr)
-        {
-          Pop();
-          var fsymb = (FuncSymbolScript)ast.symbol;
-          var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
-          PatchLater(call_op, (inst) => inst.operands[0] = fsymb._ip_addr);
-        }
-        else if(instr.op == Opcodes.GetFuncPtr && !indirect_calls)
-        {
-          var fsymb = (FuncSymbolScript)ast.symbol;
-          var fmod = fsymb.GetModule();
-          Pop();
-          var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits},
-            ast.line_num);
-          //imports list is filled later so we need to take that into account
-          PatchLater(call_op, (inst) =>
-          {
-            inst.operands[1] = fsymb._ip_addr;
-            if(inst.operands[1] == -1)
-              throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
-          });
-        }
-        else if(instr.op == Opcodes.GetFuncPtr && indirect_calls)
-        {
-          //NOTE: leave the already-emitted GetFuncPtr (func_idx-based) as-is
-          //      and call through it, instead of baking the callee's ip here
-          Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
-        }
-        else if(instr.op == Opcodes.GetFuncNativePtr)
-        {
-          Pop();
-
-          if(ast.symbol == Prelude.DumpOpcodesOn)
-          {
-            Console.WriteLine("=== Opcodes dump start");
-            dump_opcodes = true;
-          }
-          else if(ast.symbol == Prelude.DumpOpcodesOff)
-          {
-            Console.WriteLine("=== Opcodes dump end");
-            dump_opcodes = false;
-          }
-          //let's check if it's a builtin native function
-          else if(instr.operands[0] == 0/*checking if it's a global module*/)
-            Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
-          else
-            Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits},
-              ast.line_num);
-        }
-        else
-          Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
-      }
+        EmitCallFunc(ast, ci);
         break;
       case EnumCall.MFUNC:
-      {
-        var instance_type = ast.symbol.scope as IInstantiable;
-        if(instance_type == null)
-          throw new Exception("Not instance type: " + ast.symbol.name);
-
-        var mfunc = ast.symbol as FuncSymbol;
-        if(mfunc == null)
-          throw new Exception("Class method '" + ast.symbol?.name + "' not found in type '" + instance_type.GetName() +
-                              "' by index " + ast.symb_idx);
-
-        VisitChildren(ast);
-
-        if(instance_type is InterfaceSymbolScript)
-          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
-            ast.line_num);
-        else if(instance_type is InterfaceSymbolNative)
-          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
-            ast.line_num);
-        else
-        {
-          if(mfunc is FuncSymbolScript)
-          {
-            if(mfunc._virtual != null)
-              Emit(Opcodes.CallMethodVirt, new int[] {mfunc._virtual.scope_idx, (int)ast.cargs_bits}, ast.line_num);
-            else
-              Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          }
-          else if(mfunc is FuncSymbolNative)
-          {
-            if(ast.ctx_var != null && !(ast.ctx_var is FieldSymbol)/*supporting only non nested local calls*/)
-            {
-              Emit(
-                ast.ctx_var.scope is Namespace ? Opcodes.CallGVarMethodNative : Opcodes.CallVarMethodNative,
-                new int[] {ast.ctx_var.scope_idx, ast.symb_idx, (int)ast.cargs_bits},
-                ast.line_num);
-            }
-            else
-              Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          }
-          else
-            throw new Exception("Unsupported type: " + mfunc.GetType().Name);
-        }
-      }
+        EmitCallMethod(ast, ci);
         break;
       case EnumCall.ARR_IDX:
       {
@@ -1682,6 +1499,215 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
+  void EmitVarRead(AST_Call ast, in CallInfo ci)
+  {
+          if(ci.is_global)
+          {
+            //NOTE: native static fields are implemented as native functions
+            if(ci.is_static && ci.field_symb.scope is ClassSymbolNative cs)
+            {
+              var cs_mod = cs.GetModule();
+              var get_var_op = Emit(Opcodes.CallNative,
+                new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(ci.field_symb)), 0 }, ast.line_num);
+              TrySetFuncInstructionImportModule(get_var_op, cs_mod);
+            }
+            else
+              //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+              Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
+                  Opcodes.GetGVarScalar : Opcodes.GetGVar,
+                new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
+          }
+          else if(ci.field_symb != null)
+          {
+            if(ast.symb_idx == -1)
+              throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
+            VisitChildren(ast);
+            var prev = Peek();
+            if(prev.op == Opcodes.GetVar)
+            {
+              Pop();
+              Emit(Opcodes.GetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else if(prev.op == Opcodes.GetRef)
+            {
+              Pop();
+              Emit(Opcodes.GetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else if(prev.op == Opcodes.GetGVar)
+            {
+              Pop();
+              Emit(Opcodes.GetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else
+              Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
+          }
+          else if(ci.is_ref && !ast.pass_as_ref)
+            Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
+          else
+            //Emit(Opcodes.GetVar, //safe general version
+            Emit(!ci.is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ?
+                Opcodes.GetVarScalar : Opcodes.GetVar,
+              new int[] {ast.symb_idx}, ast.line_num);
+  }
+
+  void EmitVarWrite(AST_Call ast, in CallInfo ci)
+  {
+          if(add_debug_info && ast.type == EnumCall.VARWDCL &&
+             func_decls.Count > 0 && func_decls.Peek() is FuncSymbolScript fss_varwdcl && fss_varwdcl._ip_addr >= 0)
+            _local_var_table.Add(fss_varwdcl._ip_addr, ast.symb_idx, ast.symbol.name);
+          if(ast.type == EnumCall.VARWDCL && ci.is_ref_origin)
+            Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
+
+          if(ci.is_global)
+          {
+            //NOTE: native static fields are implemented as native functions
+            if(ci.is_static && ci.field_symb.scope is ClassSymbolNative cs)
+            {
+              var cs_mod = cs.GetModule();
+              var set_var_op = Emit(Opcodes.CallNative,
+                new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(ci.field_symb)), 0 }, ast.line_num);
+              TrySetFuncInstructionImportModule(set_var_op, cs_mod);
+            }
+            else
+              //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+              Emit(ast.symbol is ITyped gtyped && Types.IsScalar(gtyped.GetIType()) ?
+                  Opcodes.SetGVarScalar : Opcodes.SetGVar,
+                new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
+          }
+          else if(ci.field_symb != null)
+          {
+            if(ast.symb_idx == -1)
+              throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
+            VisitChildren(ast);
+            var prev = Peek();
+            if(prev.op == Opcodes.GetVar)
+            {
+              Pop();
+              Emit(Opcodes.SetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else if(prev.op == Opcodes.GetRef)
+            {
+              Pop();
+              Emit(Opcodes.SetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else if(prev.op == Opcodes.GetGVar)
+            {
+              Pop();
+              Emit(Opcodes.SetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+            }
+            else
+              Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
+          }
+          else if(ci.is_ref)
+            Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
+          else
+            //Emit(Opcodes.SetVar, //safe general version
+            Emit(!ci.is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
+              new int[] {ast.symb_idx}, ast.line_num);
+  }
+
+  void EmitCallFunc(AST_Call ast, in CallInfo ci)
+  {
+          VisitChildren(ast);
+          var instr = EmitGetFuncAddr(ast);
+          //let's optimize some primitive calls
+          if(instr.op == Opcodes.GetFuncLocalPtr)
+          {
+            Pop();
+            var fsymb = (FuncSymbolScript)ast.symbol;
+            var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+            PatchLater(call_op, (inst) => inst.operands[0] = fsymb._ip_addr);
+          }
+          else if(instr.op == Opcodes.GetFuncPtr && !indirect_calls)
+          {
+            var fsymb = (FuncSymbolScript)ast.symbol;
+            var fmod = fsymb.GetModule();
+            Pop();
+            var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits},
+              ast.line_num);
+            //imports list is filled later so we need to take that into account
+            PatchLater(call_op, (inst) =>
+            {
+              inst.operands[1] = fsymb._ip_addr;
+              if(inst.operands[1] == -1)
+                throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
+            });
+          }
+          else if(instr.op == Opcodes.GetFuncPtr && indirect_calls)
+          {
+            //NOTE: leave the already-emitted GetFuncPtr (func_idx-based) as-is
+            //      and call through it, instead of baking the callee's ip here
+            Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+          }
+          else if(instr.op == Opcodes.GetFuncNativePtr)
+          {
+            Pop();
+
+            if(ast.symbol == Prelude.DumpOpcodesOn)
+            {
+              Console.WriteLine("=== Opcodes dump start");
+              dump_opcodes = true;
+            }
+            else if(ast.symbol == Prelude.DumpOpcodesOff)
+            {
+              Console.WriteLine("=== Opcodes dump end");
+              dump_opcodes = false;
+            }
+            //let's check if it's a builtin native function
+            else if(instr.operands[0] == 0/*checking if it's a global module*/)
+              Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
+            else
+              Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits},
+                ast.line_num);
+          }
+          else
+            Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+  }
+
+  void EmitCallMethod(AST_Call ast, in CallInfo ci)
+  {
+          var instance_type = ast.symbol.scope as IInstantiable;
+          if(instance_type == null)
+            throw new Exception("Not instance type: " + ast.symbol.name);
+
+          var mfunc = ast.symbol as FuncSymbol;
+          if(mfunc == null)
+            throw new Exception("Class method '" + ast.symbol?.name + "' not found in type '" + instance_type.GetName() +
+                                "' by index " + ast.symb_idx);
+
+          VisitChildren(ast);
+
+          if(instance_type is InterfaceSymbolScript)
+            Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
+              ast.line_num);
+          else if(instance_type is InterfaceSymbolNative)
+            Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
+              ast.line_num);
+          else
+          {
+            if(mfunc is FuncSymbolScript)
+            {
+              if(mfunc._virtual != null)
+                Emit(Opcodes.CallMethodVirt, new int[] {mfunc._virtual.scope_idx, (int)ast.cargs_bits}, ast.line_num);
+              else
+                Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+            }
+            else if(mfunc is FuncSymbolNative)
+            {
+              if(ast.ctx_var != null && !(ast.ctx_var is FieldSymbol)/*supporting only non nested local calls*/)
+              {
+                Emit(
+                  ast.ctx_var.scope is Namespace ? Opcodes.CallGVarMethodNative : Opcodes.CallVarMethodNative,
+                  new int[] {ast.ctx_var.scope_idx, ast.symb_idx, (int)ast.cargs_bits},
+                  ast.line_num);
+              }
+              else
+                Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+            }
+            else
+              throw new Exception("Unsupported type: " + mfunc.GetType().Name);
+          }
+  }
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
     var func_symb = ast.symbol as FuncSymbol;
