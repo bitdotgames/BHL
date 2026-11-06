@@ -9,18 +9,6 @@ using Antlr4.Runtime.Tree;
 namespace bhl
 {
 
-public enum BlockType
-{
-  FUNC      = 0,
-  SEQ       = 1,
-  DEFER     = 2,
-  PARAL     = 3,
-  PARAL_ALL = 4,
-  IF        = 7,
-  WHILE     = 8,
-  FOR       = 9,
-  DOWHILE   = 10,
-}
 
 public abstract class AST_Visitor
 {
@@ -31,7 +19,14 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_FuncDecl ast);
   public abstract void DoVisit(AST_LambdaDecl ast);
   public abstract void DoVisit(AST_ClassDecl ast);
-  public abstract void DoVisit(AST_Block ast);
+  public abstract void DoVisit(AST_If ast);
+  public abstract void DoVisit(AST_While ast);
+  public abstract void DoVisit(AST_DoWhile ast);
+  public abstract void DoVisit(AST_Seq ast);
+  public abstract void DoVisit(AST_FuncBody ast);
+  public abstract void DoVisit(AST_Paral ast);
+  public abstract void DoVisit(AST_ParalAll ast);
+  public abstract void DoVisit(AST_Defer ast);
   public abstract void DoVisit(AST_TypeCast ast);
   public abstract void DoVisit(AST_TypeAs ast);
   public abstract void DoVisit(AST_TypeIs ast);
@@ -612,20 +607,62 @@ public class AST_VarDecl : AST_Tree
   }
 }
 
-public class AST_Block : AST_Tree
+public abstract class AST_Block : AST_Tree
 {
-  public override void Accept(AST_Visitor v) => v.DoVisit(this);
-
-  public BlockType type = new BlockType();
   //NOTE: only set for blocks the user introduces with a keyword (defer, paral, paral_all),
   //      so the debugger can stop on that line; structural blocks emit no opcode of their own
   public int line_num;
 
-  public AST_Block(BlockType type, int line_num = 0)
+  protected AST_Block(int line_num = 0)
   {
-    this.type = type;
     this.line_num = line_num;
   }
+}
+
+//NOTE: [cond, body] per branch, with the 'else' body as a trailing odd child
+public class AST_If : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+}
+
+//NOTE: [cond, body]
+public class AST_While : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+}
+
+//NOTE: [body, cond] - the reverse of AST_While, which is why these are separate types
+public class AST_DoWhile : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+}
+
+public class AST_Seq : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+}
+
+public class AST_FuncBody : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+}
+
+public class AST_Paral : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+  public AST_Paral(int line_num = 0) : base(line_num) {}
+}
+
+public class AST_ParalAll : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+  public AST_ParalAll(int line_num = 0) : base(line_num) {}
+}
+
+public class AST_Defer : AST_Block
+{
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+  public AST_Defer(int line_num = 0) : base(line_num) {}
 }
 
 public class AST_JsonObj : AST_Tree
@@ -757,10 +794,19 @@ public class AST_Dumper : AST_Visitor
     writer.Write(")");
   }
 
-  public override void DoVisit(AST_Block node)
+  public override void DoVisit(AST_If node) => DumpBlock(node);
+  public override void DoVisit(AST_While node) => DumpBlock(node);
+  public override void DoVisit(AST_DoWhile node) => DumpBlock(node);
+  public override void DoVisit(AST_Seq node) => DumpBlock(node);
+  public override void DoVisit(AST_FuncBody node) => DumpBlock(node);
+  public override void DoVisit(AST_Paral node) => DumpBlock(node);
+  public override void DoVisit(AST_ParalAll node) => DumpBlock(node);
+  public override void DoVisit(AST_Defer node) => DumpBlock(node);
+
+  void DumpBlock(AST_Block node)
   {
     writer.Write("(BLK ");
-    writer.Write(node.type + " {");
+    writer.Write(node.GetType().Name + " {");
     VisitChildren(node);
     writer.Write("})");
   }
@@ -1012,44 +1058,35 @@ public static class AST_Extensions
     return n.GetChildren()[1] as AST_Tree;
   }
 
-  //NOTE: a control block's children are positional, and the order is NOT the same per type -
-  //      'while' holds [cond, body] but 'do while' holds [body, cond], so children[0] means
-  //      opposite things. Go through these instead of indexing children by hand
   static void AssertTwoChildren(AST_Block n)
   {
     if(n.children.Count != 2)
-      throw new Exception("Unexpected amount of children (must be 2): " + n.type);
+      throw new Exception("Unexpected amount of children (must be 2): " + n.GetType().Name);
   }
 
-  static public IAST cond(this AST_Block n)
-  {
-    AssertTwoChildren(n);
-    return n.children[n.type == BlockType.DOWHILE ? 1 : 0];
-  }
+  static public IAST cond(this AST_While n)   { AssertTwoChildren(n); return n.children[0]; }
+  static public IAST body(this AST_While n)   { AssertTwoChildren(n); return n.children[1]; }
 
-  static public IAST body(this AST_Block n)
-  {
-    AssertTwoChildren(n);
-    return n.children[n.type == BlockType.DOWHILE ? 0 : 1];
-  }
+  //NOTE: reversed against AST_While, the body runs before the condition is tested
+  static public IAST body(this AST_DoWhile n) { AssertTwoChildren(n); return n.children[0]; }
+  static public IAST cond(this AST_DoWhile n) { AssertTwoChildren(n); return n.children[1]; }
 
-  //NOTE: an 'if' holds [cond, body] per branch, with the 'else' body as a trailing odd one
-  static public int BranchCount(this AST_Block n)
+  static public int BranchCount(this AST_If n)
   {
     return n.children.Count / 2;
   }
 
-  static public IAST BranchCond(this AST_Block n, int i)
+  static public IAST BranchCond(this AST_If n, int i)
   {
     return n.children[i * 2];
   }
 
-  static public IAST BranchBody(this AST_Block n, int i)
+  static public IAST BranchBody(this AST_If n, int i)
   {
     return n.children[i * 2 + 1];
   }
 
-  static public IAST ElseBody(this AST_Block n)
+  static public IAST ElseBody(this AST_If n)
   {
     return (n.children.Count % 2) == 1 ? n.children[n.children.Count - 1] : null;
   }

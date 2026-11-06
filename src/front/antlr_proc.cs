@@ -219,7 +219,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     blocks.Remove(block);
   }
 
-  int CountBlocks(BlockType type)
+  int CountBlocks<T>() where T : AST_Block
   {
     var fsymb = PeekFuncDecl();
     List<AST_Block> blocks;
@@ -228,14 +228,14 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(blocks != null)
     {
       foreach(var block in blocks)
-        if(block.type == type)
+        if(block is T)
           ++c;
     }
 
     return c;
   }
 
-  int GetBlockLevel(BlockType type)
+  int GetBlockLevel<T>() where T : AST_Block
   {
     var fsymb = PeekFuncDecl();
     List<AST_Block> blocks;
@@ -245,7 +245,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       for(int i = blocks.Count; i-- > 0;)
       {
         var block = blocks[i];
-        if(block.type == type)
+        if(block is T)
           return i;
       }
     }
@@ -255,13 +255,10 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   int GetLoopBlockLevel()
   {
-    int level = GetBlockLevel(BlockType.FOR);
+    int level = GetBlockLevel<AST_While>();
     if(level != -1)
       return level;
-    level = GetBlockLevel(BlockType.WHILE);
-    if(level != -1)
-      return level;
-    level = GetBlockLevel(BlockType.DOWHILE);
+    level = GetBlockLevel<AST_DoWhile>();
     return level;
   }
 
@@ -1587,7 +1584,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
     }
 
-    if(GetBlockLevel(BlockType.DEFER) != -1)
+    if(GetBlockLevel<AST_Defer>() != -1)
     {
       AddError(ctx, "yield is not allowed in defer block");
       return;
@@ -2397,7 +2394,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var ret_val = ctx.expList();
 
-    if(CountBlocks(BlockType.DEFER) > 0)
+    if(CountBlocks<AST_Defer>() > 0)
       //we can proceed
       AddError(ctx, "return is not allowed in defer block");
 
@@ -2526,7 +2523,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    if(GetBlockLevel(BlockType.DEFER) > loop_level)
+    if(GetBlockLevel<AST_Defer>() > loop_level)
     {
       AddError(ctx, "not within loop construct");
       return null;
@@ -2549,7 +2546,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    if(GetBlockLevel(BlockType.DEFER) > loop_level)
+    if(GetBlockLevel<AST_Defer>() > loop_level)
     {
       AddError(ctx, "not within loop construct");
       return null;
@@ -3201,7 +3198,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
-    ProcBlock(BlockType.SEQ, ctx.statement());
+    ProcBlock(new AST_Seq(), ctx.statement());
     return null;
   }
 
@@ -3209,7 +3206,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
 
-    var block = ProcBlock(BlockType.PARAL, ctx.block()?.statement(), ctx.Start.Line);
+    var block = ProcBlock(new AST_Paral(ctx.Start.Line), ctx.block()?.statement());
     if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
@@ -3219,7 +3216,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
 
-    var block = ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement(), ctx.Start.Line);
+    var block = ProcBlock(new AST_ParalAll(ctx.Start.Line), ctx.block()?.statement());
     if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
@@ -3229,23 +3226,23 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.DEFER(), SemanticToken.Keyword);
 
-    if(CountBlocks(BlockType.DEFER) > 0)
+    if(CountBlocks<AST_Defer>() > 0)
     {
       AddError(ctx, "nested defers are not allowed");
       return null;
     }
 
-    ProcBlock(BlockType.DEFER, ctx.block()?.statement(), ctx.Start.Line);
+    ProcBlock(new AST_Defer(ctx.Start.Line), ctx.block()?.statement());
     return null;
   }
 
   public override object VisitStmIf(bhlParser.StmIfContext ctx)
   {
-    var ast = new AST_Block(BlockType.IF);
+    var ast = new AST_If();
 
     LSP_AddSemanticToken(ctx.IF(), SemanticToken.Keyword);
 
-    var main_cond = new AST_Block(BlockType.SEQ);
+    var main_cond = new AST_Seq();
     PushAST(main_cond);
     bool ok = TryVisit(ctx.exp());
     PopAST();
@@ -3259,7 +3256,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
+    ok = ProcBlock(new AST_Seq(), ctx.block()?.statement()) != null;
     PopAST();
     if(!ok)
       return null;
@@ -3305,7 +3302,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       LSP_AddSemanticToken(item.ELSE(), SemanticToken.Keyword);
       LSP_AddSemanticToken(item.IF(), SemanticToken.Keyword);
 
-      var item_cond = new AST_Block(BlockType.SEQ);
+      var item_cond = new AST_Seq();
       PushAST(item_cond);
       bool item_ok = TryVisit(item.exp());
       PopAST();
@@ -3318,7 +3315,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      item_ok = ProcBlock(BlockType.SEQ, item.block()?.statement()) != null;
+      item_ok = ProcBlock(new AST_Seq(), item.block()?.statement()) != null;
       PopAST();
       if(!item_ok)
         return null;
@@ -3336,7 +3333,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return_found.Remove(func_symb);
 
       PushAST(ast);
-      bool block_ok = ProcBlock(BlockType.SEQ, @else.block()?.statement()) != null;
+      bool block_ok = ProcBlock(new AST_Seq(), @else.block()?.statement()) != null;
       PopAST();
       if(!block_ok)
         return null;
@@ -3352,7 +3349,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
   {
-    var ast = new AST_Block(BlockType.IF); //short-circuit eval
+    var ast = new AST_If(); //short-circuit eval
 
     var exp_0 = ctx.exp();
     var exp_1 = ctx.ternaryIfExp().exp(0);
@@ -3395,11 +3392,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
-    var ast = new AST_Block(BlockType.WHILE);
+    var ast = new AST_While();
 
     PushBlock(ast);
 
-    var cond = new AST_Block(BlockType.SEQ);
+    var cond = new AST_Seq();
     PushAST(cond);
     bool ok = TryVisit(ctx.exp());
     PopAST();
@@ -3410,7 +3407,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
+    ok = ProcBlock(new AST_Seq(), ctx.block()?.statement()) != null;
     PopAST();
     if(!ok)
       return null;
@@ -3435,18 +3432,18 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_AddSemanticToken(ctx.DO(), SemanticToken.Keyword);
     LSP_AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
-    var ast = new AST_Block(BlockType.DOWHILE);
+    var ast = new AST_DoWhile();
 
     PushBlock(ast);
 
     PushAST(ast);
-    bool ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
+    bool ok = ProcBlock(new AST_Seq(), ctx.block()?.statement()) != null;
     PopAST();
     if(!ok)
       return null;
     ast.children[ast.children.Count - 1].AddChild(new AST_Continue(jump_marker: true));
 
-    var cond = new AST_Block(BlockType.SEQ);
+    var cond = new AST_Seq();
     PushAST(cond);
     ok = TryVisit(ctx.exp());
     PopAST();
@@ -3489,11 +3486,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     var for_cond = ctx.forExp().exp();
     var for_post_iter = ctx.forExp().forPostIter();
 
-    var ast = new AST_Block(BlockType.WHILE);
+    var ast = new AST_While();
 
     PushBlock(ast);
 
-    var cond = new AST_Block(BlockType.SEQ);
+    var cond = new AST_Seq();
     PushAST(cond);
     bool ok = TryVisit(for_cond);
     PopAST();
@@ -3504,7 +3501,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+    var block = ProcBlock(new AST_Seq(), ctx.block()?.statement());
     if(block == null)
       return null;
     //appending post iteration code
@@ -3578,11 +3575,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     CheckCoroCallValidity(ctx);
 
-    var ast = new AST_Block(BlockType.WHILE);
+    var ast = new AST_While();
 
     PushBlock(ast);
 
-    var cond = new AST_Block(BlockType.SEQ);
+    var cond = new AST_Seq();
     PushAST(cond);
     bool ok = TryVisit(ctx.exp());
     PopAST();
@@ -3592,7 +3589,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     ast.AddChild(cond);
 
-    var body = new AST_Block(BlockType.SEQ);
+    var body = new AST_Seq();
     int line = ctx.Start.Line;
     body.AddChild(new AST_Yield(line));
     ast.AddChild(body);
@@ -3707,11 +3704,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(iter_ast_decl != null)
         PeekAST().AddChild(iter_ast_decl);
 
-      var ast = new AST_Block(BlockType.WHILE);
+      var ast = new AST_While();
       PushBlock(ast);
 
       //while condition
-      var cond = new AST_Block(BlockType.SEQ);
+      var cond = new AST_Seq();
       var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
       bin_op.AddChild(new AST_VarRead(ctx.Start.Line, arr_cnt_symb));
       bin_op.AddChild(new AST_VarRead(ctx.Start.Line, arr_tmp_symb));
@@ -3721,7 +3718,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       //while body
       PushAST(ast);
-      var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+      var block = ProcBlock(new AST_Seq(), ctx.block()?.statement());
       if(block == null)
         goto Bail;
       //prepending filling of the iterator var
@@ -3869,18 +3866,18 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(val_iter_ast_decl != null)
         PeekAST().AddChild(val_iter_ast_decl);
 
-      var ast = new AST_Block(BlockType.WHILE);
+      var ast = new AST_While();
       PushBlock(ast);
 
       //while condition
-      var cond = new AST_Block(BlockType.SEQ);
+      var cond = new AST_Seq();
       cond.AddChild(new AST_VarRead(ctx.Start.Line, map_tmp_en_symb));
       cond.AddChild(new AST_VarRead(ctx.Start.Line, map_type.enumerator_type.Resolve("Next")));
       ast.AddChild(cond);
 
       //while body
       PushAST(ast);
-      var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+      var block = ProcBlock(new AST_Seq(), ctx.block()?.statement());
       if(block == null)
         goto Bail;
       //prepending filling of k/v
@@ -3917,20 +3914,17 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return !ok ? null : Annotate(tree).eval_type;
   }
 
-  AST_Block ProcBlock(BlockType type, IParseTree[] sts, int line_num = 0)
+  AST_Block ProcBlock(AST_Block ast, IParseTree[] sts)
   {
     if(sts == null)
       return null;
 
-    bool is_paral =
-      type == BlockType.PARAL ||
-      type == BlockType.PARAL_ALL;
+    bool is_paral = ast is AST_Paral || ast is AST_ParalAll;
 
     var local_scope = new LocalScope(is_paral, curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
 
-    var ast = new AST_Block(type, line_num);
     PushBlock(ast);
 
     var tmp = new AST_Interim();
@@ -3948,7 +3942,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         //NOTE: wrapping in group only in case there are more than one child
         if(tmp.children.Count > 1)
         {
-          var seq = new AST_Block(BlockType.SEQ);
+          var seq = new AST_Seq();
           for(int c = 0; c < tmp.children.Count; ++c)
             seq.AddChild(tmp.children[c]);
           ast.AddChild(seq);

@@ -501,7 +501,7 @@ public partial class ANTLR_Processor
     AST_FuncDecl func_ast)
   {
     PushAST(func_ast.block());
-    ProcBlock(BlockType.FUNC, block_ctx?.statement());
+    ProcBlock(new AST_FuncBody(), block_ctx?.statement());
     PopAST();
 
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))

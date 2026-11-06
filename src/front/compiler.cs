@@ -1168,11 +1168,8 @@ public class ModuleCompiler : AST_Visitor
     curr_scope = scope_bak;
   }
 
-  public override void DoVisit(AST_Block ast)
+  public override void DoVisit(AST_If ast)
   {
-    switch(ast.type)
-    {
-      case BlockType.IF:
 
         //if()
         // ^-- to be patched with position out of 'if body'
@@ -1216,10 +1213,11 @@ public class ModuleCompiler : AST_Visitor
           Visit(else_body);
           AddOffsetFromTo(last_jmp_op, Peek());
         }
+  }
 
-        break;
-      case BlockType.WHILE:
-      {
+  public override void DoVisit(AST_While ast)
+  {
+
         loop_blocks.Push(ast);
 
         var begin_op = Peek();
@@ -1237,10 +1235,11 @@ public class ModuleCompiler : AST_Visitor
         PatchBreaks(ast);
 
         loop_blocks.Pop();
-      }
-        break;
-      case BlockType.DOWHILE:
-      {
+  }
+
+  public override void DoVisit(AST_DoWhile ast)
+  {
+
         loop_blocks.Push(ast);
 
         var begin_op = Peek();
@@ -1261,56 +1260,39 @@ public class ModuleCompiler : AST_Visitor
         PatchBreaks(ast);
 
         loop_blocks.Pop();
-      }
-        break;
-      case BlockType.FUNC:
-      {
-        func_ctrl_blocks.Push(new List<AST_Block>());
-        VisitChildren(ast);
-        func_ctrl_blocks.Pop();
-      }
-        break;
-      case BlockType.SEQ:
-      case BlockType.PARAL:
-      case BlockType.PARAL_ALL:
-      {
-        VisitControlBlock(ast);
-      }
-        break;
-      case BlockType.DEFER:
-      {
-        VisitDefer(ast);
-      }
-        break;
-      default:
-        throw new Exception("Not supported block type: " + ast.type);
-    }
   }
+
+  public override void DoVisit(AST_FuncBody ast)
+  {
+    func_ctrl_blocks.Push(new List<AST_Block>());
+    VisitChildren(ast);
+    func_ctrl_blocks.Pop();
+  }
+
+  public override void DoVisit(AST_Seq ast)       => VisitControlBlock(ast);
+  public override void DoVisit(AST_Paral ast)     => VisitControlBlock(ast);
+  public override void DoVisit(AST_ParalAll ast)  => VisitControlBlock(ast);
+  public override void DoVisit(AST_Defer ast)     => VisitDefer(ast);
 
   void VisitControlBlock(AST_Block ast)
   {
     var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count - 1] : null;
 
-    bool parent_is_paral =
-      parent_block != null &&
-      (parent_block.type == BlockType.PARAL ||
-       parent_block.type == BlockType.PARAL_ALL);
+    bool parent_is_paral = parent_block is AST_Paral || parent_block is AST_ParalAll;
 
-    bool is_paral =
-      ast.type == BlockType.PARAL ||
-      ast.type == BlockType.PARAL_ALL;
+    bool is_paral = ast is AST_Paral || ast is AST_ParalAll;
 
     ctrl_blocks.Add(ast);
 
     Opcodes block_type_op;
-    if(ast.type == BlockType.PARAL)
+    if(ast is AST_Paral)
       block_type_op = Opcodes.Paral;
-    else if(ast.type == BlockType.PARAL_ALL)
+    else if(ast is AST_ParalAll)
       block_type_op = Opcodes.ParalAll;
-    else if(ast.type == BlockType.SEQ)
+    else if(ast is AST_Seq)
       block_type_op = Opcodes.Scope;
     else
-      throw new Exception("Not supported block type: " + ast.type);
+      throw new Exception("Not supported block type: " + ast.GetType().Name);
 
     var block_op = Emit(block_type_op, new int[] { 0 /*patched later*/}, ast.line_num);
 
@@ -1322,9 +1304,9 @@ public class ModuleCompiler : AST_Visitor
       //      they are inside paral block
       if(is_paral &&
          (!(child is AST_Block child_block) ||
-          (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
+          (!(child_block is AST_Seq) && !(child_block is AST_Defer))))
       {
-        var seq_child = new AST_Block(BlockType.SEQ);
+        var seq_child = new AST_Seq();
         seq_child.children.Add(child);
         ast.children[i] = seq_child;
         child = seq_child;
