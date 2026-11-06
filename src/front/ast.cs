@@ -499,6 +499,10 @@ public class AST_VarDecl : AST_Tree
   public IType type => symb?.type.Get();
   public int symb_idx;
   public int line_num;
+  //NOTE: set for a func param declaring a default value, whose expression is this node's
+  //      only child - don't infer it back from the children, a transform adding one for
+  //      any other reason would silently change the DefArg bytecode (see GetDefaultArgsNum)
+  public bool has_default;
 
   public AST_VarDecl(VariableSymbol symb, int line_num)
     : this(symb, symb.scope_idx, line_num)
@@ -910,14 +914,11 @@ public static class AST_Extensions
   static public int GetDefaultArgsNum(this AST_FuncDecl n)
   {
     var fparams = n.fparams();
-    if(fparams.children.Count == 0)
-      return 0;
 
     int num = 0;
     for(int i = 0; i < fparams.children.Count; ++i)
     {
-      var fc = fparams.children[i].GetChildren();
-      if(fc != null && fc.Count > 0)
+      if(fparams.children[i] is AST_VarDecl vd && vd.has_default)
         ++num;
     }
 

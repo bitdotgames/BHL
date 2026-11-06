@@ -3007,7 +3007,10 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
 
     if(exp_ast != null)
+    {
       decl_ast.AddChild(exp_ast);
+      ((AST_VarDecl)decl_ast).has_default = true;
+    }
 
     PeekAST().AddChild(decl_ast);
 
