@@ -361,6 +361,120 @@ coro func void foo() {
     Assert.Contains(14, hit_lines);
   }
 
+  //NOTE: a statement line with no opcode mapped to it is a line the debugger cannot stop on -
+  //      stepping steps straight past it and a breakpoint there resolves no address at all.
+  //      This is how the 'break'/'continue' and 'defer'/'paral' gaps were found; it walks every
+  //      statement kind in the grammar so a new one cannot regress quietly. A line that
+  //      genuinely emits no opcode of its own goes in 'known_lineless' WITH ITS REASON - do not
+  //      add one to silence a failure without checking the body still carries the statement.
+  [Fact]
+  public void TestEveryStatementLineHasAnOpcode()
+  {
+    var known_lineless = new Dictionary<string, string>()
+    {
+      { "} else {", "just a jump target, both branch bodies map" },
+      { "do {",     "just a loop label, the '} while(..)' line maps" },
+    };
+
+    var sources = new Dictionary<string, string>()
+    {
+      { "decls and control flow", @"
+func void foo() {
+  int a = 1
+  a = 2
+  if(a == 2) {
+    a = 3
+  } else {
+    a = 4
+  }
+  while(a < 5) {
+    a = a + 1
+  }
+  do {
+    a = a + 1
+  } while(a < 8)
+  for(int i = 0; i < 2; i = i + 1) {
+    a = a + i
+  }
+  []int xs = [1,2]
+  foreach(int x in xs) {
+    a = a + x
+  }
+  return
+}
+" },
+      { "loop jumps", @"
+func void foo() {
+  int i = 0
+  while(i < 3) {
+    i = i + 1
+    if(i == 1) {
+      continue
+    }
+    break
+  }
+}
+" },
+      { "defer, paral and yields", @"
+coro func void bar() {
+  yield()
+}
+
+coro func void foo() {
+  defer {
+    int d = 1
+  }
+  paral {
+    yield bar()
+    yield()
+  }
+  paral_all {
+    yield bar()
+    yield()
+  }
+  int c = 0
+  yield while(c > 0)
+}
+" },
+      { "calls, modify ops and nested block", @"
+func int bar() {
+  return 1
+}
+
+func void foo() {
+  int a = 0
+  bar()
+  a++
+  a--
+  a += 2
+  {
+    a = 3
+  }
+}
+" },
+    };
+
+    foreach(var kv in sources)
+    {
+      var vm = MakeVM(kv.Value);
+      var module = vm.FindModule(TestModuleName);
+      var mapped = new HashSet<int>(module.decl.compiled.ip2src_line.lines);
+
+      var src_lines = kv.Value.Replace("\r", "").Split('\n');
+      for(int i = 0; i < src_lines.Length; ++i)
+      {
+        var text = src_lines[i].Trim();
+        if(text.Length == 0 || text == "{" || text == "}" || known_lineless.ContainsKey(text))
+          continue;
+
+        Assert.True(
+          mapped.Contains(i + 1),
+          $"[{kv.Key}] no opcode mapped to line {i + 1}: '{text}'"
+        );
+      }
+    }
+  }
+
   [Fact]
   public void TestStepOverSkipsCallees()
   {
