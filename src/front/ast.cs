@@ -911,6 +911,48 @@ public static class AST_Extensions
     return n.GetChildren()[1] as AST_Tree;
   }
 
+  //NOTE: a control block's children are positional, and the order is NOT the same per type -
+  //      'while' holds [cond, body] but 'do while' holds [body, cond], so children[0] means
+  //      opposite things. Go through these instead of indexing children by hand
+  static void AssertTwoChildren(AST_Block n)
+  {
+    if(n.children.Count != 2)
+      throw new Exception("Unexpected amount of children (must be 2): " + n.type);
+  }
+
+  static public IAST cond(this AST_Block n)
+  {
+    AssertTwoChildren(n);
+    return n.children[n.type == BlockType.DOWHILE ? 1 : 0];
+  }
+
+  static public IAST body(this AST_Block n)
+  {
+    AssertTwoChildren(n);
+    return n.children[n.type == BlockType.DOWHILE ? 0 : 1];
+  }
+
+  //NOTE: an 'if' holds [cond, body] per branch, with the 'else' body as a trailing odd one
+  static public int BranchCount(this AST_Block n)
+  {
+    return n.children.Count / 2;
+  }
+
+  static public IAST BranchCond(this AST_Block n, int i)
+  {
+    return n.children[i * 2];
+  }
+
+  static public IAST BranchBody(this AST_Block n, int i)
+  {
+    return n.children[i * 2 + 1];
+  }
+
+  static public IAST ElseBody(this AST_Block n)
+  {
+    return (n.children.Count % 2) == 1 ? n.children[n.children.Count - 1] : null;
+  }
+
   static public int GetDefaultArgsNum(this AST_FuncDecl n)
   {
     var fparams = n.fparams();

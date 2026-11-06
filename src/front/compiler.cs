@@ -937,12 +937,11 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: returns jump instruction to be patched later
-  Instruction EmitConditionPlaceholderAndBody(AST_Block ast, int idx)
+  Instruction EmitConditionPlaceholderAndBody(IAST cond, IAST body)
   {
-    //condition
-    Visit(ast.children[idx]);
+    Visit(cond);
     var jump_op = Emit(Opcodes.JumpZ, new int[] { 0 });
-    Visit(ast.children[idx + 1]);
+    Visit(body);
     return jump_op;
   }
 
@@ -1194,15 +1193,9 @@ public class ModuleCompiler : AST_Visitor
         //}
 
         Instruction last_jmp_op = null;
-        int i = 0;
-        //NOTE: amount of children is even if there's no 'else'
-        for(; i < ast.children.Count; i += 2)
+        for(int b = 0; b < ast.BranchCount(); ++b)
         {
-          //break if there's only 'else leftover' left
-          if((i + 2) > ast.children.Count)
-            break;
-
-          var if_op = EmitConditionPlaceholderAndBody(ast, i);
+          var if_op = EmitConditionPlaceholderAndBody(ast.BranchCond(b), ast.BranchBody(b));
           if(last_jmp_op != null)
             AddOffsetFromTo(last_jmp_op, Peek());
 
@@ -1217,24 +1210,21 @@ public class ModuleCompiler : AST_Visitor
             AddOffsetFromTo(if_op, Peek());
         }
 
-        //check fo 'else leftover'
-        if(i != ast.children.Count)
+        var else_body = ast.ElseBody();
+        if(else_body != null)
         {
-          Visit(ast.children[i]);
+          Visit(else_body);
           AddOffsetFromTo(last_jmp_op, Peek());
         }
 
         break;
       case BlockType.WHILE:
       {
-        if(ast.children.Count != 2)
-          throw new Exception("Unexpected amount of children (must be 2)");
-
         loop_blocks.Push(ast);
 
         var begin_op = Peek();
 
-        var cond_op = EmitConditionPlaceholderAndBody(ast, 0);
+        var cond_op = EmitConditionPlaceholderAndBody(ast.cond(), ast.body());
 
         //to the beginning of the loop
         var jump_op = Emit(Opcodes.Jump, new int[] { 0 });
@@ -1251,15 +1241,12 @@ public class ModuleCompiler : AST_Visitor
         break;
       case BlockType.DOWHILE:
       {
-        if(ast.children.Count != 2)
-          throw new Exception("Unexpected amount of children (must be 2)");
-
         loop_blocks.Push(ast);
 
         var begin_op = Peek();
 
-        Visit(ast.children[0]);
-        Visit(ast.children[1]);
+        Visit(ast.body());
+        Visit(ast.cond());
         var cond_op = Emit(Opcodes.JumpZ, new int[] { 0 });
 
         //to the beginning of the loop
