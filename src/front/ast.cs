@@ -65,69 +65,7 @@ public abstract class AST_Visitor
 
     try
     {
-      if(ast is AST_Interim _1)
-        DoVisit(_1);
-      else if(ast is AST_Block _2)
-        DoVisit(_2);
-      else if(ast is AST_Literal _3)
-        DoVisit(_3);
-      else if(ast is AST_Call _4)
-        DoVisit(_4);
-      else if(ast is AST_VarDecl _5)
-        DoVisit(_5);
-      else if(ast is AST_LambdaDecl _6)
-        DoVisit(_6);
-      //NOTE: base class must be handled after AST_LambdaDecl
-      else if(ast is AST_FuncDecl _7)
-        DoVisit(_7);
-      else if(ast is AST_ClassDecl _8)
-        DoVisit(_8);
-      else if(ast is AST_TypeCast _10)
-        DoVisit(_10);
-      else if(ast is AST_Return _11)
-        DoVisit(_11);
-      else if(ast is AST_Break _12)
-        DoVisit(_12);
-      else if(ast is AST_Continue _13)
-        DoVisit(_13);
-      else if(ast is AST_PopValue _14)
-        DoVisit(_14);
-      else if(ast is AST_BinaryOpExp _15)
-        DoVisit(_15);
-      else if(ast is AST_UnaryOpExp _16)
-        DoVisit(_16);
-      else if(ast is AST_New _17)
-        DoVisit(_17);
-      else if(ast is AST_Inc _18)
-        DoVisit(_18);
-      else if(ast is AST_Dec _19)
-        DoVisit(_19);
-      else if(ast is AST_JsonObj _20)
-        DoVisit(_20);
-      else if(ast is AST_JsonArr _21)
-        DoVisit(_21);
-      else if(ast is AST_JsonArrAddItem _22)
-        DoVisit(_22);
-      else if(ast is AST_JsonPair _23)
-        DoVisit(_23);
-      else if(ast is AST_Import _24)
-        DoVisit(_24);
-      else if(ast is AST_Module _25)
-        DoVisit(_25);
-      else if(ast is AST_TypeAs _26)
-        DoVisit(_26);
-      else if(ast is AST_TypeIs _27)
-        DoVisit(_27);
-      else if(ast is AST_Typeof _28)
-        DoVisit(_28);
-      else if(ast is AST_JsonMap _29)
-        DoVisit(_29);
-      else if(ast is AST_JsonMapAddItem _30)
-        DoVisit(_30);
-      else if(ast is AST_Yield _31)
-        DoVisit(_31);
-      else
-        throw new Exception("Not known type: " + ast.GetType().Name);
+      ast.Accept(this);
     }
     catch(Exception)
     {
@@ -155,24 +93,34 @@ public abstract class AST_Visitor
 
 public interface IAST
 {
+  //NOTE: each node dispatches to its own DoVisit overload, so adding a node is a compile
+  //      error until it's handled - there's no order-sensitive type test to get wrong
+  void Accept(AST_Visitor v);
 }
 
 public abstract class AST_Tree : IAST
 {
   public List<IAST> children = new List<IAST>();
+
+  public abstract void Accept(AST_Visitor v);
 }
 
 public class AST_Interim : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
 }
 
 public class AST_Import : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public List<string> module_names = new List<string>();
 }
 
 public class AST_Module : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public string name;
 
   public AST_Module(string name)
@@ -190,6 +138,8 @@ public enum EnumUnaryOp
 
 public class AST_UnaryOpExp : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public EnumUnaryOp type = new EnumUnaryOp();
 
   public AST_UnaryOpExp(EnumUnaryOp type)
@@ -224,6 +174,8 @@ public enum EnumBinaryOp
 
 public class AST_BinaryOpExp  : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public EnumBinaryOp type = new EnumBinaryOp();
   public int line_num;
 
@@ -236,6 +188,8 @@ public class AST_BinaryOpExp  : AST_Tree
 
 public class AST_Inc : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public VariableSymbol symbol;
 
   public AST_Inc(VariableSymbol symbol)
@@ -246,6 +200,8 @@ public class AST_Inc : IAST
 
 public class AST_Dec : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public VariableSymbol symbol;
 
   public AST_Dec(VariableSymbol symbol)
@@ -256,6 +212,8 @@ public class AST_Dec : IAST
 
 public class AST_New : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public int line_num;
 
@@ -268,6 +226,8 @@ public class AST_New : AST_Tree
 
 public class AST_FuncDecl : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public FuncSymbolScript symbol;
   public int last_line_num;
 
@@ -284,6 +244,8 @@ public class AST_FuncDecl : AST_Tree
 
 public class AST_ClassDecl : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public ClassSymbolScript symbol;
 
   public AST_ClassDecl(ClassSymbolScript symbol)
@@ -300,7 +262,7 @@ public class AST_ClassDecl : AST_Tree
   }
 }
 
-public class AST_UpVal : IAST
+public class AST_UpVal
 {
   public VariableSymbol local;
   public VariableSymbol upval;
@@ -325,6 +287,8 @@ public class AST_UpVal : IAST
 
 public class AST_LambdaDecl : AST_FuncDecl
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public bool called_in_place;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
@@ -338,6 +302,8 @@ public class AST_LambdaDecl : AST_FuncDecl
 
 public class AST_TypeCast : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public bool force_type;
   public IType hint_exp_type;
@@ -353,6 +319,8 @@ public class AST_TypeCast : AST_Tree
 
 public class AST_TypeAs : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public bool force_type;
   public int line_num;
@@ -367,6 +335,8 @@ public class AST_TypeAs : AST_Tree
 
 public class AST_TypeIs : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public int line_num;
 
@@ -399,6 +369,8 @@ public enum EnumCall
 
 public class AST_Call  : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symbol;
@@ -444,6 +416,8 @@ public class AST_Call  : AST_Tree
 
 public class AST_Return  : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public int num;
   public int line_num;
 
@@ -455,6 +429,8 @@ public class AST_Return  : AST_Tree
 
 public class AST_Typeof : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
 
   public AST_Typeof(IType type)
@@ -465,6 +441,8 @@ public class AST_Typeof : IAST
 
 public class AST_Break : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public int line_num;
 
   public AST_Break(int line_num = 0)
@@ -475,6 +453,8 @@ public class AST_Break : IAST
 
 public class AST_Continue : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public bool jump_marker;
   public int line_num;
 
@@ -487,6 +467,8 @@ public class AST_Continue : IAST
 
 public class AST_Yield : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public int line_num;
 
   public AST_Yield(int line_num)
@@ -497,6 +479,8 @@ public class AST_Yield : IAST
 
 public class AST_Literal : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public ConstType type = new ConstType();
   public double nval;
   public string sval = "";
@@ -509,6 +493,8 @@ public class AST_Literal : IAST
 
 public class AST_VarDecl : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public VariableSymbol symb;
   public IType type => symb?.type.Get();
   public int symb_idx;
@@ -533,6 +519,8 @@ public class AST_VarDecl : AST_Tree
 
 public class AST_Block : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public BlockType type = new BlockType();
   //NOTE: only set for blocks the user introduces with a keyword (defer, paral, paral_all),
   //      so the debugger can stop on that line; structural blocks emit no opcode of their own
@@ -547,6 +535,8 @@ public class AST_Block : AST_Tree
 
 public class AST_JsonObj : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public int line_num;
 
@@ -559,6 +549,8 @@ public class AST_JsonObj : AST_Tree
 
 public class AST_JsonArr : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public int line_num;
 
@@ -571,10 +563,13 @@ public class AST_JsonArr : AST_Tree
 
 public class AST_JsonArrAddItem : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
 }
 
 public class AST_JsonMap : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType type;
   public int line_num;
 
@@ -587,10 +582,13 @@ public class AST_JsonMap : AST_Tree
 
 public class AST_JsonMapAddItem : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
 }
 
 public class AST_JsonPair : AST_Tree
 {
+  public override void Accept(AST_Visitor v) => v.DoVisit(this);
+
   public IType scope_type;
   public string name;
   public int symb_idx;
@@ -607,6 +605,7 @@ public class AST_JsonPair : AST_Tree
 
 public class AST_PopValue : IAST
 {
+  public void Accept(AST_Visitor v) => v.DoVisit(this);
 }
 
 public class AST_Dumper : AST_Visitor
