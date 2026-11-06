@@ -534,10 +534,14 @@ public class AST_VarDecl : AST_Tree
 public class AST_Block : AST_Tree
 {
   public BlockType type = new BlockType();
+  //NOTE: only set for blocks the user introduces with a keyword (defer, paral, paral_all),
+  //      so the debugger can stop on that line; structural blocks emit no opcode of their own
+  public int line_num;
 
-  public AST_Block(BlockType type)
+  public AST_Block(BlockType type, int line_num = 0)
   {
     this.type = type;
+    this.line_num = line_num;
   }
 }
 

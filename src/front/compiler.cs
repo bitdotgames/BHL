@@ -1325,7 +1325,7 @@ public class ModuleCompiler : AST_Visitor
     else
       throw new Exception("Not supported block type: " + ast.type);
 
-    var block_op = Emit(block_type_op, new int[] { 0 /*patched later*/});
+    var block_op = Emit(block_type_op, new int[] { 0 /*patched later*/}, ast.line_num);
 
     for(int i = 0; i < ast.children.Count; ++i)
     {
@@ -1366,7 +1366,7 @@ public class ModuleCompiler : AST_Visitor
     if(parent_block != null)
       ctrl_block_has_defers.Add(parent_block);
 
-    var block_op = Emit(Opcodes.Defer, new int[] { 0 /*patched later*/});
+    var block_op = Emit(Opcodes.Defer, new int[] { 0 /*patched later*/}, ast.line_num);
     VisitChildren(ast);
     AddOffsetFromTo(block_op, Peek());
   }

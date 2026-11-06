@@ -319,6 +319,48 @@ func void foo() {
     Assert.Contains(9, hit_lines);
   }
 
+  //NOTE: same root cause as 'break'/'continue' - these emit a real opcode (Defer, Paral,
+  //      ParalAll) which used to carry no source line, so the header line had no address
+  [Fact]
+  public void TestBreakpointOnDeferAndParalLines()
+  {
+    string bhl = @"
+coro func void bar() {
+  yield()
+}
+
+coro func void foo() {
+  defer {
+    int d = 1
+  }
+  paral {
+    yield bar()
+    yield()
+  }
+  paral_all {
+    yield bar()
+    yield()
+  }
+}
+";
+    var vm = MakeVM(bhl);
+    var d  = MakeDebugger(vm);
+    var module = vm.FindModule(TestModuleName);
+
+    Assert.True(d.AddBreakpoint(module, line: 7),  "no opcode mapped to the 'defer' line");
+    Assert.True(d.AddBreakpoint(module, line: 10), "no opcode mapped to the 'paral' line");
+    Assert.True(d.AddBreakpoint(module, line: 14), "no opcode mapped to the 'paral_all' line");
+
+    var hit_lines = new List<int>();
+    d.OnBreakpoint = b => hit_lines.Add(b.line);
+
+    Execute(vm, "foo");
+
+    Assert.Contains(7, hit_lines);
+    Assert.Contains(10, hit_lines);
+    Assert.Contains(14, hit_lines);
+  }
+
   [Fact]
   public void TestStepOverSkipsCallees()
   {

@@ -3211,7 +3211,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
 
-    var block = ProcBlock(BlockType.PARAL, ctx.block()?.statement());
+    var block = ProcBlock(BlockType.PARAL, ctx.block()?.statement(), ctx.Start.Line);
     if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
@@ -3221,7 +3221,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
 
-    var block = ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
+    var block = ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement(), ctx.Start.Line);
     if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
@@ -3237,7 +3237,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    ProcBlock(BlockType.DEFER, ctx.block()?.statement());
+    ProcBlock(BlockType.DEFER, ctx.block()?.statement(), ctx.Start.Line);
     return null;
   }
 
@@ -3919,7 +3919,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return !ok ? null : Annotate(tree).eval_type;
   }
 
-  AST_Block ProcBlock(BlockType type, IParseTree[] sts)
+  AST_Block ProcBlock(BlockType type, IParseTree[] sts, int line_num = 0)
   {
     if(sts == null)
       return null;
@@ -3932,7 +3932,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     PushScope(local_scope);
     local_scope.Enter();
 
-    var ast = new AST_Block(type);
+    var ast = new AST_Block(type, line_num);
     PushBlock(ast);
 
     var tmp = new AST_Interim();

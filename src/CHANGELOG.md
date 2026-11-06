@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The debugger stops on a `break` and on a `continue` again: their jump was emitted without a
   source line, so nothing mapped to those lines - stepping skipped straight over them and a
   breakpoint set on one could not resolve an address at all. Needs a recompile to take effect.
+- A breakpoint can be set on a `defer`, `paral` and `paral_all` line: the opcode each of them
+  emits carried no source line either, so only the statements inside the block had an address.
 
 ## [3.0.0-beta13]
 
