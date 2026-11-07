@@ -250,6 +250,35 @@ public class TestProjConf
     }
   }
 
+  //NOTE: 'libs/*' used to yield nothing at all - the final segment matched files, which were
+  //      then dropped as non-directories, and a wildcard matching nothing is deliberately quiet
+  [Fact]
+  public void SrcDirsTrailingWildcardMatchesDirs()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_trailing_" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(Path.Combine(root, "alpha"));
+    Directory.CreateDirectory(Path.Combine(root, "beta"));
+    try
+    {
+      File.WriteAllText(Path.Combine(root, "alpha", "a.bhl"), "func int A() { return 1 }");
+      File.WriteAllText(Path.Combine(root, "beta", "b.bhl"), "func int B() { return 2 }");
+
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(root.Replace('\\', '/') + "/*");
+      proj.Setup();
+
+      Assert.Equal(2, proj.src_dirs.Count);
+
+      var files = new List<string>();
+      proj.CollectSourceFiles(files);
+      Assert.Equal(2, files.Count);
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
   [Fact]
   public void SrcDirsWildcardWithNoMatchesResultsInEmptySrcDirs()
   {

@@ -332,7 +332,7 @@ public partial class ProjectConf
       bool excluding = src_dir.StartsWith("!");
 
       string pattern = NormalizePath(proj_file, excluding ? src_dir.Substring(1) : src_dir);
-      var matched = BuildUtils.Glob(pattern).Where(Directory.Exists).ToList();
+      var matched = BuildUtils.Glob(pattern, dirs_only: true).Where(Directory.Exists).ToList();
 
       if(excluding)
       {

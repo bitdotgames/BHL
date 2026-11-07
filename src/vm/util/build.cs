@@ -98,7 +98,10 @@ static public class BuildUtils
   }
 
   //NOTE: expands one path segment at a time, so '*' works in any segment, not just a trailing one
-  static public List<string> Glob(string pattern)
+  //NOTE: 'dirs_only' makes the final segment match directories rather than files - a source
+  //      dir pattern like 'libs/*' means every dir under libs, while a bindings sources
+  //      pattern like 'autobind/*.cs' means the files
+  static public List<string> Glob(string pattern, bool dirs_only = false)
   {
     if(pattern.IndexOf('*') == -1)
       return new List<string> { pattern };
@@ -135,7 +138,9 @@ static public class BuildUtils
         //NOTE: GetFiles/GetDirectories return OS-native separators (backslash on Windows),
         //      which would otherwise leak past this point - every other segment here is
         //      joined with '/' by hand, so normalize these too to keep the whole path consistent
-        var matches = is_last ? Directory.GetFiles(dir, segment) : Directory.GetDirectories(dir, segment);
+        var matches = (is_last && !dirs_only)
+          ? Directory.GetFiles(dir, segment)
+          : Directory.GetDirectories(dir, segment);
         foreach(var m in matches)
           next.Add(m.Replace('\\', '/'));
       }

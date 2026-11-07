@@ -70,6 +70,35 @@ public class TestBuildUtils
     }
   }
 
+  //NOTE: a src_dirs pattern names directories, a bindings sources pattern names files - the
+  //      final segment is the only place the two differ
+  [Fact]
+  public void TestGlobDirsOnlyMatchesDirectoriesOnTheFinalSegment()
+  {
+    var root = MakeTempDir();
+    try
+    {
+      Directory.CreateDirectory(Path.Combine(root, "alpha"));
+      Directory.CreateDirectory(Path.Combine(root, "beta"));
+      File.WriteAllText(Path.Combine(root, "loose.bhl"), "");
+
+      var pattern = root.Replace('\\', '/') + "/*";
+
+      var files = BuildUtils.Glob(pattern);
+      Assert.Single(files);
+      Assert.EndsWith("loose.bhl", files[0]);
+
+      var dirs = BuildUtils.Glob(pattern, dirs_only: true);
+      Assert.Equal(2, dirs.Count);
+      Assert.Contains(dirs, d => d.EndsWith("alpha"));
+      Assert.Contains(dirs, d => d.EndsWith("beta"));
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
   [Fact]
   public void TestGlobNoMatchingDirectoryReturnsEmpty()
   {
