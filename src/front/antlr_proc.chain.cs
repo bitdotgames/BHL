@@ -80,25 +80,10 @@ public partial class ANTLR_Processor
         return false;
       }
 
-      WalkLeftoverName();
-
-      if(_chain.IsMemorySlotAccess && _curr_symb is FuncSymbol m && _scope is ClassSymbol)
+      if(!WalkLeftoverName())
       {
-        if(!_write)
-        {
-          if(!m.attribs.HasFlag(FuncAttrib.Static))
-          {
-            _proc.AddError(_chain.items.At(_chain.items.Count - 1), "method pointers not supported");
-            _proc.PopAST();
-            return false;
-          }
-        }
-        else
-        {
-          _proc.AddError(_chain.items.At(_chain.items.Count - 1), "invalid assignment");
-          _proc.PopAST();
-          return false;
-        }
+        _proc.PopAST();
+        return false;
       }
 
       var chain_ast = _proc.PeekAST();
@@ -306,11 +291,34 @@ public partial class ANTLR_Processor
     //NOTE: a chain can end on a name nothing consumed ('..().x'), resolved only once the
     //      items are done. Walk() and the lambda tail both reach here, the latter used to
     //      skip it and leave the name unresolved with the type stuck at the lambda's result
-    internal void WalkLeftoverName()
+    internal bool WalkLeftoverName()
     {
-      if(_curr_name != null)
-        WalkItem(null, null, _curr_name.Symbol.Line, _write,
-          is_leftover: true, is_root: !_narrowed);
+      if(_curr_name == null)
+        return true;
+
+      var place = _curr_name;
+      WalkItem(null, null, _curr_name.Symbol.Line, _write,
+        is_leftover: true, is_root: !_narrowed);
+
+      //NOTE: a method reached as a slot rather than called - taking one as a value isn't
+      //      supported, and assigning to one is meaningless. Checked here so the lambda
+      //      tail gets it too: it used to reach the VM, which crashed casting the
+      //      signature to a class
+      if(_curr_symb is FuncSymbol m && _scope is ClassSymbol)
+      {
+        if(_write)
+        {
+          _proc.AddError(place, "invalid assignment");
+          return false;
+        }
+        if(!m.attribs.HasFlag(FuncAttrib.Static))
+        {
+          _proc.AddError(place, "method pointers not supported");
+          return false;
+        }
+      }
+
+      return true;
     }
 
     bool CheckStaticInstanceAccess(bhlParser.MemberAccessContext macc, ClassSymbol class_symb)

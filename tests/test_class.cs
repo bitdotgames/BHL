@@ -1186,7 +1186,7 @@ public class TestClass : BHL_TestBase
       "method pointers not supported",
       new PlaceAssert(bhl, @"
       func() ptr = f.foo
---------------------^"
+---------------------^"
       )
     );
   }
@@ -1237,7 +1237,7 @@ public class TestClass : BHL_TestBase
       "invalid assignment",
       new PlaceAssert(bhl, @"
       f.foo = null
--------^"
+--------^"
       )
     );
   }

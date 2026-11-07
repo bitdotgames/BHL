@@ -25,6 +25,30 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //NOTE: the guard rejecting a method taken as a value lived in Walk(), which the lambda
+  //      tail never reaches - this compiled and then crashed the VM casting a FuncSignature
+  //      to a ClassSymbol
+  [Fact]
+  public void TestLambdaCallMethodPointerIsRejected()
+  {
+    string bhl = @"
+    class Foo {
+      func int m() {
+        return 1
+      }
+    }
+
+    func test() {
+      func int() ptr = func Foo() { return new Foo }().m
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "method pointers not supported"
+    );
+  }
+
   [Fact]
   public void TestLambdaCallFollowedByUnknownMember()
   {

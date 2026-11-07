@@ -1290,7 +1290,11 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopAST();
       return false;
     }
-    walker.WalkLeftoverName();
+    if(!walker.WalkLeftoverName())
+    {
+      PopAST();
+      return false;
+    }
     curr_type = walker.CurrType;
 
     ValidateChainCall(
