@@ -5,6 +5,16 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta19]
+
+### Fixed
+- A trailing wildcard in `src_dirs` matches directories. `Glob` resolves its final segment with
+  `GetFiles`, which is right for a bindings `sources` pattern like `autobind/*.cs` but not for a
+  source dir one: `libs/*` returned the files under `libs`, which `Setup()` then dropped as
+  non-directories. The result was an empty build, and a silent one - a wildcard matching nothing
+  is deliberately quiet, since an absent unversioned package dir is legitimate. A wildcard in a
+  middle segment (`pkgs/*/Runtime`) always worked, as did a plain dir, which recurses anyway.
+
 ## [3.0.0-beta18]
 
 Follow-ups to the library `name` introduced in beta17 - worth taking if you adopted it.
