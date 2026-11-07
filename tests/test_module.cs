@@ -1091,6 +1091,75 @@ public class TestModule : BHL_TestBase
     }
   }
 
+  //NOTE: a plain prefix test takes '<root>/src' to cover '<root>/srcx/b.bhl' and names that
+  //      module 'x/b', colliding with a real '<root>/src/x/b.bhl' - the two unrelated files
+  //      then fail the build as an 'ambiguous' module
+  [Fact]
+  public async Task TestIncludePathPrefixMustEndOnPathBoundary()
+  {
+    string file_deep = @"
+    func int Deep() {
+      return 1
+    }
+    ";
+
+    string file_sibling = @"
+    func int Sibling() {
+      return 2
+    }
+    ";
+
+    string file_test = @"
+    import ""x/b""
+    import ""b""
+
+    func int test()
+    {
+      return Deep() + Sibling()
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile(Path.Combine("src", "x", "b.bhl"), file_deep, ref files);
+    NewTestFile(Path.Combine("srcx", "b.bhl"), file_sibling, ref files);
+    NewTestFile(Path.Combine("src", "test.bhl"), file_test, ref files);
+
+    {
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, use_cache: false, max_threads: 1);
+      conf.proj.inc_path.Clear();
+      //NOTE: the shorter one first, so a prefix test would match it for both
+      conf.proj.inc_path.Add(TestDirPath() + "/src");
+      conf.proj.inc_path.Add(TestDirPath() + "/srcx");
+
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      Assert.Equal(3, Execute(vm, "test").Stack.Pop().num);
+    }
+  }
+
+  //NOTE: both spellings of an inc dir must behave the same - a trailing separator is common
+  //      in a real bhl.proj ("../" and the like)
+  [Theory]
+  [InlineData("")]
+  [InlineData("/")]
+  public void TestIncludePathNamesModulesByDirBoundary(string trailing)
+  {
+    var root = BuildUtils.NormalizeFilePath(Path.Combine(Path.GetTempPath(), "bhl_incpath_" + Guid.NewGuid().ToString("N")));
+
+    var inc = new IncludePath();
+    inc.Add(root + "/src" + trailing);
+    inc.Add(root + "/srcx" + trailing);
+
+    Assert.Equal("x/b", inc.FilePath2ModuleName(root + "/src/x/b.bhl"));
+    //NOTE: a plain prefix test would call this one 'x/b' too
+    Assert.Equal("b", inc.FilePath2ModuleName(root + "/srcx/b.bhl"));
+  }
+
   [Fact]
   public async Task TestImportTryIncludePathWithSlash()
   {
