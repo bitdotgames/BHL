@@ -150,8 +150,10 @@ public static partial class Tasks
   static OptionSet compile_full_options(CompileFullArgs a) => new OptionSet()
   {
     {
+      //NOTE: compile() has already read this very file and reported its warnings, for every
+      //      path including the ones exiting before _compile() - printing here doubles them
       "p|proj=", "project config file",
-      v => { a.proj = ProjectConf.ReadFromFile(v); PrintProjWarnings(a.proj); }
+      v => a.proj = ProjectConf.ReadFromFile(v)
     },
     {
       "dir=", "source directories separated by ;",
