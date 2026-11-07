@@ -187,6 +187,69 @@ public class TestProjConf
     }
   }
 
+  //NOTE: src_dirs may overlap directly, or after 'includes' folded in another project's dirs.
+  //      The same file twice used to be reported as a module ambiguous with itself, and threw
+  //      on a duplicate key while the LSP indexed it
+  [Fact]
+  public void OverlappingSrcDirsYieldEachFileOnce()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_overlap_" + Guid.NewGuid().ToString("N"));
+    var nested = Path.Combine(root, "nested");
+    Directory.CreateDirectory(nested);
+    try
+    {
+      File.WriteAllText(Path.Combine(root, "top.bhl"), "func int A() { return 1 }");
+      File.WriteAllText(Path.Combine(nested, "deep.bhl"), "func int B() { return 2 }");
+
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(root);
+      proj.src_dirs.Add(nested);
+      proj.Setup();
+
+      var files = new List<string>();
+      proj.CollectSourceFiles(files);
+
+      Assert.Equal(2, files.Count);
+      Assert.Equal(files.Count, files.Distinct().Count());
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
+  //NOTE: building without whatever the mistyped dir held is worse than saying so, but a
+  //      wildcard matching nothing is normal and must stay quiet
+  [Fact]
+  public void MissingLiteralSrcDirWarnsWhileMissingWildcardDoesNot()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_missing_" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(root);
+      proj.src_dirs.Add(Path.Combine(root, "tpyo_dir"));
+      proj.Setup();
+
+      Assert.Single(proj.src_dirs);
+      Assert.Single(proj.warnings);
+      Assert.Contains("does not exist", proj.warnings[0]);
+
+      var wildcard = new ProjectConf();
+      wildcard.src_dirs.Add(root);
+      wildcard.src_dirs.Add(Path.Combine(root, "pkg@*", "Runtime"));
+      wildcard.Setup();
+
+      Assert.Single(wildcard.src_dirs);
+      Assert.Empty(wildcard.warnings);
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
   [Fact]
   public void SrcDirsWildcardWithNoMatchesResultsInEmptySrcDirs()
   {

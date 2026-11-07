@@ -129,21 +129,17 @@ public class Workspace
     Path2Proc.Clear();
     Path2Doc.Clear();
 
-    for(int i = 0; i < ProjConf.src_dirs.Count; ++i)
+    //NOTE: collected for the whole project at once so overlapping src_dirs don't hand the
+    //      same file in twice, which Path2Proc.Add below would throw on
+    var files = new List<string>();
+    ProjConf.CollectSourceFiles(files);
+
+    foreach(var norm_file in files)
     {
-      var src_dir = ProjConf.src_dirs[i];
-
-      var files = new List<string>();
-      ProjConf.CollectSourceFiles(src_dir, files);
-      foreach(var file in files)
+      using(var sfs = File.OpenRead(norm_file))
       {
-        string norm_file = BuildUtils.NormalizeFilePath(file);
-
-        using(var sfs = File.OpenRead(norm_file))
-        {
-          var proc = ParseFile(norm_file, sfs);
-          Path2Proc.Add(norm_file, proc);
-        }
+        var proc = ParseFile(norm_file, sfs);
+        Path2Proc.Add(norm_file, proc);
       }
     }
 

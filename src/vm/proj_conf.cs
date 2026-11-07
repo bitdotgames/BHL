@@ -203,20 +203,33 @@ public partial class ProjectConf
   //      can't end up disagreeing about what belongs to the project
   public void CollectSourceFiles(List<string> files)
   {
+    var seen = new HashSet<string>();
     foreach(var src_dir in src_dirs)
-      CollectSourceFiles(src_dir, files);
+      CollectSourceFiles(src_dir, files, seen);
   }
 
   public void CollectSourceFiles(string dir, List<string> files)
+  {
+    CollectSourceFiles(dir, files, new HashSet<string>());
+  }
+
+  void CollectSourceFiles(string dir, List<string> files, HashSet<string> seen)
   {
     if(IsExcludedDir(dir))
       return;
 
     foreach(var file in Directory.EnumerateFiles(dir, "*.bhl"))
-      files.Add(file);
+    {
+      //NOTE: src_dirs may overlap - directly, or after 'includes' folded in another project's
+      //      dirs - and the same file handed in twice is reported as a module ambiguous with
+      //      itself by the compiler, and throws on a duplicate key in the LSP's index
+      string norm = BuildUtils.NormalizeFilePath(file);
+      if(seen.Add(norm))
+        files.Add(norm);
+    }
 
     foreach(var sub in Directory.EnumerateDirectories(dir))
-      CollectSourceFiles(sub, files);
+      CollectSourceFiles(sub, files, seen);
   }
 
   public void Setup()
@@ -310,7 +323,15 @@ public partial class ProjectConf
           excluded_src_dirs.Add(BuildUtils.NormalizeFilePath(dir));
       }
       else
+      {
+        //NOTE: a wildcard matching nothing is normal (e.g. an unversioned package dir), a
+        //      literal path that isn't there is a typo - and silently building without
+        //      whatever it held is worse than saying so
+        if(matched.Count == 0 && pattern.IndexOf('*') == -1)
+          warnings.Add($"source dir '{src_dir}' does not exist");
+
         expanded_src_dirs.AddRange(matched);
+      }
     }
     src_dirs = expanded_src_dirs;
 

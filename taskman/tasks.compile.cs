@@ -248,10 +248,6 @@ public static partial class Tasks
 
     a.files.AddRange(extra);
 
-    for(int i = 0; i < a.proj.src_dirs.Count; ++i)
-      if(!Directory.Exists(a.proj.src_dirs[i]))
-        compile_usage("Source directory not found: " + a.proj.src_dirs[i]);
-
     if(string.IsNullOrEmpty(a.proj.result_file))
       compile_usage("Result file path not set");
 
