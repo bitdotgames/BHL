@@ -84,9 +84,17 @@ once for a diamond graph, and already has fields it is forbidden to declare
 (`defines`, the legacy `bindings_*` ones, postproc) — so "an included project
 may declare X" is established precedent.
 
+There is already a precedent for this exact shape elsewhere in `bhl.proj`:
+a `bindings` entry **must** declare a `name`, and `LoadBindings()` rejects an
+entry whose declared `(name, version)` doesn't match what the binding actually
+announces (`ProjectConf.DiscoverDeclaredBindings`). Native bindings therefore
+already declare their identity and have it verified; libraries do not. Applying
+the same rule to an included project is consistency, not a new concept.
+
 Sketch, **not designed or implemented**:
 
-- an included `bhl.proj` declares `module_prefix` (the root project's is empty,
+- a library ships its own `bhl.proj` - which is already how it is consumed -
+  and that file declares the library's `name` (the root project's is empty,
   i.e. today's behaviour);
 - `ExpandIncludes` records it alongside each `src_dir`/`inc_dir` it folds in,
   so `IncludePath` holds `(dir, prefix)` rather than a bare dir;
