@@ -5,6 +5,24 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta20]
+
+### Added
+- `using <namespace>` brings a namespace's members into the module unqualified, and
+  `using <alias> = <namespace>` binds a short name to it instead. Only a consumer *outside* a
+  namespace ever had to spell the full path - inside one, unqualified access to its own
+  members, relative access downward and enclosing scope access upward all already worked. The
+  workaround was to reopen `namespace foo { }` in the consuming file, which works but silently
+  puts anything declared there into that namespace.
+
+  Both forms are private to the module declaring them, so neither is re-exported to modules
+  importing it - a module is a file in bhl, so this is the same scoping as C#'s file level
+  `using`. A `using` colliding with a local symbol is reported as `already defined symbol`.
+  The alias form cannot collide with the namespace's contents at all, which makes it the safer
+  choice for a large namespace.
+
+  **`using` is a new keyword**, so a script using it as an identifier no longer parses.
+
 ## [3.0.0-beta19]
 
 ### Fixed
