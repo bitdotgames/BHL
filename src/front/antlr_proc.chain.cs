@@ -20,6 +20,7 @@ public partial class ANTLR_Processor
 
     ITerminalNode _curr_name;
     IScope        _scope;
+    bool          _narrowed;
     IType         _curr_type;
     Symbol        _curr_symb;
     int           _offset;
@@ -37,6 +38,7 @@ public partial class ANTLR_Processor
       _curr_symb = null;
       _offset   = 0;
       _scope    = rootScope ?? (chain.IsGlobalNs ? proc.ns : proc.curr_scope);
+      _narrowed = false;
     }
 
     // Minimal constructor for processing only chain items (lambda-tail case).
@@ -51,6 +53,7 @@ public partial class ANTLR_Processor
       _curr_symb = null;
       _offset   = 0;
       _scope    = proc.curr_scope;
+      _narrowed = false;
     }
 
     internal bool Walk(ref IType type)
@@ -77,9 +80,7 @@ public partial class ANTLR_Processor
         return false;
       }
 
-      if(_curr_name != null)
-        WalkItem(null, null, _curr_name.Symbol.Line, _write,
-          is_leftover: true, is_root: _chain.items.Count == 0);
+      WalkLeftoverName();
 
       if(_chain.IsMemorySlotAccess && _curr_symb is FuncSymbol m && _scope is ClassSymbol)
       {
@@ -247,7 +248,7 @@ public partial class ANTLR_Processor
       //      narrowed the scope yet. A namespace prefix eaten by the head already narrowed it
       //      (that's what _offset means), and so does every member access from here on -
       //      past either, a name must be found in that scope or not at all
-      bool narrowed = _offset > 0;
+      _narrowed = _offset > 0;
 
       for(int c = _offset; c < items.Count; ++c)
       {
@@ -256,12 +257,12 @@ public partial class ANTLR_Processor
 
         if(item is bhlParser.CallArgsContext cargs)
         {
-          WalkItem(cargs, null, cargs.Start.Line, write: false, is_root: !narrowed);
+          WalkItem(cargs, null, cargs.Start.Line, write: false, is_root: !_narrowed);
           _curr_name = null;
         }
         else if(item is bhlParser.ArrAccessContext arracc)
         {
-          WalkItem(null, arracc, arracc.Start.Line, write: _write && is_last, is_root: !narrowed);
+          WalkItem(null, arracc, arracc.Start.Line, write: _write && is_last, is_root: !_narrowed);
           _curr_name = null;
         }
         else if(item is bhlParser.MemberAccessContext macc)
@@ -269,7 +270,7 @@ public partial class ANTLR_Processor
           ClassSymbol class_symb = null;
           if(_curr_name != null)
           {
-            WalkItem(null, null, macc.Start.Line, write: false, is_root: !narrowed);
+            WalkItem(null, null, macc.Start.Line, write: false, is_root: !_narrowed);
             class_symb = _curr_symb as ClassSymbol;
           }
           else
@@ -292,7 +293,7 @@ public partial class ANTLR_Processor
             return false;
 
           _curr_name = macc.NAME();
-          narrowed = true;
+          _narrowed = true;
         }
         else
           throw new System.Exception("Unhandled chain item");
@@ -302,6 +303,16 @@ public partial class ANTLR_Processor
     }
 
     // Consolidated from four separate if-blocks: error if static-access-mode != member-is-static.
+    //NOTE: a chain can end on a name nothing consumed ('..().x'), resolved only once the
+    //      items are done. Walk() and the lambda tail both reach here, the latter used to
+    //      skip it and leave the name unresolved with the type stuck at the lambda's result
+    internal void WalkLeftoverName()
+    {
+      if(_curr_name != null)
+        WalkItem(null, null, _curr_name.Symbol.Line, _write,
+          is_leftover: true, is_root: !_narrowed);
+    }
+
     bool CheckStaticInstanceAccess(bhlParser.MemberAccessContext macc, ClassSymbol class_symb)
     {
       bool is_via_class = class_symb != null;

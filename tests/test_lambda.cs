@@ -5,6 +5,45 @@ using Xunit;
 
 public class TestLambda : BHL_TestBase
 {
+  //NOTE: the lambda tail walked the chain items but never resolved a name left over at the
+  //      end, so '.x' stayed unresolved and the type stayed the lambda's return type
+  [Fact]
+  public void TestLambdaCallFollowedByMemberAccess()
+  {
+    string bhl = @"
+    class Foo {
+      int x
+    }
+
+    func int test() {
+      return func Foo() { return new Foo }().x
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(0, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestLambdaCallFollowedByUnknownMember()
+  {
+    string bhl = @"
+    class Foo {
+      int x
+    }
+
+    func int test() {
+      return func Foo() { return new Foo }().missing
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "symbol 'missing' not resolved"
+    );
+  }
+
   [Fact]
   public void TestLambdaUselessStatement()
   {
