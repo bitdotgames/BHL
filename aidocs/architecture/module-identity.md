@@ -46,9 +46,11 @@ library", with the consumer's `inc_dir` pointing at its *parent*.
 This convention is what every search-path based system uses: C (`include/libname/`),
 Python (packages on `sys.path`), Java (reverse-DNS packages). It is not unusual.
 
-## Where BHL is weaker than those
+## Where positional naming is weaker than those
 
-The convention is unwritten and unenforceable, and three consequences follow.
+This is what a library gets when it declares no name (see the next section for
+the fix). The convention is unwritten and unenforceable, and three consequences
+follow.
 
 **1. Module identity is decided by the consumer, not the library.** The same
 file is `a/util` or `A/a/util` depending on where the consumer points
@@ -69,56 +71,59 @@ into one ordered flat list where first-match-wins decides names. Two libraries
 are one careless layout away from colliding, and `module 'util' ambiguous
 resolving` does not hint that the fix is to restructure directories.
 
-## Assessment
+## A library declares its own name
 
-Keep the resolution model. Decoupling module identity from file paths
-(Rust/C# style, where a module declares its own name) is the principled fix but
-a very large one: module names key `.bhc` entries, imports, the LSP index and
-the build cache.
+A `bhl.proj` pulled in through `includes` may declare `"name"`. Every module it
+contributes is then named `<name>/<path under its dirs>`, whatever the including
+project did with its own `inc_dirs`:
 
-The cheap middle option is to make the discipline explicit rather than
-discovered, and `includes` already provides the unit to hang it on: an included
-`bhl.proj` *is* a library. It contributes its own `src_dirs`/`inc_dirs`
-(`ExpandIncludes`), is identified by its canonical file path, is folded in only
-once for a diamond graph, and already has fields it is forbidden to declare
-(`defines`, the legacy `bindings_*` ones, postproc) — so "an included project
-may declare X" is established precedent.
+```json
+// pkg/bhl.proj
+{ "name": "mylib", "src_dirs": ["./"] }
+```
 
-There is already a precedent for this exact shape elsewhere in `bhl.proj`:
-a `bindings` entry **must** declare a `name`, and `LoadBindings()` rejects an
-entry whose declared `(name, version)` doesn't match what the binding actually
-announces (`ProjectConf.DiscoverDeclaredBindings`). Native bindings therefore
-already declare their identity and have it verified; libraries do not. Applying
-the same rule to an included project is consistency, not a new concept.
+`pkg/util.bhl` becomes `mylib/util`, imported as `import "mylib/util"`.
 
-Sketch, **not designed or implemented**:
+Rules, all enforced:
 
-- a library ships its own `bhl.proj` - which is already how it is consumed -
-  and that file declares the library's `name` (the root project's is empty,
-  i.e. today's behaviour);
-- `ExpandIncludes` records it alongside each `src_dir`/`inc_dir` it folds in,
-  so `IncludePath` holds `(dir, prefix)` rather than a bare dir;
-- a module is then named `<prefix>/<path relative to that library's dir>`,
-  which makes identity a property of the library instead of the consumer's
-  `inc_dirs`, fixing weaknesses 1 and 2 above;
-- an absolute `import "libA/util"` strips the declared prefix and searches only
-  that library's dirs, instead of scanning one flat ordered list.
+- **A named library is reachable only through its name.** `import "util"` does
+  not find `mylib/util` even if some `inc_dir` happens to cover that tree
+  (`IncludePath.TryIncludePaths`).
+- **A declared name beats a prefix-less dir covering the same files.** If the
+  consumer points an `inc_dir` straight into the library, the module is still
+  `mylib/util`, not `util` (`_FilePath2ModuleName` prefers a prefixed entry).
+- **A named library's dirs are always on the include path**, whether or not the
+  including project declares `inc_dirs` of its own — otherwise the consumer
+  could make the library unreachable just by having its own include path.
+- **Two libraries claiming one name is an error** naming both `bhl.proj` files.
+- **No name means today's behaviour exactly**, so this is opt-in.
 
-Two libraries declaring the same prefix is then simply an error at `Setup()`
-with both project paths named — no ordering question arises, because order
-stops being what decides a name. Without a declared prefix everything behaves
-exactly as today, so it can land opt-in.
+Verified: the same project compiles to a byte-identical bundle under three
+different consumer `inc_dirs` configurations, and two libraries may both ship a
+`util.bhl` — which positional naming could not express at all.
 
-The work lands in `IncludePath` (per-item prefixes) and `ExpandIncludes`
-(recording them) — contained, but it touches the naming of every module, so it
-wants a migration story for projects already relying on positional names.
+Implementation: `ProjectConf.name` + `dir2prefix`/`prefix2proj` recorded by
+`ExpandIncludes`, carried onto `inc_path` in `Setup()` (including through
+wildcard expansion of `src_dirs`); `IncludePath` entries became `(dir, prefix)`.
 
-Advice that applies today, with no code change:
+**Migration:** adopting a name changes the module names of that library, which
+key `.bhc` entries, the build cache and any runtime `LoadModule("...")` call.
+Expect one full rebuild and update of explicit module-name references.
 
-- libraries should use **relative imports internally**, so their wiring is
-  position independent;
-- a consumer's `inc_dir` should point at the library's **parent**, so the
-  library name is part of every module name.
+## Still positional without a name
+
+The weaknesses above are only fixed for libraries that declare one. An
+unnamed library keeps positional identity, so the directory convention and the
+advice still apply to it:
+
+- use **relative imports internally**, so its wiring is position independent;
+- point the consumer's `inc_dir` at the library's **parent**, so the library
+  name is part of every module name.
+
+Decoupling module identity from file paths entirely (Rust/C# style, where a
+module declares its own name in source) remains the principled end state and
+remains unimplemented — module names key `.bhc` entries, imports, the LSP index
+and the build cache.
 
 ## Gotcha: prefix matching is by path boundary
 

@@ -7,15 +7,23 @@ namespace bhl
 
 public class IncludePath
 {
-  List<string> _items = new List<string>();
-  IReadOnlyList<string> Items => _items;
+  //NOTE: 'prefix' is the declaring library's name (see ProjectConf.name) and empty for the
+  //      project's own dirs. A module under such a dir is named '<prefix>/<rest>', so its
+  //      identity belongs to the library rather than to however the consumer spelled inc_dirs
+  public struct Entry
+  {
+    public string dir;
+    public string prefix;
+  }
+
+  List<Entry> _items = new List<Entry>();
 
   public int Count
   {
     get { return _items.Count; }
   }
 
-  public string this[int i]
+  public Entry this[int i]
   {
     get { return _items[i]; }
   }
@@ -31,13 +39,37 @@ public class IncludePath
 
   public override string ToString()
   {
-    return string.Join(',', _items);
+    var sb = new System.Text.StringBuilder();
+    for(int i = 0; i < _items.Count; ++i)
+    {
+      if(i > 0)
+        sb.Append(',');
+      if(_items[i].prefix.Length > 0)
+        sb.Append(_items[i].prefix).Append('=');
+      sb.Append(_items[i].dir);
+    }
+    return sb.ToString();
   }
 
   public void Add(string path)
   {
-    string normalized = BuildUtils.NormalizeFilePath(path);
-    _items.Add(normalized);
+    Add(path, "");
+  }
+
+  public void Add(string path, string prefix)
+  {
+    var entry = new Entry {
+      dir = BuildUtils.NormalizeFilePath(path),
+      prefix = prefix ?? ""
+    };
+
+    //NOTE: the same dir can be reached twice (a library's own inc_dirs and its src_dirs),
+    //      and a duplicate entry would only cost a redundant File.Exists per import
+    for(int i = 0; i < _items.Count; ++i)
+      if(_items[i].dir == entry.dir && _items[i].prefix == entry.prefix)
+        return;
+
+    _items.Add(entry);
   }
 
   public void Clear()
@@ -65,20 +97,39 @@ public class IncludePath
 
   string _FilePath2ModuleName(string full_path)
   {
-    string norm_path = "";
+    //NOTE: a library that declared a name owns the identity of its files, so it wins over a
+    //      prefix-less dir the including project happens to have pointed at the same tree -
+    //      otherwise the consumer's inc_dirs would still decide the library's module names
+    int found = -1;
     for(int i = 0; i < _items.Count; ++i)
     {
-      var inc_path = _items[i];
-      if(!StartsWithDir(full_path, inc_path))
+      if(!StartsWithDir(full_path, _items[i].dir))
         continue;
 
-      norm_path = full_path.Substring(inc_path.Length);
+      if(_items[i].prefix.Length > 0)
+      {
+        found = i;
+        break;
+      }
+
+      if(found == -1)
+        found = i;
+    }
+
+    string norm_path = "";
+    if(found != -1)
+    {
+      var item = _items[found];
+
+      norm_path = full_path.Substring(item.dir.Length);
       norm_path = norm_path.Replace('\\', '/');
       //stripping .bhl extension
       norm_path = norm_path.Substring(0, norm_path.Length - 4);
       //stripping initial /
       norm_path = norm_path.TrimStart('/', '\\');
-      break;
+
+      if(item.prefix.Length > 0)
+        norm_path = item.prefix + "/" + norm_path;
     }
 
     if(norm_path.Length == 0)
@@ -129,9 +180,24 @@ public class IncludePath
 
   public string TryIncludePaths(string path)
   {
-    for(int i = 0; i < this.Count; ++i)
+    for(int i = 0; i < _items.Count; ++i)
     {
-      var file_path = BuildUtils.NormalizeFilePath(this[i] + "/" + path  + ".bhl");
+      var item = _items[i];
+
+      string rest = path;
+      if(item.prefix.Length > 0)
+      {
+        //NOTE: a named library is only reachable through its own name, so an import can't
+        //      land in it by accident just because this dir happens to come first
+        if(!path.StartsWith(item.prefix, StringComparison.Ordinal) ||
+           path.Length <= item.prefix.Length ||
+           !IsSep(path[item.prefix.Length]))
+          continue;
+
+        rest = path.Substring(item.prefix.Length + 1);
+      }
+
+      var file_path = BuildUtils.NormalizeFilePath(item.dir + "/" + rest + ".bhl");
       if(File.Exists(file_path))
         return file_path;
     }

@@ -121,6 +121,12 @@ public partial class ProjectConf
 
   public List<string> src_dirs = new List<string>();
 
+  //NOTE: a library declares its own name here, and every module it contributes is then named
+  //      '<name>/<path under its dirs>' regardless of how the including project spelled its
+  //      inc_dirs - identity belongs to the library, the way a 'bindings' entry already
+  //      declares its own. Only meaningful on a bhl.proj pulled in through 'includes'
+  public string name = "";
+
   //NOTE: paths to other bhl.proj files whose src_dirs/bindings/inc_dirs get folded in (see
   //      ExpandIncludes) - a non-empty 'defines' on one of them is rejected, everything else is ignored
   public List<string> includes = new List<string>();
@@ -180,6 +186,18 @@ public partial class ProjectConf
         if(File.Exists(src))
           yield return src;
     }
+  }
+
+  //NOTE: which library contributed a given src_dir/inc_dir entry, filled by ExpandIncludes.
+  //      Keyed by the entry exactly as stored, so Setup() can carry it onto inc_path
+  [JsonIgnore] public Dictionary<string, string> dir2prefix = new Dictionary<string, string>();
+
+  //NOTE: declared library name -> the bhl.proj that declared it, to catch two claiming one name
+  [JsonIgnore] public Dictionary<string, string> prefix2proj = new Dictionary<string, string>();
+
+  string PrefixForDir(string dir)
+  {
+    return dir2prefix.TryGetValue(dir, out var prefix) ? prefix : "";
   }
 
   //NOTE: filled by Setup() from the '!' prefixed src_dirs entries
@@ -297,8 +315,9 @@ public partial class ProjectConf
 
     for(int i = 0; i < inc_dirs.Count; ++i)
     {
+      string prefix = PrefixForDir(inc_dirs[i]);
       inc_dirs[i] = NormalizePath(proj_file, inc_dirs[i]);
-      inc_path.Add(inc_dirs[i]);
+      inc_path.Add(inc_dirs[i], prefix);
     }
 
     //NOTE: wildcard-expanded (e.g. a UPM package's version-suffixed PackageCache path),
@@ -306,6 +325,7 @@ public partial class ProjectConf
     //      subtree instead of adding one: the walk doesn't descend into it, which is the whole
     //      point - assets interleaved with sources otherwise get rescanned on every build
     var expanded_src_dirs = new List<string>();
+    var expanded_prefixes = new Dictionary<string, string>();
     excluded_src_dirs = new List<string>();
     foreach(var src_dir in src_dirs)
     {
@@ -330,6 +350,13 @@ public partial class ProjectConf
         if(matched.Count == 0 && pattern.IndexOf('*') == -1)
           warnings.Add($"source dir '{src_dir}' does not exist");
 
+        //NOTE: a wildcard entry contributed by a library expands into several dirs, each of
+        //      which still belongs to that library
+        string prefix = PrefixForDir(src_dir);
+        foreach(var dir in matched)
+          if(prefix.Length > 0)
+            expanded_prefixes[dir] = prefix;
+
         expanded_src_dirs.AddRange(matched);
       }
     }
@@ -338,7 +365,16 @@ public partial class ProjectConf
     if(inc_dirs.Count == 0)
     {
       foreach(var src_dir in src_dirs)
-        inc_path.Add(src_dir);
+        inc_path.Add(src_dir, expanded_prefixes.TryGetValue(src_dir, out var p) ? p : "");
+    }
+    else
+    {
+      //NOTE: a named library's dirs are always on the include path - its modules have to be
+      //      addressable by its name no matter how the including project spelled its inc_dirs,
+      //      which is the whole point of the library declaring a name
+      foreach(var src_dir in src_dirs)
+        if(expanded_prefixes.TryGetValue(src_dir, out var p))
+          inc_path.Add(src_dir, p);
     }
 
     result_file = NormalizePath(proj_file, result_file);
@@ -427,11 +463,31 @@ public partial class ProjectConf
 
         included.CheckNoPostproc(included_file);
 
+        if(!string.IsNullOrEmpty(included.name))
+        {
+          if(proj.prefix2proj.TryGetValue(included.name, out var claimed_by) && claimed_by != canon)
+            throw new Exception(
+              $"Library name '{included.name}' is declared by two projects: " +
+              $"'{claimed_by}' and '{included_file}'"
+            );
+          proj.prefix2proj[included.name] = canon;
+        }
+
         foreach(var src_dir in included.src_dirs)
-          proj.src_dirs.Add(NormalizePath(included_file, src_dir));
+        {
+          var entry = NormalizePath(included_file, src_dir);
+          proj.src_dirs.Add(entry);
+          if(!string.IsNullOrEmpty(included.name))
+            proj.dir2prefix[entry] = included.name;
+        }
 
         foreach(var inc_dir in included.inc_dirs)
-          proj.inc_dirs.Add(NormalizePath(included_file, inc_dir));
+        {
+          var entry = NormalizePath(included_file, inc_dir);
+          proj.inc_dirs.Add(entry);
+          if(!string.IsNullOrEmpty(included.name))
+            proj.dir2prefix[entry] = included.name;
+        }
 
         foreach(var b in included.bindings)
         {

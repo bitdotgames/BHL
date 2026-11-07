@@ -126,3 +126,22 @@ explicit via a `module_prefix` declared by an included bhl.proj - `includes`
 already treats an included project as a unit with its own dirs and its own
 forbidden fields. Sketch only, not implemented.
 
+## [2026-11-07] ingest | A library bhl.proj declares its name
+
+Implemented the sketch from the previous entry. An included bhl.proj may
+declare `name`, and every module it contributes is named `<name>/<rest>`
+regardless of the including project's inc_dirs. A named library is reachable
+only through its name, its declared name beats a prefix-less inc_dir covering
+the same files, and its dirs are always on the include path. Two libraries
+claiming one name is an error naming both projects. No name means today's
+behaviour, so it's opt-in.
+
+Verified a project compiles to a byte-identical bundle under three different
+consumer inc_dirs configurations, and that two libraries may both ship a
+util.bhl - which positional naming couldn't express at all. The drm project
+(no names declared) builds byte-identically to before.
+
+`IncludePath` entries became `(dir, prefix)`; `ExpandIncludes` records which
+library contributed each dir; `Setup()` carries that onto inc_path, including
+through wildcard expansion of src_dirs.
+

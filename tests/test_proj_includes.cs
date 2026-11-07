@@ -73,6 +73,121 @@ func RegisterBindings(std.bind.Types types) {{
     }
   }
 
+  //NOTE: a library declaring a name owns its modules' identity - see
+  //      aidocs/architecture/module-identity.md
+  [Fact]
+  public void NamedLibraryPrefixesItsModules()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+        @"{ ""name"": ""mylib"", ""src_dirs"": [""./""] }");
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.Setup();
+
+      Assert.Equal("mylib/util",
+        proj.inc_path.FilePath2ModuleName(Path.Combine(lib_dir, "util.bhl")));
+
+      //NOTE: reachable by the library's name, and only by it
+      Assert.NotNull(proj.inc_path.TryIncludePaths("mylib/util"));
+      Assert.Null(proj.inc_path.TryIncludePaths("util"));
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  //NOTE: the whole point - identity must not depend on how the consumer spelled inc_dirs
+  [Fact]
+  public void NamedLibraryKeepsItsNamesWhateverTheConsumerIncludes()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+        @"{ ""name"": ""mylib"", ""src_dirs"": [""./""] }");
+
+      //NOTE: the consumer points an inc_dir straight into the library's own tree
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.inc_dirs.Add(lib_dir);
+      proj.Setup();
+
+      Assert.Equal("mylib/util",
+        proj.inc_path.FilePath2ModuleName(Path.Combine(lib_dir, "util.bhl")));
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  //NOTE: two libraries shipping the same filename is exactly what positional naming couldn't do
+  [Fact]
+  public void TwoNamedLibrariesMayShareAFileName()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      foreach(var lib in new string[] { "A", "B" })
+      {
+        var lib_dir = Path.Combine(dir, lib);
+        WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+        WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+          @"{ ""name"": ""lib" + lib + @""", ""src_dirs"": [""./""] }");
+      }
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(dir, "A", "bhl.proj"));
+      proj.includes.Add(Path.Combine(dir, "B", "bhl.proj"));
+      proj.Setup();
+
+      Assert.Equal("libA/util",
+        proj.inc_path.FilePath2ModuleName(Path.Combine(dir, "A", "util.bhl")));
+      Assert.Equal("libB/util",
+        proj.inc_path.FilePath2ModuleName(Path.Combine(dir, "B", "util.bhl")));
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
+  public void TwoLibrariesClaimingOneNameIsRejected()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      foreach(var lib in new string[] { "A", "B" })
+      {
+        var lib_dir = Path.Combine(dir, lib);
+        WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+        WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+          @"{ ""name"": ""same"", ""src_dirs"": [""./""] }");
+      }
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(dir, "A", "bhl.proj"));
+      proj.includes.Add(Path.Combine(dir, "B", "bhl.proj"));
+
+      var err = Assert.Throws<Exception>(() => proj.Setup());
+      Assert.Contains("declared by two projects", err.Message);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void IncludeResolvesPathsRelativeToIncludedFileNotProjFile()
   {
