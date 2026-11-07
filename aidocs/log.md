@@ -83,3 +83,24 @@ Costed three options. Widening the operand pipeline is out: 677 explicit
 smaller diff (two 4-byte operands) was rejected in favour of wide call-opcode
 variants, which keep the hot path and all 42 existing call-opcode assertions
 untouched — smallest permanent cost beats smallest diff.
+
+## [2026-11-07] ingest | Caching the .cs bindings parser
+
+Asked whether `CsSourceBindings` results can be cached so unchanged bindings
+aren't re-parsed every compile. Landed two caches: the parse memoized per
+process (it ran twice per build — once for the declared versions, once to
+register), and the declared `(name, version)` pairs persisted in `tmp_dir`
+keyed on source content. A no-op build with a 20k-symbol binding went 520ms →
+135ms. The declared cache is written temp-then-rename because a build and the
+LSP share the file and a torn read would look well formed with fewer entries.
+
+Caching `Register()` itself was costed and rejected. Every native symbol type
+is in `NOT_PERSISTED` by design — `.bhc` resolves natives by name against live
+bindings at load — so caching them inverts that invariant. Measured prize at a
+realistic binding size is tens of ms per recompiling build. Memoized the
+interpreter's per-invocation reflection instead: ~30% off `Run`, no invariant
+touched.
+
+Also found while benchmarking: `NormalizePath` leaves a bare relative path
+alone, which silently breaks the generated `.csproj` when `dll` is set.
+
