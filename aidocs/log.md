@@ -102,5 +102,6 @@ interpreter's per-invocation reflection instead: ~30% off `Run`, no invariant
 touched.
 
 Also found while benchmarking: `NormalizePath` leaves a bare relative path
-alone, which silently breaks the generated `.csproj` when `dll` is set.
-
+alone, which silently broke the generated `.csproj` when `dll` is set - fixed
+by emitting absolute paths from `MakeLibraryCSProj` rather than changing the
+long-standing `./`-prefix convention.

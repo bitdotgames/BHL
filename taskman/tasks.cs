@@ -311,9 +311,12 @@ public static partial class Tasks
 </Project>
  ";
 
+    //NOTE: the csproj is generated into tmp_dir while these paths come from the caller's
+    //      cwd (or a bhl.proj), and MSBuild resolves a relative one against the csproj's
+    //      own directory - i.e. never where it was meant to point
     string csproj_sources = "<ItemGroup>\n";
     foreach (var file in files)
-      csproj_sources += $"<Compile Include=\"{file}\" />\n";
+      csproj_sources += $"<Compile Include=\"{Path.GetFullPath(file)}\" />\n";
     csproj_sources += "</ItemGroup>\n\n";
 
     string csproj_deps = "<ItemGroup>\n";
@@ -322,12 +325,12 @@ public static partial class Tasks
       if(dep.EndsWith(".dll"))
       {
         csproj_deps +=
-          $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dep)}\"><HintPath>{dep}</HintPath></Reference>\n";
+          $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dep)}\"><HintPath>{Path.GetFullPath(dep)}</HintPath></Reference>\n";
       }
       else if(dep.EndsWith(".csproj"))
       {
         csproj_deps +=
-          $"<ProjectReference Include=\"{dep}\"/>\n";
+          $"<ProjectReference Include=\"{Path.GetFullPath(dep)}\"/>\n";
       }
       else
         throw new Exception("Unknown dependency file: " + dep);

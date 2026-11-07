@@ -71,11 +71,17 @@ symbols themselves — which a cache would not avoid either. `SymbolsStorage.Fin
 is dictionary-backed, so `Namespace.Define` is *not* the quadratic culprit (cf.
 [`CheckUniqueSymbols`](symbol-type-consistency.md)).
 
-## Related gotcha
+## Related: how paths in `bhl.proj` resolve
 
-`ProjectConf.NormalizePath` only resolves a path against the `bhl.proj`
-directory when it starts with `.` — a bare `"bindings.cs"` is returned
-unchanged and so interpreted relative to the cwd. That reads fine, but setting
-`dll` on such an entry writes a generated `.csproj` into `tmp_dir` carrying the
-relative path verbatim, and MSBuild resolves it against the *csproj* directory:
-`error CS2001: source file not found`. All the examples use `"./bindings.cs"`.
+`ProjectConf.NormalizePath` resolves a path against the `bhl.proj` directory
+only when it starts with `.`; a bare `"bindings.cs"` is returned unchanged and
+so stays relative to the cwd. That rule is long-standing (it predates the
+`0081c094` refactor that moved it) and all the examples use `"./bindings.cs"`.
+
+It *used* to break the dll build: setting `dll` on such an entry writes a
+generated `.csproj` into `tmp_dir`, which carried the relative path verbatim,
+and MSBuild resolves a relative `<Compile Include>` against the *csproj's own*
+directory — `error CS2001: source file not found`. `MakeLibraryCSProj`
+(`taskman/tasks.cs`) now emits `Path.GetFullPath` for sources, `HintPath` and
+`ProjectReference`, which pins the cwd-relative meaning at generation time and
+leaves the `bhl.proj` convention itself untouched.
