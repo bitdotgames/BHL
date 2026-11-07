@@ -435,6 +435,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   void ParseUsing(bhlParser.MusingContext ctx)
   {
     LSP_AddSemanticToken(ctx.USING(), SemanticToken.Keyword);
+    if(ctx.NAME() != null)
+      LSP_AddSemanticToken(ctx.NAME(), SemanticToken.Namespace);
 
     raw_usings_parsed.Add(ctx);
   }

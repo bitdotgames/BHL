@@ -296,7 +296,17 @@ public partial class ANTLR_Processor
 
       try
       {
-        module.ns.LinkWithLinked(ns);
+        if(ctx.NAME() != null)
+        {
+          //NOTE: an alias is just a namespace of its own linking to the target - the same
+          //      shape an import shadow already has, so nothing new has to resolve it
+          var alias = new Namespace(module, ctx.NAME().GetText());
+          alias.is_alias = true;
+          alias.LinkWithLinked(ns);
+          module.ns.Define(alias);
+        }
+        else
+          module.ns.LinkWithLinked(ns);
       }
       catch(SymbolError se)
       {

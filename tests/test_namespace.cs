@@ -2339,6 +2339,158 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
+  public async Task TestUsingAliasBindsAShortName()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 10
+      }
+      namespace deep {
+        func int Inner() {
+          return 5
+        }
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using f = foo
+    using d = foo.deep
+
+    func int test()
+    {
+      return f.Helper() + d.Inner() + f.deep.Inner()
+    }
+    ";
+
+    var vm = await MakeVM(new Dictionary<string, string>()
+      {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    Assert.Equal(20, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  //NOTE: that's the point of the alias form - it can't collide with what the namespace holds
+  [Fact]
+  public async Task TestUsingAliasDoesNotBringMembersInUnqualified()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using f = foo
+
+    func int test()
+    {
+      return Helper()
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2}
+          }
+        );
+      },
+      "symbol 'Helper' not resolved"
+    );
+  }
+
+  //NOTE: an alias is private to its module like the plain form - leaking it would additionally
+  //      name a module the importer never imported, which used to fail inside the compiler
+  [Fact]
+  public async Task TestUsingAliasIsNotReExportedToImporters()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using f = foo
+
+    func int mid() {
+      return f.Helper()
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""
+
+    func int test()
+    {
+      return f.Helper()
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2},
+            {"bhl3.bhl", bhl3}
+          }
+        );
+      },
+      "symbol 'f' not resolved"
+    );
+  }
+
+  [Fact]
+  public async Task TestUsingAliasClashingWithALocalSymbolIsAnError()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using f = foo
+
+    func int f() {
+      return 2
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2}
+          }
+        );
+      },
+      "already defined symbol 'f'"
+    );
+  }
+
+  [Fact]
   public async Task TestImportedSymbolsInGlobalNamespace()
   {
     string bhl1 = @"

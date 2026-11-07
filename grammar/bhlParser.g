@@ -20,9 +20,11 @@ mimport
   ;
 
 //NOTE: brings a namespace's members into this module unqualified, like C#'s 'using'. A module
-//      is a file in bhl, so it is scoped the same way, and it isn't re-exported to importers
+//      is a file in bhl, so it is scoped the same way, and it isn't re-exported to importers.
+//      The 'NAME ASSIGN' form binds a short alias to the namespace instead, which can't
+//      collide with anything the namespace holds
 musing
-  : USING dotName SEMI*
+  : USING (NAME ASSIGN)? dotName SEMI*
   ;
 
 decl

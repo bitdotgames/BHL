@@ -26,6 +26,11 @@ public class Namespace : Symbol, IScope,
   // module-local symbols (e.g. for IDE completion across all modules).
   public bool IsLinkedShadow => indirectness > 0;
 
+  //NOTE: a 'using x = ns' alias, private to the module that declared it - the plain 'using'
+  //      form isn't re-exported to importers either, and an alias leaking would additionally
+  //      name a module the importer never imported
+  public bool is_alias;
+
   public SymbolsStorage members;
 
   public override uint ClassId()
@@ -132,6 +137,9 @@ public class Namespace : Symbol, IScope,
     for(int i = 0; i < other.members.Count; ++i)
     {
       var other_symb = other.members[i];
+
+      if(other_symb is Namespace alias_ns && alias_ns.is_alias)
+        continue;
 
       var this_symb = _Resolve(other_symb.name);
 
@@ -248,7 +256,8 @@ public class Namespace : Symbol, IScope,
 
       if(symb is Namespace sub_ns)
       {
-        if(sub_ns.indirectness != 0)
+        //NOTE: an alias is module private and names nothing of its own
+        if(sub_ns.indirectness != 0 || sub_ns.is_alias)
           continue;
 
         string path = prefix + sub_ns.name;
@@ -352,7 +361,7 @@ public class Namespace : Symbol, IScope,
           continue;
 
         var ns = s as Namespace;
-        if(ns == null || ns.indirectness == 0)
+        if(ns == null || (ns.indirectness == 0 && !ns.is_alias))
           yield return s;
       }
     }
@@ -378,7 +387,8 @@ public class Namespace : Symbol, IScope,
       if(s != null)
       {
         var ns = s as Namespace;
-        if(ns == null || ns.indirectness == 0)
+        //NOTE: an alias belongs to the module that declared it, it isn't reachable through a link
+        if(ns == null || (ns.indirectness == 0 && !ns.is_alias))
           return s;
       }
     }
@@ -395,7 +405,7 @@ public class Namespace : Symbol, IScope,
     foreach(var lnk in links)
     {
       s = lnk.members.Find(name);
-      if(s != null)
+      if(s != null && !(s is Namespace ns && ns.is_alias))
         return s;
     }
 
