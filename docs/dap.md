@@ -43,47 +43,45 @@ MonoBehaviour.Update()               bhl-debug extension
 | `stackTrace` | Current call stack with source locations |
 | `scopes` | Variable scopes for a frame (Locals) |
 | `variables` | Local variable values at the current frame |
+| `evaluate` | Evaluate an expression in the current frame (watch/hover) |
 | `continue` | Resume execution |
+| `next` | Step over |
+| `stepIn` | Step into |
+| `stepOut` | Step out |
 | `disconnect` | Detach debugger |
 
 ## Unity integration
 
-Add the `BHLDebugServer` to your project (requires `BHL_DEBUGGER` defined and
-`bhl_dap.dll` included). See `example/dap/unity/BHLDebugExample.cs` for a
-complete working script:
+Create a `BHLDebugServer` around your `VM` and start it listening:
 
 ```csharp
-#if BHL_DEBUGGER && UNITY_EDITOR
+#if UNITY_EDITOR
 _debug_server = new BHLDebugServer(_vm);
 _debug_server.OnPause  = () => UnityEditor.EditorApplication.isPaused = true;
 _debug_server.OnResume = () => UnityEditor.EditorApplication.isPaused = false;
-_debug_server.StartListening(7777);
+_debug_server.StartListening(7777);  // 7777 is the default
 #endif
 ```
 
 `StartListening()` is non-blocking — Unity's game loop continues normally until
 a breakpoint is hit.
 
-> **Note**: `BHL_DEBUGGER` must be defined when building `bhl_front` (it is by
-> default) but intentionally **not** defined in `bhl_runtime` (the slim Unity
-> assembly) so production builds have zero overhead.
+> **Note**: the adapter lives in `src/vm/dap/` and is compiled into the VM
+> assemblies unconditionally. Nothing runs until you construct a
+> `BHLDebugServer`, so guard that construction with your own define (as the
+> `UNITY_EDITOR` check above does) to keep it out of production builds.
 
 ## VS Code client
 
-A minimal VS Code extension lives in `example/dap/vscode/`. It has no npm
-dependencies — VS Code's built-in `DebugAdapterServer` handles the DAP protocol.
-
-**Install:**
-
-```sh
-cd example/dap/vscode && make
-```
-
-Then reload VS Code (Cmd+Shift+P → **Reload Window**).
+The client extension and a Unity example script used to live under
+`example/dap/` in this repo; they were moved to a separate repository (see
+commit `0ee6c82e`). Any DAP-capable client works — VS Code's built-in
+`DebugAdapterServer` speaks the protocol, so the extension needs no npm
+dependencies.
 
 **Configure your project:**
 
-Copy `example/dap/vscode/sample.launch.json` to your project's `.vscode/launch.json`:
+Add this to your project's `.vscode/launch.json`:
 
 ```json
 {
@@ -102,8 +100,12 @@ Copy `example/dap/vscode/sample.launch.json` to your project's `.vscode/launch.j
 
 **Debug session:**
 
-1. Press **Play** in Unity — the console prints `BHL debug server listening on port 7777`.
-2. In the Extension Development Host, press **F5** (or open the Run & Debug panel and click **Attach to BHL (Unity)**).
+1. Press **Play** in Unity, so your `BHLDebugServer` starts listening.
+2. Press **F5** in VS Code (or open the Run & Debug panel and click **Attach to BHL (Unity)**).
 3. Set breakpoints in `.bhl` files by clicking the gutter.
 4. When execution reaches a breakpoint, Unity freezes and VS Code shows the call stack and local variables.
-5. Press **Continue** (F5) to resume.
+5. Step with **F10** / **F11** / **Shift+F11**, inspect or watch expressions, and press **Continue** (F5) to resume.
+
+> Line mapping is always emitted, so breakpoints and stepping work on any
+> compiled module. Compiling with `--debug-info` additionally emits local
+> variable *names*, without which the `variables` request has nothing to label.

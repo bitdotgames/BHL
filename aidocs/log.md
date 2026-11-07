@@ -176,3 +176,38 @@ compiler before fixing:
 Verified-correct claims worth not re-checking: docs/standard-library.md matches
 src/vm/std, and `static` functions really are module-private across imports.
 
+## [2026-11-07] lint | docs/lsp.md and docs/dap.md
+
+The earlier docs audit compiled code blocks, so these two were skipped - they
+have none. Checked their prose against lsp/ and src/vm/dap/ instead.
+
+docs/dap.md:
+- the supported-requests table was missing `next`, `stepIn`, `stepOut` and
+  `evaluate`, i.e. all of stepping, which is the debugger's main feature.
+- `example/dap/unity/...` and `example/dap/vscode/...` don't exist; they were
+  moved to another repo in 0ee6c82e and the doc was never updated. The console
+  message the walkthrough quotes came from that removed script - BHLDebugServer
+  logs nothing itself.
+- the `BHL_DEBUGGER` define doesn't exist anywhere, and the claim that the
+  adapter is excluded from bhl_runtime for "zero overhead" is false:
+  bhl_runtime.csproj sits in src/vm/ with default globbing, so it compiles
+  src/vm/dap/ too. Nothing runs until a BHLDebugServer is constructed.
+- NOTE while fixing this I nearly introduced a fresh error, claiming
+  breakpoints need --debug-info. They don't: that flag gates only
+  `local_var_table` (variable names), `ip2src_line` is always emitted.
+
+docs/lsp.md:
+- "Fix missing imports on save" and "Remove unused imports on save (available
+  as a workspace command)" were both wrong. There is no save hook - DidSave is
+  a no-op with a comment saying fixes are offered as a CodeAction so the user
+  decides. And the only registered command is `bhl.reload`. The real mechanism
+  is two code actions: "Add missing imports" (quickfix) and "Organize imports"
+  (source.organizeImports).
+- after `bhl.reload` the message is "reloaded", not "indexed" as implied.
+
+Verified-correct and not worth re-checking: the incremental recompile claim
+(only the changed file and its direct importers are reprocessed), both quoted
+log formats, the completion claims including auto-inserted imports
+(AdditionalTextEdits), the bhl.proj/bindings watching, the commands table,
+`bhl lsp --log-file`, the BHLDebugServer API and its default port 7777.
+

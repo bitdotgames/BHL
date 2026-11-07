@@ -10,13 +10,17 @@ See **[https://github.com/pachanga/BHL-VSCode](https://github.com/pachanga/BHL-V
 - Symbols from modules not yet imported are also offered; selecting them automatically inserts the required `import` line at the top of the file.
 - Typing inside an `import "..."` string triggers module-name completions, listing all known modules that are not already imported.
 
-### Fix missing imports on save
+### Import quick fixes
 
-When you save a file, the server scans for unresolved symbol errors and automatically inserts the missing `import` statements. If a symbol is found in exactly one known module, the import is added without prompting.
+The server offers these as **code actions**, not automatically on save — you decide whether to accept them:
 
-### Remove unused imports on save
+| Code action | Kind | Effect |
+|---|---|---|
+| **Add missing imports** | `quickfix` | Inserts the `import` for each unresolved symbol found in exactly one known module |
+| **Organize imports** | `source.organizeImports` | Document-wide: adds every missing import *and* drops every unused one |
 
-*(available as a workspace command)* The server detects `import` statements whose symbols are never used and can remove them.
+Editors can run them on save if you ask them to — in VS Code via
+`"editor.codeActionsOnSave": { "source.organizeImports": "explicit" }`.
 
 ### Auto-reload on project changes
 
@@ -32,10 +36,16 @@ Every keystroke triggers an incremental recompile. Only the changed file and its
 BHL: recompiled in 12ms
 ```
 
-On startup or after a manual reload (`bhl.reload` command):
+On startup:
 
 ```
 BHL: 47 file(s) indexed in 340ms
+```
+
+After a reload (the `bhl.reload` command, a `bhl.proj` change or a rebuilt bindings DLL):
+
+```
+BHL: 47 file(s) reloaded in 340ms
 ```
 
 ### Available commands
