@@ -5,6 +5,48 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta15]
+
+### Added
+- `bhl run` resolves imports through a project: it takes `--proj`, and without one looks for the
+  nearest `bhl.proj` walking up from the script. A script with an import could not run at all
+  before - the import resolved to nothing and every symbol from it was unresolved. The project's
+  bindings are loaded too, so a script using native symbols runs, not just one with imports.
+
+### Fixed
+- A chain member is resolved in the scope the chain narrowed to, never the enclosing ones.
+  `f.helper()` found an unrelated global `helper` and then died downstream with an internal
+  `Not instance type: helper` reported at `0:0`; `Foo.helper()` found it too and was blamed on a
+  static/instance mismatch when the class simply has no such member.
+- A name left over at the end of a lambda call chain is resolved:
+  `func Foo() { return new Foo }().x` reported "incompatible types: 'int' and 'Foo'" instead of
+  compiling, and gave an unknown member the same message.
+- A method taken as a value on a lambda tail is rejected instead of crashing the VM:
+  `func int() x = func Foo() { return new Foo }().m` compiled and then threw "Unable to cast
+  object of type 'bhl.FuncSignature' to type 'bhl.ClassSymbol'". The same thing through a named
+  function has always been rejected as "method pointers not supported".
+- Editing a `.cs` binding invalidates the modules compiled against it. A sources-only entry has
+  no dll to watch, so an edit left every module cached against symbols that no longer existed and
+  the build reported success.
+- A `bindings` entry combining a relative source path with `dll` builds: the generated `.csproj`
+  is written into `tmp_dir` and carried that path verbatim, so MSBuild resolved it against the
+  csproj's own directory (`error CS2001: source file not found`).
+
+### Changed
+- **Breaking for `IFrontPostProcessor`:** `AST_Call` and `AST_Block` are type hierarchies now and
+  the `EnumCall`/`BlockType` enums are gone. `is AST_Call` and `tree.children` still work, but a
+  post-processor switching on either enum has to move to type tests.
+- Checking for duplicate globals no longer relinks every module: it merged each one into a single
+  accumulating namespace that gained a link per module, making the check quadratic in module
+  count on every build. 2.14s -> 0.01s at 12k modules.
+- `.cs` bindings are parsed once per build instead of twice, and an incremental build with nothing
+  to recompile no longer parses them at all - the declared versions it needs are cached in
+  `tmp_dir`. A no-op build with a 20k-symbol binding went 520ms -> 135ms.
+- A func parameter's default value is flagged by the frontend instead of inferred from its node
+  having children. That held only because the default expression is the one thing ever attached
+  to a param, so an `IFrontPostProcessor` attaching a child for any other reason would have
+  silently changed the `DefArg` bytecode. The counts are unchanged.
+
 ## [3.0.0-beta14]
 
 ### Fixed
