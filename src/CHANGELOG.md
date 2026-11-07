@@ -5,6 +5,41 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta17]
+
+### Added
+- A `bhl.proj` pulled in through `includes` may declare a `name`, and every module it
+  contributes is then named `<name>/<path under its dirs>` whatever the including project does
+  with its `inc_dirs`. Module identity used to come from stripping the first matching include
+  path prefix, so it was decided by the consumer rather than the library: two libraries each
+  rooted at their own `inc_dir` collided on any shared filename, and a library's own absolute
+  imports were only valid under one particular consumer configuration. A BHL `namespace` never
+  helped, since symbol namespacing and module identity are independent mechanisms. A named
+  library is reachable only through its name, its declared name wins over a prefix-less
+  `inc_dir` covering the same files, and its dirs are always on the include path so a consumer
+  can't make it unreachable. Two libraries claiming one name is an error naming both projects.
+  Declaring no name keeps the previous behaviour, so this is opt-in - but note that adopting a
+  name changes that library's module names, which key `.bhc` entries, the build cache and any
+  runtime `LoadModule(...)` call.
+
+### Fixed
+- A module is named by an include dir that actually contains it. The prefix match was a plain
+  string test, so an inc dir `<root>/src` also covered `<root>/srcx/b.bhl` and named that
+  module `x/b` - the same name as a real `<root>/src/x/b.bhl`. Two unrelated files in unrelated
+  directories then failed the build as an ambiguous module, with no way out short of renaming a
+  directory.
+- Each source file is collected once. `src_dirs` may overlap, directly or after `includes`
+  folded in another project's dirs, and the same file twice was reported as a module ambiguous
+  with itself - naming the very same path on both sides - and threw on a duplicate key while
+  the LSP indexed it.
+- A `src_dir` that doesn't exist is reported. It used to be dropped silently, so a typo quietly
+  built a project missing whatever that directory held; the guard meant to catch it ran after
+  that filtering and could never fire. It's a warning rather than an error, since listing a
+  generated dir that isn't there yet is a legitimate setup. A wildcard matching nothing stays
+  quiet, as before.
+- A file under no include dir at all says what to do about it, instead of reporting that it
+  "was not normalized according to include path".
+
 ## [3.0.0-beta16]
 
 ### Added
