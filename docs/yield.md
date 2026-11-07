@@ -1,5 +1,7 @@
 # Yield in BHL
 
+> Examples below use `std.io.WriteLine`, which needs `import "std/io"` at the top of the file.
+
 The `yield` keyword in BHL is used for coroutine control flow, allowing functions to pause execution and resume later. This is particularly useful for game development, animations, and other scenarios requiring time-based control.
 
 ## Basic Usage
@@ -43,9 +45,9 @@ coro func valid() {
 Pauses execution until the next tick:
 ```bhl
 coro func basic() {
-    trace("Start")
+    std.io.WriteLine("Start")
     yield()  // Pause here
-    trace("Resume")
+    std.io.WriteLine("Resume")
 }
 ```
 

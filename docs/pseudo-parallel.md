@@ -1,5 +1,7 @@
 # Parallel Execution in BHL
 
+> Examples below use `std.io.WriteLine`, which needs `import "std/io"` at the top of the file.
+
 BHL provides powerful parallel execution capabilities through the `paral` and `paral_all` blocks. These constructs allow you to run multiple code blocks concurrently within coroutines.
 
 ## Basic Parallel Execution
@@ -13,14 +15,14 @@ coro func test() {
     paral {
         {
             yield wait(1000)
-            trace("1 second")   // finishes first — block ends here
+            std.io.WriteLine("1 second")   // finishes first — block ends here
         }
         {
             yield wait(5000)
-            trace("5 seconds")  // never reached
+            std.io.WriteLine("5 seconds")  // never reached
         }
     }
-    trace("done")  // prints after 1 second
+    std.io.WriteLine("done")  // prints after 1 second
 }
 ```
 
@@ -150,14 +152,14 @@ coro func test() {
     paral {
         {
             yield wait(1000)
-            trace("Branch 1 done")  // This will print
+            std.io.WriteLine("Branch 1 done")  // This will print
         }
         {
             yield wait(2000)  // This branch won't complete
-            trace("Branch 2 done")  // This will never print
+            std.io.WriteLine("Branch 2 done")  // This will never print
         }
     }
-    trace("After paral")  // Prints after 1 second
+    std.io.WriteLine("After paral")  // Prints after 1 second
 }
 ```
 
@@ -170,14 +172,14 @@ coro func test() {
     paral_all {
         {
             yield wait(1000)
-            trace("Branch 1 done")  // Prints after 1 second
+            std.io.WriteLine("Branch 1 done")  // Prints after 1 second
         }
         {
             yield wait(2000)
-            trace("Branch 2 done")  // Prints after 2 seconds
+            std.io.WriteLine("Branch 2 done")  // Prints after 2 seconds
         }
     }
-    trace("After paral_all")  // Prints after 2 seconds
+    std.io.WriteLine("After paral_all")  // Prints after 2 seconds
 }
 ```
 

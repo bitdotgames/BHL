@@ -1,6 +1,11 @@
 # Operator Overloading in BHL
 
-Operator overloading lets you define the behaviour of built-in operators for your own classes. Operators are defined as `static` functions whose name is the operator symbol.
+Operator overloading lets you define the behaviour of built-in operators for a class. An
+operator is a `static` function whose name is the operator symbol.
+
+> Operators can only be defined on a class bound from C# — BHL source has no syntax for
+> declaring one, since a function declaration requires a name and an operator symbol isn't one.
+> Scripts can *use* the operators a bound class defines, as shown below.
 
 ## Supported Operators
 
@@ -16,36 +21,23 @@ Operator overloads must:
 - Take exactly two arguments (one for unary `!`)
 - Return a non-void type
 
-## Defining operators in BHL
+## Using overloaded operators from BHL
+
+Once a bound class defines them, operators work as they do for built-in types:
 
 ```bhl
-class Vector2 {
-  float x
-  float y
-
-  static func Vector2 +(Vector2 a, Vector2 b) {
-    Vector2 r
-    r.x = a.x + b.x
-    r.y = a.y + b.y
-    return r
-  }
-
-  static func bool ==(Vector2 a, Vector2 b) {
-    return a.x == b.x && a.y == b.y
-  }
-}
-
 func test() {
-  Vector2 v1 = {x: 1, y: 2}
-  Vector2 v2 = {x: 3, y: 4}
-  Vector2 v3 = v1 + v2   // calls the overloaded +
+  Vector2 v1 = new Vector2
+  Vector2 v2 = new Vector2
+  Vector2 v3 = v1 + v2    // calls the overloaded +
   bool eq    = v1 == v2   // calls the overloaded ==
 }
 ```
 
-## Defining operators via C# bindings
+## Defining operators in C#
 
-When the class is defined in C#, add the operator as a static `FuncSymbolNative` and define it on the class before calling `Setup()`:
+Add the operator as a static `FuncSymbolNative` and define it on the class before calling
+`Setup()`:
 
 ```csharp
 var cl = new ClassSymbolNative(new Origin(), "Vector2", null,

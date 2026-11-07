@@ -1,5 +1,7 @@
 # Fibers in BHL
 
+> Examples below use `std.io.WriteLine`, which needs `import "std/io"` at the top of the file.
+
 Fibers in BHL provide a lightweight concurrency mechanism for managing coroutines and parallel execution. They are the underlying mechanism that powers BHL's parallel execution features.
 
 ## Basic Concepts
@@ -68,7 +70,7 @@ Fibers can work with function pointers for dynamic execution:
 ```bhl
 coro func example() {
     // Store coroutine reference
-    func coro void ptr = worker
+    coro func() ptr = worker
     
     // Start using function pointer
     start(ptr)
@@ -91,7 +93,7 @@ func example() {
     start(coro func() {
         counter = counter + 1
         yield()
-        trace((string)counter)
+        std.io.WriteLine((string)counter)
     })
 }
 ```

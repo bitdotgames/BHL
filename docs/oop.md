@@ -1,5 +1,7 @@
 # Object-Oriented Programming in BHL
 
+> Examples below use `std.io.WriteLine`, which needs `import "std/io"` at the top of the file.
+
 ## Classes
 
 ### Class Definition
@@ -12,7 +14,7 @@ class Person {
     int age
     
     func void SayHello() {
-        trace("Hello, " + this.name)
+        std.io.WriteLine("Hello, " + this.name)
     }
     
     func void SetDetails(string name, int age) {
@@ -50,71 +52,42 @@ person.age = 30
 2. Using JSON-like initialization syntax:
 ```bhl
 // Basic object initialization
-var person = new Person {
-    name = "John",
-    age = 30
+Person person = {
+    name: "John",
+    age: 30
 }
 
 // Nested objects
-var employee = new Employee {
-    name = "John",
-    age = 30,
-    department = "Engineering",
-    address = new Address {
-        street = "123 Main St",
-        city = "San Francisco"
+Employee employee = {
+    name: "John",
+    age: 30,
+    department: "Engineering",
+    address: {
+        street: "123 Main St",
+        city: "San Francisco"
     }
 }
 
 // Arrays in initialization
-var team = new Team {
-    name = "Engineering",
-    members = [
-        new Person { name = "John", age = 30 },
-        new Person { name = "Alice", age = 25 }
+Team team = {
+    name: "Engineering",
+    members: [
+        {name: "John", age: 30},
+        {name: "Alice", age: 25}
     ],
-    skills = ["C#", "BHL", "Git"]
+    skills: ["C#", "BHL", "Git"]
 }
 
-// Maps in initialization
-var company = new Company {
-    name = "TechCorp",
-    departments = {
-        "eng": new Department { name = "Engineering", size = 50 },
-        "hr": new Department { name = "HR", size = 10 }
-    },
-    config = {
-        "max_employees": 100,
-        "location": "SF"
-    }
+// Maps are created empty and filled by assignment - there is no map literal
+Company company = {
+    name: "TechCorp"
 }
+company.departments["eng"] = {name: "Engineering", size: 50}
+company.departments["hr"]  = {name: "HR", size: 10}
+```
 
-// Mixed arrays, maps, and objects
-var project = new Project {
-    name = "BHL 2.0",
-    team = [
-        new Developer {
-            name = "John",
-            skills = ["BHL", "C#"],
-            metadata = {
-                "level": "senior",
-                "start_date": "2024"
-            }
-        },
-        new Developer {
-            name = "Alice",
-            skills = ["Python", "BHL"],
-            metadata = {
-                "level": "mid",
-                "start_date": "2025"
-            }
-        }
-    ]
-}
-
-## Inheritance
-
-BHL supports single inheritance using the `:` syntax:
+A JSON-like initializer takes identifier keys (`name:`), so it builds objects and
+arrays. Maps are filled afterwards, as above.
 
 ```bhl
 class Employee : Person {

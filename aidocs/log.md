@@ -145,3 +145,34 @@ util.bhl - which positional naming couldn't express at all. The drm project
 library contributed each dir; `Setup()` carries that onto inc_path, including
 through wildcard expansion of src_dirs.
 
+## [2026-11-07] lint | docs/ audit against the compiler
+
+Extracted all 110 `bhl` code blocks from docs/ and compiled each one, then
+triaged the failures (most are statement fragments shown without a wrapping
+func, which is fine). Seven real inconsistencies, all verified against the
+compiler before fixing:
+
+- `trace()` used in 6 docs (21 calls) is a test-only binding from
+  tests/test_shared.cs, not shipped. Replaced with `std.io.WriteLine`, which
+  docs/getting-started.md and docs/standard-library.md already used correctly.
+- docs/operator-overloading.md documented a "Defining operators in BHL"
+  syntax that doesn't parse - `funcDecl` requires a NAME and an operator symbol
+  isn't one, and no test declares one in BHL source. Operators are native only.
+- docs/oop.md used `new X { field = value }`; the real JSON initializer is
+  `X x = {field: value}` (`jsonPair : NAME COLON jsonValue`).
+- docs/oop.md also documented map literals (`{"key": v}`); there is no map
+  literal at all - jsonArray holds values, not pairs, and keys must be NAMEs.
+  Maps are created empty and filled by assignment, as docs/maps.md says.
+- docs/defer.md used a braceless `if`, which isn't supported.
+- docs/functions.md used `if isValid(x) {`; a *call* as an unparenthesized
+  condition doesn't parse (plain `if true {` does). Likely deliberate - it
+  would be ambiguous with a JSON initializer.
+- docs/fibers.md used `func coro void ptr`; funcType is `CORO? FUNC retType?
+  '(' types? ')'`, so it's `coro func() ptr`.
+- docs/imports.md claimed duplicate imports are silently ignored; a duplicate
+  is an error ("already imported 'x'"), only a self-import is ignored. (Fixed
+  in the earlier 'using' docs commit.)
+
+Verified-correct claims worth not re-checking: docs/standard-library.md matches
+src/vm/std, and `static` functions really are module-private across imports.
+

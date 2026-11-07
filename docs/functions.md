@@ -1,5 +1,7 @@
 # Functions in BHL
 
+> Examples below use `std.io.WriteLine`, which needs `import "std/io"` at the top of the file.
+
 ## Function Declaration
 
 ```bhl
@@ -137,7 +139,7 @@ static func bool isValid(string input) { return input.Count > 0 }
 static func string format(string name, int id) { return name + "#" + (string)id }
 
 func test() {
-    if isValid("test") { trace(format("User", 123)) }
+    if(isValid("test")) { std.io.WriteLine(format("User", 123)) }
 }
 ```
 
