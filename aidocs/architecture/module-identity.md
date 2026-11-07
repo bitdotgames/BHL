@@ -96,6 +96,13 @@ Rules, all enforced:
   including project declares `inc_dirs` of its own — otherwise the consumer
   could make the library unreachable just by having its own include path.
 - **Two libraries claiming one name is an error** naming both `bhl.proj` files.
+- **A named library may not declare `inc_dirs`.** They are redundant (its
+  `src_dirs` are already on the include path under its name) and harmful: the
+  entries would carry its name onto whatever they cover, including the
+  including project's own files, and their mere presence suppresses that
+  project's `src_dirs` fallback — leaving it unable to import its own modules.
+  Without a name, `inc_dirs` is how a library made its files addressable at
+  all, so it stays allowed there.
 - **No name means today's behaviour exactly**, so this is opt-in.
 
 Verified: the same project compiles to a byte-identical bundle under three

@@ -188,6 +188,56 @@ func RegisterBindings(std.bind.Types types) {{
     }
   }
 
+  //NOTE: a named library's src_dirs are already on the include path under its name, so its
+  //      inc_dirs are redundant and actively harmful - they'd carry its name onto whatever
+  //      they cover, and their presence suppresses the including project's src_dirs fallback
+  [Fact]
+  public void NamedLibraryMayNotDeclareIncDirs()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+        @"{ ""name"": ""mylib"", ""src_dirs"": [""./""], ""inc_dirs"": [""./""] }");
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+
+      var err = Assert.Throws<Exception>(() => proj.Setup());
+      Assert.Contains("declares both 'name' and 'inc_dirs'", err.Message);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  //NOTE: without a name, inc_dirs is how a library made its files addressable - still allowed
+  [Fact]
+  public void UnnamedLibraryMayStillDeclareIncDirs()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "util.bhl"), "func int Util() { return 1 }");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"),
+        @"{ ""src_dirs"": [""./""], ""inc_dirs"": [""./""] }");
+
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.Setup();
+
+      Assert.Equal("util", proj.inc_path.FilePath2ModuleName(Path.Combine(lib_dir, "util.bhl")));
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void IncludeResolvesPathsRelativeToIncludedFileNotProjFile()
   {

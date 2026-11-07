@@ -463,6 +463,17 @@ public partial class ProjectConf
 
         included.CheckNoPostproc(included_file);
 
+        //NOTE: a named library's src_dirs are already on the include path under its name, so
+        //      its inc_dirs are redundant - and harmful: they'd carry its name onto whatever
+        //      they cover, including the including project's own files, and their mere
+        //      presence suppresses that project's src_dirs fallback, leaving it unable to
+        //      import its own modules
+        if(!string.IsNullOrEmpty(included.name) && included.inc_dirs.Count > 0)
+          throw new Exception(
+            $"Included bhl.proj '{included_file}' declares both 'name' and 'inc_dirs' - " +
+            "a named library is addressed through its name, drop its 'inc_dirs'"
+          );
+
         if(!string.IsNullOrEmpty(included.name))
         {
           if(proj.prefix2proj.TryGetValue(included.name, out var claimed_by) && claimed_by != canon)
