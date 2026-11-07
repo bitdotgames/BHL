@@ -5,6 +5,29 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta16]
+
+### Added
+- A `src_dirs` entry starting with `!` excludes a subtree instead of adding one, and the source
+  walk no longer descends into it. Sources gathering enumerated every file under every `src_dir`
+  and then kept the `.bhl` ones, so assets interleaved with sources were rescanned on every
+  build. On a project with 31530 level files sitting beside 291 modules, a no-op build went
+  0.68s -> 0.16s and a one file change 1.26s -> 0.72s. An exclusion matching nothing is a
+  warning, same as an unresolved wildcard include.
+
+### Changed
+- An incremental build only materializes the cached modules it needs - the stale files plus
+  their transitive imports - instead of deserializing every cached module's symbols. Touching
+  one file in a 9000 module project took 1.73s instead of 0.60s, three quarters of it spent on
+  modules that hadn't changed. Modules outside that set keep their compiled bytes, which still
+  go into the result and the cache blob. The build cache gained each module's project wide
+  declarations so the cross-module duplicate check still covers a module that was never
+  materialized, and its format version was bumped accordingly: **the first build after
+  upgrading does one full rebuild**, then behaves as usual.
+
+### Fixed
+- A `bhl.proj` warning is reported once rather than twice.
+
 ## [3.0.0-beta15]
 
 ### Added
