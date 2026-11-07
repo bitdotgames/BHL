@@ -107,8 +107,7 @@ public static partial class Tasks
 
       //NOTE: the script must stay at index 0, it's the module which gets loaded
       var rest = new List<string>();
-      for(int i = 0; i < proj.src_dirs.Count; ++i)
-        CompilationExecutor.AddFilesFromDir(proj.src_dirs[i], rest);
+      proj.CollectSourceFiles(rest);
 
       var seen = new HashSet<string>(BuildUtils.NormalizeFilePaths(files));
       foreach(var f in BuildUtils.NormalizeFilePaths(rest))

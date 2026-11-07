@@ -277,10 +277,7 @@ public static partial class Tasks
     }
 
     if(a.files.Count == 0)
-    {
-      for(int i = 0; i < a.proj.src_dirs.Count; ++i)
-        CompilationExecutor.AddFilesFromDir(a.proj.src_dirs[i], a.files);
-    }
+      a.proj.CollectSourceFiles(a.files);
     else
     {
       for(int i = a.files.Count; i-- > 0;)

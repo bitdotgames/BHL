@@ -182,6 +182,43 @@ public partial class ProjectConf
     }
   }
 
+  //NOTE: filled by Setup() from the '!' prefixed src_dirs entries
+  [JsonIgnore]
+  public List<string> excluded_src_dirs = new List<string>();
+
+  public bool IsExcludedDir(string dir)
+  {
+    if(excluded_src_dirs.Count == 0)
+      return false;
+
+    string norm = BuildUtils.NormalizeFilePath(dir);
+    for(int i = 0; i < excluded_src_dirs.Count; ++i)
+      if(norm == excluded_src_dirs[i])
+        return true;
+
+    return false;
+  }
+
+  //NOTE: the single place the project's .bhl files are discovered, so the compiler and the LSP
+  //      can't end up disagreeing about what belongs to the project
+  public void CollectSourceFiles(List<string> files)
+  {
+    foreach(var src_dir in src_dirs)
+      CollectSourceFiles(src_dir, files);
+  }
+
+  public void CollectSourceFiles(string dir, List<string> files)
+  {
+    if(IsExcludedDir(dir))
+      return;
+
+    foreach(var file in Directory.EnumerateFiles(dir, "*.bhl"))
+      files.Add(file);
+
+    foreach(var sub in Directory.EnumerateDirectories(dir))
+      CollectSourceFiles(sub, files);
+  }
+
   public void Setup()
   {
     if(max_threads <= 0)
@@ -252,12 +289,28 @@ public partial class ProjectConf
     }
 
     //NOTE: wildcard-expanded (e.g. a UPM package's version-suffixed PackageCache path),
-    //      same as bindings' `sources` - see BuildUtils.Glob
+    //      same as bindings' `sources` - see BuildUtils.Glob. A '!' prefixed entry excludes a
+    //      subtree instead of adding one: the walk doesn't descend into it, which is the whole
+    //      point - assets interleaved with sources otherwise get rescanned on every build
     var expanded_src_dirs = new List<string>();
+    excluded_src_dirs = new List<string>();
     foreach(var src_dir in src_dirs)
     {
-      string pattern = NormalizePath(proj_file, src_dir);
-      expanded_src_dirs.AddRange(BuildUtils.Glob(pattern).Where(Directory.Exists));
+      bool excluding = src_dir.StartsWith("!");
+
+      string pattern = NormalizePath(proj_file, excluding ? src_dir.Substring(1) : src_dir);
+      var matched = BuildUtils.Glob(pattern).Where(Directory.Exists).ToList();
+
+      if(excluding)
+      {
+        if(matched.Count == 0)
+          warnings.Add($"excluded source dir '{src_dir}' matches nothing");
+
+        foreach(var dir in matched)
+          excluded_src_dirs.Add(BuildUtils.NormalizeFilePath(dir));
+      }
+      else
+        expanded_src_dirs.AddRange(matched);
     }
     src_dirs = expanded_src_dirs;
 

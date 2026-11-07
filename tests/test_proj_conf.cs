@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using bhl;
 using Xunit;
 
@@ -117,6 +119,67 @@ public class TestProjConf
 
       Assert.Single(proj.src_dirs);
       Assert.Equal(BuildUtils.NormalizeFilePath(pkg_dir), proj.src_dirs[0]);
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
+  //NOTE: assets interleaved with sources (e.g. tens of thousands of level files) otherwise get
+  //      rescanned on every single build just to find the .bhl ones among them
+  [Fact]
+  public void SrcDirsExclamationPrefixPrunesTheWalk()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_excl_" + Guid.NewGuid().ToString("N"));
+    var kept = Path.Combine(root, "kept");
+    var skipped = Path.Combine(root, "skipped");
+    var skipped_deep = Path.Combine(skipped, "deep");
+    Directory.CreateDirectory(kept);
+    Directory.CreateDirectory(skipped_deep);
+    try
+    {
+      File.WriteAllText(Path.Combine(root, "top.bhl"), "func int A() { return 1 }");
+      File.WriteAllText(Path.Combine(kept, "kept.bhl"), "func int B() { return 2 }");
+      File.WriteAllText(Path.Combine(skipped, "skipped.bhl"), "func int C() { return 3 }");
+      File.WriteAllText(Path.Combine(skipped_deep, "deep.bhl"), "func int D() { return 4 }");
+
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(root);
+      proj.src_dirs.Add("!" + skipped);
+      proj.Setup();
+
+      //NOTE: an exclusion is not a source dir itself
+      Assert.Single(proj.src_dirs);
+      Assert.Empty(proj.warnings);
+
+      var files = new List<string>();
+      proj.CollectSourceFiles(files);
+
+      var names = files.Select(Path.GetFileName).OrderBy(x => x).ToList();
+      Assert.Equal(new List<string>() { "kept.bhl", "top.bhl" }, names);
+    }
+    finally
+    {
+      Directory.Delete(root, true);
+    }
+  }
+
+  [Fact]
+  public void SrcDirsExclusionMatchingNothingWarns()
+  {
+    var root = Path.Combine(Path.GetTempPath(), "bhl_proj_conf_excl_warn_" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+      var proj = new ProjectConf();
+      proj.src_dirs.Add(root);
+      proj.src_dirs.Add("!" + Path.Combine(root, "typo"));
+      proj.Setup();
+
+      Assert.Single(proj.src_dirs);
+      Assert.Single(proj.warnings);
+      Assert.Contains("matches nothing", proj.warnings[0]);
     }
     finally
     {

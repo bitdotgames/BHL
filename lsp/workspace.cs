@@ -133,7 +133,8 @@ public class Workspace
     {
       var src_dir = ProjConf.src_dirs[i];
 
-      var files = Directory.GetFiles(src_dir, "*.bhl", SearchOption.AllDirectories);
+      var files = new List<string>();
+      ProjConf.CollectSourceFiles(src_dir, files);
       foreach(var file in files)
       {
         string norm_file = BuildUtils.NormalizeFilePath(file);
