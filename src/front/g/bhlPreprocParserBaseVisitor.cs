@@ -26,7 +26,6 @@ using Antlr4.Runtime.Tree;
 using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
-
 /// <summary>
 /// This class provides an empty implementation of <see cref="IbhlPreprocParserVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset

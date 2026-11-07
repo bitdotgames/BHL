@@ -129,6 +129,9 @@ public partial class ANTLR_Processor
       WrapError(kv.Value, () => kv.Value.Phase_LinkImports2(proc_bundle));
 
     foreach(var kv in proc_bundle.file2proc)
+      WrapError(kv.Value, () => kv.Value.Phase_LinkUsings());
+
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
 
     foreach(var kv in proc_bundle.file2proc)
@@ -257,6 +260,47 @@ public partial class ANTLR_Processor
       {
         errors.Add(se);
         continue;
+      }
+    }
+  }
+
+  //NOTE: runs once the imports are linked, since a 'using' usually names a namespace some
+  //      import brought in. Linking is non transitive at the member level (TryLink walks
+  //      'other.members', not 'other.links'), so this doesn't leak to modules importing us -
+  //      same scoping as C#'s file level using
+  internal void Phase_LinkUsings()
+  {
+    foreach(var ctx in raw_usings_parsed)
+    {
+      string path = ctx.dotName().GetText();
+
+      var symb = module.ns.ResolveSymbolByPath(new NamePath(path));
+
+      if(symb == null)
+      {
+        AddError(ctx, "namespace '" + path + "' not found");
+        continue;
+      }
+
+      if(!(symb is Namespace ns))
+      {
+        AddError(ctx, "'" + path + "' is not a namespace");
+        continue;
+      }
+
+      if(ns == module.ns)
+      {
+        AddError(ctx, "invalid using '" + path + "'");
+        continue;
+      }
+
+      try
+      {
+        module.ns.LinkWithLinked(ns);
+      }
+      catch(SymbolError se)
+      {
+        errors.Add(se);
       }
     }
   }

@@ -172,6 +172,27 @@ public class Namespace : Symbol, IScope,
     return default(LinkConflict);
   }
 
+  //NOTE: a namespace reached through an import is a local shadow holding no members of its
+  //      own, only a link to the real one (see TryLink) - so bringing its contents in means
+  //      linking everything it can see, not just what it directly holds
+  public void LinkWithLinked(Namespace other)
+  {
+    var all = new HashSet<Namespace>();
+    CollectSelfAndLinked(other, all);
+
+    foreach(var ns in all)
+      Link(ns);
+  }
+
+  static void CollectSelfAndLinked(Namespace ns, HashSet<Namespace> result)
+  {
+    if(!result.Add(ns))
+      return;
+
+    foreach(var lnk in ns.links)
+      CollectSelfAndLinked(lnk, result);
+  }
+
   bool IsLinked(Namespace other)
   {
     return other == this || links.IndexOf(other) != -1;

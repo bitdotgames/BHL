@@ -28,7 +28,6 @@ using ITerminalNode = Antlr4.Runtime.Tree.ITerminalNode;
 using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
-
 /// <summary>
 /// This class provides an empty implementation of <see cref="IbhlPreprocParserListener"/>,
 /// which can be extended to create a listener which only needs to handle a subset

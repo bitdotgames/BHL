@@ -2135,6 +2135,210 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
+  public async Task TestUsingBringsNamespaceMembersIn()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 10
+      }
+      namespace deep {
+        func int Inner() {
+          return 5
+        }
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using foo
+
+    func int test()
+    {
+      //NOTE: unqualified, relative, and still fully qualified all work
+      return Helper() + deep.Inner() + foo.Helper()
+    }
+    ";
+
+    var vm = await MakeVM(new Dictionary<string, string>()
+      {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    Assert.Equal(25, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public async Task TestUsingNestedNamespace()
+  {
+    string bhl1 = @"
+    namespace foo {
+      namespace deep {
+        func int Inner() {
+          return 7
+        }
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using foo.deep
+
+    func int test()
+    {
+      return Inner()
+    }
+    ";
+
+    var vm = await MakeVM(new Dictionary<string, string>()
+      {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    Assert.Equal(7, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  //NOTE: a module is a file in bhl, so 'using' is scoped like C#'s file level one - a module
+  //      importing us must declare its own
+  [Fact]
+  public async Task TestUsingIsNotReExportedToImporters()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using foo
+
+    func int mid() {
+      return Helper()
+    }
+    ";
+
+    string bhl3 = @"
+    import ""bhl2""
+
+    func int test()
+    {
+      return Helper()
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2},
+            {"bhl3.bhl", bhl3}
+          }
+        );
+      },
+      "symbol 'Helper' not resolved"
+    );
+  }
+
+  [Fact]
+  public async Task TestUsingConflictingWithALocalSymbolIsAnError()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using foo
+
+    func int Helper() {
+      return 2
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2}
+          }
+        );
+      },
+      "already defined symbol 'Helper'"
+    );
+  }
+
+  [Fact]
+  public async Task TestUsingOfANonNamespaceIsAnError()
+  {
+    string bhl1 = @"
+    namespace foo {
+      func int Helper() {
+        return 1
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    using foo.Helper
+
+    func int test() {
+      return 1
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>()
+          {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2}
+          }
+        );
+      },
+      "'foo.Helper' is not a namespace"
+    );
+  }
+
+  [Fact]
+  public async Task TestUsingOfAnUnknownNamespaceIsAnError()
+  {
+    string bhl1 = @"
+    using nope.nothing
+
+    func int test() {
+      return 1
+    }
+    ";
+
+    await AssertErrorAsync<Exception>(
+      async delegate() {
+        await MakeVM(new Dictionary<string, string>() { {"bhl1.bhl", bhl1} });
+      },
+      "namespace 'nope.nothing' not found"
+    );
+  }
+
+  [Fact]
   public async Task TestImportedSymbolsInGlobalNamespace()
   {
     string bhl1 = @"

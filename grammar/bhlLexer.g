@@ -5,6 +5,7 @@ options {
 }
 
 IMPORT : 'import' ;
+USING : 'using' ;
 NULL : 'null' ;
 FALSE : 'false' ;
 TRUE : 'true' ;

@@ -12,10 +12,17 @@ program
 declOrImport
   : decl
   | mimport
+  | musing
   ;
 
 mimport
   : IMPORT NORMALSTRING SEMI*
+  ;
+
+//NOTE: brings a namespace's members into this module unqualified, like C#'s 'using'. A module
+//      is a file in bhl, so it is scoped the same way, and it isn't re-exported to importers
+musing
+  : USING dotName SEMI*
   ;
 
 decl

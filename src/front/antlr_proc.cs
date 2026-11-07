@@ -72,6 +72,10 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   //NOTE: non-normalized names
   Dictionary<bhlParser.MimportContext, string> raw_imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
+  //NOTE: resolved once the imports are linked, since a 'using' usually names a namespace that
+  //      an import brought in
+  List<bhlParser.MusingContext> raw_usings_parsed = new List<bhlParser.MusingContext>();
+
   Dictionary<ModuleDeclared, bhlParser.MimportContext> import_to_ctx = new Dictionary<ModuleDeclared, bhlParser.MimportContext>();
 
   //NOTE: module.ns linked with types.ns
@@ -144,6 +148,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     warnings = new CompileWarnings();
 
     raw_imports_parsed.Clear();
+    raw_usings_parsed.Clear();
     import_to_ctx.Clear();
     imports.Clear();
     annotated_nodes.Clear();
@@ -402,6 +407,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       if(item.mimport() != null)
         ParseImport(item.mimport());
+      else if(item.musing() != null)
+        ParseUsing(item.musing());
     }
 
     foreach(var item in ctx.declOrImport())
@@ -423,6 +430,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     name = name.Substring(1, name.Length - 2);
 
     raw_imports_parsed[ctx] = name;
+  }
+
+  void ParseUsing(bhlParser.MusingContext ctx)
+  {
+    LSP_AddSemanticToken(ctx.USING(), SemanticToken.Keyword);
+
+    raw_usings_parsed.Add(ctx);
   }
 
   IType ProcFuncCallExp(
