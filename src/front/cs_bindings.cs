@@ -114,7 +114,12 @@ public class CsSourceBindings : IUserBindings
     try
     {
       Directory.CreateDirectory(Path.GetDirectoryName(cache_file));
-      File.WriteAllText(cache_file, sb.ToString());
+      //NOTE: a build and the LSP share this file and may run at once - a plain write lets the
+      //      reader see a truncated yet well formed file, i.e. silently fewer declared versions
+      //NOTE: per process, so a concurrent writer gets its own and a failed move leaks at most one
+      string tmp = cache_file + "." + System.Diagnostics.Process.GetCurrentProcess().Id + ".tmp";
+      File.WriteAllText(tmp, sb.ToString());
+      File.Move(tmp, cache_file, overwrite: true);
     }
     catch
     {
