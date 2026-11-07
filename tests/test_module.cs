@@ -1241,6 +1241,62 @@ public class TestModule : BHL_TestBase
     );
   }
 
+  //NOTE: an incremental build doesn't materialize the symbols of a cached module nothing stale
+  //      imports, so the project wide duplicate check has to cover it from the build cache
+  //      instead - otherwise a conflict introduced against an untouched module is missed
+  [Fact]
+  public async Task TestDuplicateGlobalAgainstCachedModuleIsDetected()
+  {
+    string file_x = @"
+    func int Dup() {
+      return 1
+    }
+    ";
+
+    string file_y_ok = @"
+    func int Other() {
+      return 2
+    }
+    ";
+
+    //NOTE: y doesn't import x, so x is not in the closure of the only stale module
+    string file_y_dup = @"
+    func int Dup() {
+      return 2
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("x.bhl", file_x, ref files);
+    NewTestFile("y.bhl", file_y_ok, ref files);
+
+    {
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
+      await CompileFiles(exec, conf);
+      Assert.Equal(0, exec.cache_hits);
+      Assert.Equal(2, exec.cache_miss);
+    }
+
+    int fidx = NewTestFile("y.bhl", file_y_dup, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
+
+      await AssertErrorAsync<Exception>(
+        async delegate() { await CompileFiles(exec, conf); },
+        "symbol 'Dup' declared in module"
+      );
+
+      //NOTE: x really did come from the cache, i.e. the conflict was caught without it
+      Assert.Equal(1, exec.cache_hits);
+    }
+  }
+
   [Fact]
   public async Task TestCommentedImportsIgnored()
   {

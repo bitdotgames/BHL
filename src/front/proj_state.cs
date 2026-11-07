@@ -25,6 +25,20 @@ public class ProjectCompilationStateBundle
     //      per-file bytecode file
     public byte[] compiled_bytes;
     public long compiled_write_ticks;
+
+    //NOTE: filled by the import scan pass so the load pass can decide per file without
+    //      redoing the work: a usable cache entry, and what this file depends on
+    public byte[] cache_bytes;
+    public long cache_write_ticks;
+    public bool cache_usable;
+
+    //NOTE: a cache hit whose symbols were deliberately not materialized - its bytes still go
+    //      into the result and the cache blob, but it takes no part in this compilation
+    public bool symbols_skipped;
+
+    //NOTE: the unique declarations replayed from the cache for a module whose symbols were
+    //      skipped, so the project wide duplicate check still covers it
+    public List<Namespace.Decl> cached_decls;
   }
 
   public Types types;

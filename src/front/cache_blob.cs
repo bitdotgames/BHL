@@ -16,7 +16,8 @@ namespace bhl
 public class CompileCacheBlob
 {
   const uint MAGIC = 0x4c48425f;
-  const uint VERSION = 1;
+  //NOTE: bumped whenever the layout changes - an older blob then reads as a cold cache
+  const uint VERSION = 2;
 
   struct Entry
   {
@@ -27,6 +28,9 @@ public class CompileCacheBlob
 
   Dictionary<string, Entry> maybe_imports = new Dictionary<string, Entry>();
   Dictionary<string, Entry> compiled = new Dictionary<string, Entry>();
+  //NOTE: the project wide unique declarations of each module, so the duplicate check can
+  //      cover a module whose symbols this build never materialized (see CheckUniqueSymbols)
+  Dictionary<string, Entry> decls = new Dictionary<string, Entry>();
   byte[] data = Array.Empty<byte>();
 
   public static CompileCacheBlob Load(string path)
@@ -51,6 +55,10 @@ public class CompileCacheBlob
         int compiled_count = r.ReadInt32();
         for(int i = 0; i < compiled_count; ++i)
           blob.compiled[r.ReadString()] = ReadEntry(r);
+
+        int decls_count = r.ReadInt32();
+        for(int i = 0; i < decls_count; ++i)
+          blob.decls[r.ReadString()] = ReadEntry(r);
 
         int data_len = r.ReadInt32();
         blob.data = r.ReadBytes(data_len);
@@ -89,6 +97,11 @@ public class CompileCacheBlob
   public bool TryGetCompiled(string file, out byte[] bytes, out long write_ticks)
   {
     return TryGet(compiled, file, out bytes, out write_ticks);
+  }
+
+  public bool TryGetDecls(string file, out byte[] bytes, out long write_ticks)
+  {
+    return TryGet(decls, file, out bytes, out write_ticks);
   }
 
   bool TryGet(Dictionary<string, Entry> dict, string file, out byte[] bytes, out long write_ticks)
@@ -130,6 +143,7 @@ public class CompileCacheBlob
 
     List<Pending> maybe_imports = new List<Pending>();
     List<Pending> compiled = new List<Pending>();
+    List<Pending> decls = new List<Pending>();
 
     public void AddMaybeImports(string key, long write_ticks, byte[] bytes)
     {
@@ -139,6 +153,11 @@ public class CompileCacheBlob
     public void AddCompiled(string key, long write_ticks, byte[] bytes)
     {
       compiled.Add(new Pending { key = key, write_ticks = write_ticks, bytes = bytes });
+    }
+
+    public void AddDecls(string key, long write_ticks, byte[] bytes)
+    {
+      decls.Add(new Pending { key = key, write_ticks = write_ticks, bytes = bytes });
     }
 
     public void Save(string path)
@@ -161,6 +180,14 @@ public class CompileCacheBlob
         compiled_meta.Add((p.key, p.write_ticks, offset, p.bytes.Length));
       }
 
+      var decls_meta = new List<(string key, long ticks, int offset, int length)>();
+      foreach(var p in decls)
+      {
+        int offset = (int)data.Position;
+        data.Write(p.bytes, 0, p.bytes.Length);
+        decls_meta.Add((p.key, p.write_ticks, offset, p.bytes.Length));
+      }
+
       string tmp_path = path + ".tmp";
 
       using(var fs = new FileStream(tmp_path, FileMode.Create, FileAccess.Write))
@@ -178,6 +205,13 @@ public class CompileCacheBlob
 
         w.Write(compiled_meta.Count);
         foreach(var e in compiled_meta)
+        {
+          w.Write(e.key);
+          WriteEntry(w, e.ticks, e.offset, e.length);
+        }
+
+        w.Write(decls_meta.Count);
+        foreach(var e in decls_meta)
         {
           w.Write(e.key);
           WriteEntry(w, e.ticks, e.offset, e.length);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace bhl
 {
@@ -191,30 +192,34 @@ public class Namespace : Symbol, IScope,
     return clean;
   }
 
-  // Each module is parsed against its own private Namespace, so a global redeclared across
-  // two different modules is only caught by merging them together like this. Returns only
-  // the first conflict found (module-local symbols are expected to shadow one another across
-  // modules and are excluded), since TryLink itself only ever reports the first one it hits
-  // within a given module's merge.
-  public static SymbolError CheckUniqueSymbols(IEnumerable<ModuleDeclared> modules)
+  // One declaration taking part in the cross module uniqueness check. 'symbol' is null when the
+  // declaration was replayed from a build cache instead of a materialized module, in which case
+  // only the path, its kind and the owning module's name are known.
+  public readonly struct Decl
   {
-    //NOTE: a flat path -> symbol map rather than merging every module into one namespace.
-    //      That accumulated one link per module, and _Resolve scans links, so the merge
-    //      cost grew with the number of modules already merged - quadratic overall, paid
-    //      on every build including an incremental one that touched a single file
-    var seen = new Dictionary<string, Symbol>();
+    public readonly string path;
+    public readonly bool is_namespace;
+    public readonly Symbol symbol;
+    public readonly string module_name;
 
-    foreach(var module in modules)
+    public Decl(string path, bool is_namespace, Symbol symbol, string module_name)
     {
-      var err = CheckUniqueSymbols(module.ns, "", seen);
-      if(err != null)
-        return err;
+      this.path = path;
+      this.is_namespace = is_namespace;
+      this.symbol = symbol;
+      this.module_name = module_name;
     }
-
-    return null;
   }
 
-  static SymbolError CheckUniqueSymbols(Namespace ns, string prefix, Dictionary<string, Symbol> seen)
+  // The declarations of a module which must be unique across the whole project. Module local
+  // symbols shadow one another across modules and an indirect namespace comes from a linked
+  // import rather than being declared here, so neither takes part.
+  public static IEnumerable<Decl> EnumDecls(ModuleDeclared module)
+  {
+    return EnumDecls(module.ns, "", module.name);
+  }
+
+  static IEnumerable<Decl> EnumDecls(Namespace ns, string prefix, string module_name)
   {
     for(int i = 0; i < ns.members.Count; ++i)
     {
@@ -222,50 +227,76 @@ public class Namespace : Symbol, IScope,
 
       if(symb is Namespace sub_ns)
       {
-        //NOTE: an indirect namespace comes from a linked import, it's not declared here
         if(sub_ns.indirectness != 0)
           continue;
 
         string path = prefix + sub_ns.name;
-        if(seen.TryGetValue(path, out var prev))
-        {
-          //NOTE: namespaces of the same path merge, anything else under it collides
-          if(!(prev is Namespace))
-            return Conflict(prev, sub_ns);
-        }
-        else
-          seen[path] = sub_ns;
+        yield return new Decl(path, true, sub_ns, module_name);
 
-        var err = CheckUniqueSymbols(sub_ns, path + ".", seen);
-        if(err != null)
-          return err;
+        foreach(var nested in EnumDecls(sub_ns, path + ".", module_name))
+          yield return nested;
       }
       else
       {
-        //NOTE: module local symbols are expected to shadow one another across modules
         if(symb.IsModuleLocal())
           continue;
 
-        string path = prefix + symb.name;
-        if(seen.TryGetValue(path, out var prev))
-          return Conflict(prev, symb);
+        yield return new Decl(prefix + symb.name, false, symb, module_name);
+      }
+    }
+  }
 
-        seen[path] = symb;
+  // Each module is parsed against its own private Namespace, so a global redeclared across
+  // two different modules is only caught by looking at them together like this. Returns only
+  // the first conflict found (module-local symbols are expected to shadow one another across
+  // modules and are excluded).
+  public static SymbolError CheckUniqueSymbols(IEnumerable<ModuleDeclared> modules)
+  {
+    return CheckUniqueSymbols(modules.Select(EnumDecls));
+  }
+
+  public static SymbolError CheckUniqueSymbols(IEnumerable<IEnumerable<Decl>> modules)
+  {
+    //NOTE: a flat path -> declaration map rather than merging every module into one namespace.
+    //      That accumulated one link per module, and _Resolve scans links, so the merge
+    //      cost grew with the number of modules already merged - quadratic overall, paid
+    //      on every build including an incremental one that touched a single file
+    var seen = new Dictionary<string, Decl>();
+
+    foreach(var decls in modules)
+    {
+      foreach(var decl in decls)
+      {
+        if(seen.TryGetValue(decl.path, out var prev))
+        {
+          //NOTE: namespaces of the same path merge, anything else under it collides
+          if(!decl.is_namespace || !prev.is_namespace)
+            return Conflict(prev, decl);
+        }
+        else
+          seen[decl.path] = decl;
       }
     }
 
     return null;
   }
 
-  static SymbolError Conflict(Symbol local, Symbol other)
+  static SymbolError Conflict(Decl local, Decl other)
   {
-    string ModuleName(Symbol s) => (s.scope as Namespace)?.module?.name ?? "?";
-    string OriginSuffix(Symbol s) => s.origin != null
-      ? $" ({s.origin.source_file}:{s.origin.source_range.start.line})"
+    string ModuleName(Decl d) => d.symbol != null
+      ? ((d.symbol.scope as Namespace)?.module?.name ?? "?")
+      : (d.module_name ?? "?");
+
+    string TypePath(Decl d) => d.symbol != null ? d.symbol.GetFullTypePath().ToString() : d.path;
+
+    //NOTE: a declaration replayed from the build cache carries no origin
+    string OriginSuffix(Decl d) => d.symbol?.origin != null
+      ? $" ({d.symbol.origin.source_file}:{d.symbol.origin.source_range.start.line})"
       : "";
 
-    return new SymbolError(local,
-      "symbol '" + other.GetFullTypePath() + "' declared in module '" + ModuleName(other) +
+    //NOTE: whichever side was materialized gives the error a source position
+    return new SymbolError(local.symbol ?? other.symbol,
+      "symbol '" + TypePath(other) + "' declared in module '" + ModuleName(other) +
       "'" + OriginSuffix(other) + " conflicts with an existing declaration in module '" +
       ModuleName(local) + "'" + OriginSuffix(local));
   }

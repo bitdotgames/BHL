@@ -123,14 +123,16 @@ public class SymbolError : Exception
     get { return StackTrace; }
   }
 
+  //NOTE: a symbol is not always available - e.g. a cross module conflict where the other side
+  //      was replayed from the build cache rather than materialized
   public SourceRange range
   {
-    get { return symbol.origin?.source_range ?? new SourceRange(); }
+    get { return symbol?.origin?.source_range ?? new SourceRange(); }
   }
 
   public string file
   {
-    get { return symbol.origin?.source_file ?? ""; }
+    get { return symbol?.origin?.source_file ?? ""; }
   }
 
   public SymbolError(Symbol symbol, string text)

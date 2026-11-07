@@ -5,6 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using bhl.marshall;
 
@@ -258,6 +259,23 @@ public class CompilationExecutor
           MakeParseWorkers
         )
         .Parallel<ParseWorker, ParseWorker>(
+          "BHL imports scan (workers: %workers%)",
+          async (worker, token) =>
+          {
+            await Task.Run(worker.ScanImports, token);
+            return worker;
+          })
+        .Transform<List<ParseWorker>, List<ParseWorker>>(
+          "BHL imports closure",
+          (workers) =>
+          {
+            var needed = CollectNeededModules(conf, workers);
+            conf.logger.Log(2, $"BHL materializing {needed.Count} of {conf.files.Count} modules");
+            foreach(var pw in workers)
+              pw.needed_modules = needed;
+            return workers;
+          })
+        .Parallel<ParseWorker, ParseWorker>(
           "BHL parse (workers: %workers%)",
           async (worker, token) =>
           {
@@ -328,7 +346,7 @@ public class CompilationExecutor
             if(errors.Count > 0)
               throw new TooManyErrorsException();
 
-            var check_err = CheckUniqueSymbols(workers);
+            var check_err = CheckUniqueSymbols(conf, workers);
             if(check_err != null)
             {
               errors.Add(check_err);
@@ -421,6 +439,10 @@ public class CompilationExecutor
     //2. let's create collections for files to be processed and used from cache
     foreach(var kv in proc_bundle.file2parsed)
     {
+      //NOTE: its bytes are carried to the result as is, it takes no part in this compilation
+      if(kv.Value.symbols_skipped)
+        continue;
+
       if(kv.Value.cached == null &&
          //NOTE: no need to process a file if it contains parsing errors
          !errors.FileHasAnyErrors(kv.Key))
@@ -503,6 +525,66 @@ public class CompilationExecutor
     }
 
     return parse_workers;
+  }
+
+  //NOTE: 'N'/'S' marks a namespace vs anything else - namespaces of the same path merge across
+  //      modules while anything else collides, so the kind has to survive the round trip
+  static byte[] EncodeDecls(IEnumerable<Namespace.Decl> decls)
+  {
+    var sb = new StringBuilder();
+    foreach(var d in decls)
+      sb.Append(d.is_namespace ? 'N' : 'S').Append(d.path).Append('\n');
+
+    return System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+  }
+
+  static List<Namespace.Decl> DecodeDecls(byte[] bytes, string module_name)
+  {
+    var res = new List<Namespace.Decl>();
+
+    foreach(var line in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
+    {
+      if(line.Length < 1)
+        continue;
+      res.Add(new Namespace.Decl(line.Substring(1), line[0] == 'N', null, module_name));
+    }
+
+    return res;
+  }
+
+  //NOTE: a module's symbols are only ever needed to resolve a stale module against it, so the
+  //      set is the stale files plus everything they import transitively. A module importing a
+  //      stale one is itself stale (that file is among its deps), so the walk goes forward only
+  static HashSet<string> CollectNeededModules(CompileConf conf, List<ParseWorker> workers)
+  {
+    var file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+    foreach(var pw in workers)
+      foreach(var kv in pw.file2interim)
+        file2interim[kv.Key] = kv.Value;
+
+    var needed = new HashSet<string>();
+    var queue = new Queue<string>();
+
+    foreach(var kv in file2interim)
+    {
+      if(!kv.Value.cache_usable && needed.Add(kv.Key))
+        queue.Enqueue(kv.Key);
+    }
+
+    while(queue.Count > 0)
+    {
+      var file = queue.Dequeue();
+      if(!file2interim.TryGetValue(file, out var interim) || interim.imports_maybe == null)
+        continue;
+
+      foreach(var imported in interim.imports_maybe.file_paths)
+      {
+        if(needed.Add(imported))
+          queue.Enqueue(imported);
+      }
+    }
+
+    return needed;
   }
 
   List<ParseWorker> ProcessParseWorkers(List<ParseWorker> workers, CompileErrors errors)
@@ -606,9 +688,36 @@ public class CompilationExecutor
     }
   }
 
-  SymbolError CheckUniqueSymbols(List<ProcAndCompileWorker> compiler_workers)
+  //NOTE: walks in conf.files order so which conflict gets reported doesn't depend on how many
+  //      modules this particular build happened to materialize
+  SymbolError CheckUniqueSymbols(CompileConf conf, List<ProcAndCompileWorker> compiler_workers)
   {
-    return Namespace.CheckUniqueSymbols(compiler_workers.SelectMany(cw => cw.file2module.Values));
+    var file2module = new Dictionary<string, ModuleDeclared>();
+    var file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+    foreach(var cw in compiler_workers)
+    {
+      foreach(var kv in cw.file2module)
+        file2module[kv.Key] = kv.Value;
+      foreach(var kv in cw.file2interim)
+        file2interim[kv.Key] = kv.Value;
+    }
+
+    return Namespace.CheckUniqueSymbols(EnumModuleDecls(conf, file2module, file2interim));
+  }
+
+  IEnumerable<IEnumerable<Namespace.Decl>> EnumModuleDecls(
+    CompileConf conf,
+    Dictionary<string, ModuleDeclared> file2module,
+    Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim
+  )
+  {
+    foreach(var file in conf.files)
+    {
+      if(file2module.TryGetValue(file, out var module))
+        yield return Namespace.EnumDecls(module);
+      else if(file2interim.TryGetValue(file, out var interim) && interim.cached_decls != null)
+        yield return interim.cached_decls;
+    }
   }
 
   void WriteCompilationResultToFile(CompileConf conf, List<ProcAndCompileWorker> compiler_workers, string file_path)
@@ -766,13 +875,27 @@ public class CompilationExecutor
       maybe_imports_fresh[e.file] = (e.write_ticks, e.bytes);
 
     var compiled_fresh = new Dictionary<string, (long ticks, byte[] bytes)>();
+    var decls_fresh = new Dictionary<string, (long ticks, byte[] bytes)>();
     if(workers.Count > 0)
     {
       var file2interim = workers[0].file2interim;
+
+      var file2module = new Dictionary<string, ModuleDeclared>();
+      foreach(var cw in workers)
+        foreach(var kv in cw.file2module)
+          file2module[kv.Key] = kv.Value;
+
       foreach(var file in conf.files)
       {
         if(file2interim.TryGetValue(file, out var interim) && interim.compiled_bytes != null)
+        {
           compiled_fresh[file] = (interim.compiled_write_ticks, interim.compiled_bytes);
+
+          //NOTE: only a materialized module can have its declarations recomputed, a skipped
+          //      one keeps whatever the blob already holds (the fallback below)
+          if(file2module.TryGetValue(file, out var module))
+            decls_fresh[file] = (interim.compiled_write_ticks, EncodeDecls(Namespace.EnumDecls(module)));
+        }
       }
     }
 
@@ -793,6 +916,11 @@ public class CompilationExecutor
         writer.AddCompiled(file, fresh_compiled.ticks, fresh_compiled.bytes);
       else if(conf.cache_blob.TryGetCompiled(file, out var old_cbytes, out var old_cticks))
         writer.AddCompiled(file, old_cticks, old_cbytes);
+
+      if(decls_fresh.TryGetValue(file, out var fresh_decls))
+        writer.AddDecls(file, fresh_decls.ticks, fresh_decls.bytes);
+      else if(conf.cache_blob.TryGetDecls(file, out var old_dbytes, out var old_dticks))
+        writer.AddDecls(file, old_dticks, old_dbytes);
     }
 
     writer.Save(GetCacheBlobFile(conf.proj.tmp_dir));
@@ -848,9 +976,55 @@ public class CompilationExecutor
     public int cache_hits;
     public int cache_miss;
     public int cache_errs;
+    //NOTE: null means 'materialize every cached module', the behaviour before partial loading
+    public HashSet<string> needed_modules;
+
     public List<(string file, long write_ticks, byte[] bytes)> maybe_imports_cache_entries =
       new List<(string file, long write_ticks, byte[] bytes)>();
     string current_file;
+
+    //NOTE: only reads each file's import list and whether its cache entry is usable - cheap
+    //      enough to do for every file, and the import graph it yields is what lets the load
+    //      pass below skip deserializing modules nothing stale depends on
+    public void ScanImports()
+    {
+      for(int i = start; i < (start + count); ++i)
+      {
+        var current_file = conf.files[i];
+
+        var interim = new ProjectCompilationStateBundle.InterimParseResult();
+        interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
+
+        //NOTE: a cached imports scan needs no file content, only its mtime
+        FileStream sfs = null;
+        try
+        {
+          interim.imports_maybe = GetMaybeImports(current_file, ref sfs);
+
+          var deps = new List<string>(interim.imports_maybe.file_paths);
+          deps.Add(current_file);
+          deps.AddRange(conf.global_file_deps);
+          if(conf.self_file.Length > 0)
+            deps.Add(conf.self_file);
+
+          if(conf.proj.use_cache &&
+             !conf.debug_info_changed &&
+             conf.cache_blob.TryGetCompiled(current_file, out var cached_bytes, out var write_ticks) &&
+             !CompileCacheBlob.IsStale(write_ticks, deps))
+          {
+            interim.cache_bytes = cached_bytes;
+            interim.cache_write_ticks = write_ticks;
+            interim.cache_usable = true;
+          }
+        }
+        finally
+        {
+          sfs?.Dispose();
+        }
+
+        file2interim[current_file] = interim;
+      }
+    }
 
     public void Parse()
     {
@@ -874,73 +1048,61 @@ public class CompilationExecutor
     {
       current_file = conf.files[i];
 
+      var interim = file2interim[current_file];
+
+      bool use_cache = false;
+
+      if(interim.cache_usable)
+      {
+        interim.compiled_bytes = interim.cache_bytes;
+        interim.compiled_write_ticks = interim.cache_write_ticks;
+
+        //NOTE: nothing stale resolves against this module, so its bytes go straight into the
+        //      result and the cache blob - only its symbols are skipped (see needed_modules)
+        //NOTE: skipping is only sound while the duplicate check can still see this module's
+        //      declarations - without them in the cache it has to be materialized as before
+        if(needed_modules != null && !needed_modules.Contains(current_file) &&
+           conf.cache_blob.TryGetDecls(current_file, out var decl_bytes, out var _))
+        {
+          interim.symbols_skipped = true;
+          interim.cached_decls = DecodeDecls(decl_bytes, interim.module_path.name);
+          ++cache_hits;
+          return;
+        }
+
+        try
+        {
+          interim.cached = ModuleDeclared.FromStream(conf.ts, new MemoryStream(interim.cache_bytes));
+          use_cache = true;
+        }
+        catch(Exception)
+        {
+          interim.compiled_bytes = null;
+          ++cache_errs;
+        }
+      }
+
+      if(use_cache)
+      {
+        ++cache_hits;
+        return;
+      }
+
       using(var sfs = File.OpenRead(current_file))
       {
-        var imports_maybe = GetMaybeImports(current_file, sfs);
-        var deps = new List<string>(imports_maybe.file_paths);
-        deps.Add(current_file);
-        deps.AddRange(conf.global_file_deps);
-
-        //NOTE: adding self binary as a dep
-        if(conf.self_file.Length > 0)
-          deps.Add(conf.self_file);
-
-        var interim = new ProjectCompilationStateBundle.InterimParseResult();
-        interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
-        interim.imports_maybe = imports_maybe;
-
-        bool use_cache;
-
-        if(conf.proj.use_cache &&
-           !conf.debug_info_changed &&
-           conf.cache_blob.TryGetCompiled(current_file, out var cached_bytes, out var write_ticks) &&
-           !CompileCacheBlob.IsStale(write_ticks, deps))
-        {
-          try
-          {
-            interim.cached = ModuleDeclared.FromStream(conf.ts, new MemoryStream(cached_bytes));
-            interim.compiled_bytes = cached_bytes;
-            interim.compiled_write_ticks = write_ticks;
-            use_cache = true;
-          }
-          catch(Exception)
-          {
-            use_cache = false;
-            ++cache_errs;
-          }
-        }
-        else
-        {
-          use_cache = false;
-        }
-
-        if(use_cache)
-        {
-          ++cache_hits;
-        }
-        else
-        {
-          //for parsing time debug
-          //var sw = Stopwatch.StartNew();
-
-          interim.parsed = ANTLR_Processor.Parse(
-            new ModuleDeclared(interim.module_path),
-            sfs,
-            CompileErrorsHub.MakeStandard(current_file, errors),
-            defines: new HashSet<string>(conf.proj.defines),
-            preproc_parsed: out var _
-          );
-
-          //sw.Stop();
-          //conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-          ++cache_miss;
-        }
-
-        file2interim[current_file] = interim;
+        interim.parsed = ANTLR_Processor.Parse(
+          new ModuleDeclared(interim.module_path),
+          sfs,
+          CompileErrorsHub.MakeStandard(current_file, errors),
+          defines: new HashSet<string>(conf.proj.defines),
+          preproc_parsed: out var _
+        );
       }
+
+      ++cache_miss;
     }
 
-    FileImports GetMaybeImports(string file, FileStream fsf)
+    FileImports GetMaybeImports(string file, ref FileStream fsf)
     {
       if(conf.proj.use_cache &&
          conf.cache_blob.TryGetMaybeImports(file, out var cached_bytes, out var write_ticks) &&
@@ -958,6 +1120,7 @@ public class CompilationExecutor
         }
       }
 
+      fsf = fsf ?? File.OpenRead(file);
       var imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
 
       if(conf.proj.use_cache)
