@@ -5,6 +5,24 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta21]
+
+Documentation only - the shipped binaries are identical to beta20.
+
+### Documentation
+- `using` is documented in `docs/namespaces.md`: both forms, how they compose with full
+  qualification, that they are scoped to the declaring file and not re-exported, and the
+  errors with their actual messages.
+- Fixed docs that didn't match the compiler, found by compiling all 110 `bhl` code blocks in
+  `docs/`: `trace()` is a test-only binding and six docs called it (now `std.io.WriteLine`);
+  `docs/operator-overloading.md` documented a BHL syntax for declaring operators that doesn't
+  parse, they're definable only on a C# bound class; `docs/oop.md` used `new X { f = v }`
+  instead of `X x = {f: v}` and documented map literals, which don't exist - maps are created
+  empty and filled by assignment; plus a braceless `if`, an unparenthesized call as an `if`
+  condition, and `func coro void ptr` instead of `coro func() ptr`.
+- `docs/imports.md` no longer claims a duplicate import is silently ignored - it's an error,
+  only a self-import is ignored.
+
 ## [3.0.0-beta20]
 
 ### Added
