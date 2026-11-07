@@ -385,7 +385,7 @@ public partial class ANTLR_Processor
             else
             {
               _proc.PeekAST().AddChild(new AST_VarRead(line, var_symb, _curr_name));
-              var fp_mvar = new AST_CallFuncPtrMVar(line, var_symb, 0, _curr_name);
+              var fp_mvar = new AST_CallFuncPtr(line, var_symb, 0, _curr_name);
               _proc.AddCallArgs(ftype, cargs, fp_mvar);
               ast = fp_mvar;
             }
@@ -505,7 +505,7 @@ public partial class ANTLR_Processor
           _proc.AddError(cargs, $"cannot call expression of type '{_curr_type?.GetName() ?? "?"}'");
           return;
         }
-        var fp_res = new AST_CallFuncPtrRes(line, null);
+        var fp_res = new AST_CallFuncPtr(line, null);
         _proc.AddCallArgs(ftype, cargs, fp_res);
         ast = fp_res;
         _curr_type = ftype.return_type.Get();

@@ -36,8 +36,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_CallFunc ast);
   public abstract void DoVisit(AST_CallMethod ast);
   public abstract void DoVisit(AST_CallFuncPtrVar ast);
-  public abstract void DoVisit(AST_CallFuncPtrMVar ast);
-  public abstract void DoVisit(AST_CallFuncPtrRes ast);
+  public abstract void DoVisit(AST_CallFuncPtr ast);
   public abstract void DoVisit(AST_Index ast);
   public abstract void DoVisit(AST_GetFuncAddr ast);
   public abstract void DoVisit(AST_Return ast);
@@ -464,22 +463,13 @@ public class AST_CallFuncPtrVar : AST_Invoke
   {}
 }
 
-//calls a func ptr held in a class field: 'o.fn()'
-public class AST_CallFuncPtrMVar : AST_Invoke
+//calls a func ptr the chain already left on the stack: 'o.fn()', or 'get_fn()()' where
+//'symbol' is null because an expression produced it rather than a name
+public class AST_CallFuncPtr : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
 
-  public AST_CallFuncPtrMVar(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
-    : base(line_num, symbol, cargs_bits, node)
-  {}
-}
-
-//calls what an expression returned: the second call in 'get_fn()()'
-public class AST_CallFuncPtrRes : AST_Invoke
-{
-  public override void Accept(AST_Visitor v) => v.DoVisit(this);
-
-  public AST_CallFuncPtrRes(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
+  public AST_CallFuncPtr(int line_num, Symbol symbol, uint cargs_bits = 0, ITerminalNode node = null)
     : base(line_num, symbol, cargs_bits, node)
   {}
 }
@@ -850,8 +840,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_CallFunc node) => DumpCall(node);
   public override void DoVisit(AST_CallMethod node) => DumpCall(node);
   public override void DoVisit(AST_CallFuncPtrVar node) => DumpCall(node);
-  public override void DoVisit(AST_CallFuncPtrMVar node) => DumpCall(node);
-  public override void DoVisit(AST_CallFuncPtrRes node) => DumpCall(node);
+  public override void DoVisit(AST_CallFuncPtr node) => DumpCall(node);
   public override void DoVisit(AST_Index node) => DumpCall(node);
   public override void DoVisit(AST_GetFuncAddr node) => DumpCall(node);
 

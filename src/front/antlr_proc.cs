@@ -530,7 +530,9 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(call.symbol is FuncSymbol fs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, fs.signature, yielded);
         }
-        else if(call is AST_CallFuncPtrVar || call is AST_CallFuncPtrMVar)
+        //NOTE: a func ptr produced by an expression has no symbol to validate against,
+        //      which the check below filters out on its own
+        else if(call is AST_CallFuncPtrVar || call is AST_CallFuncPtr)
         {
           if(call.symbol is VariableSymbol vs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, vs.type.Get() as FuncSignature, yielded);

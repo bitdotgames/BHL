@@ -1438,8 +1438,7 @@ public class ModuleCompiler : AST_Visitor
     Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
   }
 
-  public override void DoVisit(AST_CallFuncPtrMVar ast) => EmitCallFuncPtrInv(ast);
-  public override void DoVisit(AST_CallFuncPtrRes ast)  => EmitCallFuncPtrInv(ast);
+  public override void DoVisit(AST_CallFuncPtr ast) => EmitCallFuncPtrInv(ast);
 
   void EmitCallFuncPtrInv(AST_Invoke ast)
   {
