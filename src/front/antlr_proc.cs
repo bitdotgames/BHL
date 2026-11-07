@@ -2173,15 +2173,21 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return null;
   }
 
-  public override object VisitExpLogicalAnd(bhlParser.ExpLogicalAndContext ctx)
+  //NOTE: '&&' and '||' build the same shape, only the opcode and the token differ. Each
+  //      operand goes under its own interim child: the logical node must have exactly two
+  void ProcLogicalOp(
+    ParserRuleContext ctx,
+    ITerminalNode op_token,
+    EnumBinaryOp op,
+    string op_name,
+    bhlParser.ExpContext exp_0,
+    bhlParser.ExpContext exp_1
+  )
   {
-    LSP_AddSemanticToken(ctx.LAND(), SemanticToken.Operator);
+    LSP_AddSemanticToken(op_token, SemanticToken.Operator);
 
-    var ast = new AST_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
+    var ast = new AST_BinaryOpExp(op, ctx.Start.Line);
 
-    //logical operand node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
     bool ok1 = TryVisit(exp_0);
@@ -2195,43 +2201,22 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     ast.AddChild(tmp1);
 
     if(!ok1 || !ok2)
-      return null;
+      return;
 
-    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), "&&", errors);
+    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), op_name, errors);
 
     PeekAST().AddChild(ast);
+  }
 
+  public override object VisitExpLogicalAnd(bhlParser.ExpLogicalAndContext ctx)
+  {
+    ProcLogicalOp(ctx, ctx.LAND(), EnumBinaryOp.AND, "&&", ctx.exp(0), ctx.exp(1));
     return null;
   }
 
   public override object VisitExpLogicalOr(bhlParser.ExpLogicalOrContext ctx)
   {
-    LSP_AddSemanticToken(ctx.LOR(), SemanticToken.Operator);
-
-    var ast = new AST_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
-
-    //logical operand node has exactly two children
-    var tmp0 = new AST_Interim();
-    PushAST(tmp0);
-    bool ok1 = TryVisit(exp_0);
-    PopAST();
-    ast.AddChild(tmp0);
-
-    var tmp1 = new AST_Interim();
-    PushAST(tmp1);
-    bool ok2 = TryVisit(exp_1);
-    PopAST();
-    ast.AddChild(tmp1);
-
-    if(!ok1 || !ok2)
-      return null;
-
-    Annotate(ctx).eval_type = _types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), "||", errors);
-
-    PeekAST().AddChild(ast);
-
+    ProcLogicalOp(ctx, ctx.LOR(), EnumBinaryOp.OR, "||", ctx.exp(0), ctx.exp(1));
     return null;
   }
 
@@ -2518,19 +2503,19 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     return null;
   }
 
+  //NOTE: a 'defer' nested deeper than the loop runs as its own frame, so a break or a
+  //      continue inside it isn't inside the loop as far as codegen is concerned
+  bool IsInsideLoop()
+  {
+    int loop_level = GetLoopBlockLevel();
+    return loop_level != -1 && GetBlockLevel<AST_Defer>() <= loop_level;
+  }
+
   public override object VisitStmBreak(bhlParser.StmBreakContext ctx)
   {
     LSP_AddSemanticToken(ctx.BREAK(), SemanticToken.Keyword);
 
-    int loop_level = GetLoopBlockLevel();
-
-    if(loop_level == -1)
-    {
-      AddError(ctx, "not within loop construct");
-      return null;
-    }
-
-    if(GetBlockLevel<AST_Defer>() > loop_level)
+    if(!IsInsideLoop())
     {
       AddError(ctx, "not within loop construct");
       return null;
@@ -2545,15 +2530,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.CONTINUE(), SemanticToken.Keyword);
 
-    int loop_level = GetLoopBlockLevel();
-
-    if(loop_level == -1)
-    {
-      AddError(ctx, "not within loop construct");
-      return null;
-    }
-
-    if(GetBlockLevel<AST_Defer>() > loop_level)
+    if(!IsInsideLoop())
     {
       AddError(ctx, "not within loop construct");
       return null;
