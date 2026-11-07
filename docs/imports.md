@@ -8,7 +8,11 @@ import "core/logging"    // resolved via include paths
 import "std/io"          // standard library
 ```
 
-Imports must appear at the top level of the file. Duplicate imports and self-imports are silently ignored.
+Imports must appear at the top level of the file. A self-import is silently ignored; importing
+the same module twice is an error (`already imported 'x'`).
+
+An import makes a module's namespaces reachable by their full path. To refer to their members
+without that prefix, see [`using`](namespaces.md#the-using-directive).
 
 ## Module initialization
 
