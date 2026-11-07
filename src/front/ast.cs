@@ -351,6 +351,7 @@ public class AST_TypeIs : AST_Tree
 }
 
 
+//a name used in an expression chain: read, written, called or indexed
 public abstract class AST_Call : AST_Tree
 {
   public int line_num;
@@ -381,6 +382,7 @@ public abstract class AST_Call : AST_Tree
   }
 }
 
+//a variable, field or global touched by name
 public abstract class AST_VarAccess : AST_Call
 {
   public bool pass_as_ref; //e.g. foo(ref a)
@@ -392,6 +394,7 @@ public abstract class AST_VarAccess : AST_Call
   }
 }
 
+//reads a name: 'x' in 'int y = x'
 public class AST_VarRead : AST_VarAccess
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -401,6 +404,7 @@ public class AST_VarRead : AST_VarAccess
   {}
 }
 
+//writes a name: 'x' in 'x = 1'; is_decl also declares it, as a 'ref' does
 public class AST_VarWrite : AST_VarAccess
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -415,7 +419,7 @@ public class AST_VarWrite : AST_VarAccess
   }
 }
 
-//NOTE: anything that invokes something, which is what the frontend keeps asking about
+//anything that invokes: carries the packed call args, and is what 'is this a call' asks for
 public abstract class AST_Invoke : AST_Call
 {
   public uint cargs_bits;
@@ -427,6 +431,7 @@ public abstract class AST_Invoke : AST_Call
   }
 }
 
+//calls a named function: 'foo()'
 public class AST_CallFunc : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -436,6 +441,7 @@ public class AST_CallFunc : AST_Invoke
   {}
 }
 
+//calls a method on an instance: 'o.foo()'
 public class AST_CallMethod : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -448,6 +454,7 @@ public class AST_CallMethod : AST_Invoke
   {}
 }
 
+//calls a func ptr held in a variable: 'fn()' where 'func() fn = foo'
 public class AST_CallFuncPtrVar : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -457,6 +464,7 @@ public class AST_CallFuncPtrVar : AST_Invoke
   {}
 }
 
+//calls a func ptr held in a class field: 'o.fn()'
 public class AST_CallFuncPtrMVar : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -466,6 +474,7 @@ public class AST_CallFuncPtrMVar : AST_Invoke
   {}
 }
 
+//calls what an expression returned: the second call in 'get_fn()()'
 public class AST_CallFuncPtrRes : AST_Invoke
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -475,7 +484,7 @@ public class AST_CallFuncPtrRes : AST_Invoke
   {}
 }
 
-//NOTE: container kind and direction are orthogonal, and each of the four is a single opcode
+//indexes an array or a map: 'a[0]', or 'm["k"] = v' when is_write - one opcode per combination
 public class AST_Index : AST_Call
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
@@ -491,6 +500,7 @@ public class AST_Index : AST_Call
   }
 }
 
+//takes a function as a value instead of calling it: 'foo' in 'func() fn = foo'
 public class AST_GetFuncAddr : AST_Call
 {
   public override void Accept(AST_Visitor v) => v.DoVisit(this);
