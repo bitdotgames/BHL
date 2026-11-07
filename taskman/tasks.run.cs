@@ -13,21 +13,39 @@ public static partial class Tasks
   static void run_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl run <script.bhl> [args...] [--func=<name>] [--tick-ms=<n>]");
+    Console.WriteLine("bhl run <script.bhl> [args...] [--proj=<bhl.proj file>] [--func=<name>] [--tick-ms=<n>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
+  }
+
+  static string FindProjFileUpwards(string dir)
+  {
+    var di = string.IsNullOrEmpty(dir) ? null : new DirectoryInfo(dir);
+    while(di != null)
+    {
+      string candidate = Path.Combine(di.FullName, "bhl.proj");
+      if(File.Exists(candidate))
+        return candidate;
+      di = di.Parent;
+    }
+    return null;
   }
 
   public class RunArgs
   {
     public string func = "main";
     public int tick_ms = 0;
+    public string proj_file = "";
   }
 
   //NOTE: shared by run() for real parsing and by 'bhl help run' for documentation
   //      (see the '_options' convention in tasks.cs's help task)
   static OptionSet run_options(RunArgs a) => new OptionSet()
   {
+    {
+      "p|proj=", "project config file, so the script's imports and bindings resolve against it",
+      v => a.proj_file = v
+    },
     {
       "func=", "function to run instead of 'main'",
       v => a.func = v
@@ -68,7 +86,38 @@ public static partial class Tasks
     string script_file = Path.GetFullPath(extra[0]);
     var script_args = extra.GetRange(1, extra.Count - 1);
 
-    var vm = await CompilationExecutor.CompileAndLoadVM(new List<string> { script_file }, add_debug_info: true);
+    //NOTE: without a project a script's imports can't resolve, so look for one the way
+    //      most tools find their config - nearest bhl.proj walking up from the script
+    if(string.IsNullOrEmpty(a.proj_file))
+      a.proj_file = FindProjFileUpwards(Path.GetDirectoryName(script_file));
+    else if(!File.Exists(a.proj_file))
+      run_usage("Project file not found: " + a.proj_file);
+
+    ProjectConf proj = null;
+    var files = new List<string> { script_file };
+    IUserBindings bindings = null;
+
+    if(!string.IsNullOrEmpty(a.proj_file))
+    {
+      proj = ProjectConf.ReadFromFile(a.proj_file);
+      foreach(var w in proj.warnings)
+        ErrorUtils.OutputWarning(w);
+
+      bindings = proj.LoadBindings();
+
+      //NOTE: the script must stay at index 0, it's the module which gets loaded
+      var rest = new List<string>();
+      for(int i = 0; i < proj.src_dirs.Count; ++i)
+        CompilationExecutor.AddFilesFromDir(proj.src_dirs[i], rest);
+
+      var seen = new HashSet<string>(BuildUtils.NormalizeFilePaths(files));
+      foreach(var f in BuildUtils.NormalizeFilePaths(rest))
+        if(seen.Add(f))
+          files.Add(f);
+    }
+
+    var vm = await CompilationExecutor.CompileAndLoadVM(
+      files, add_debug_info: true, bindings: bindings, proj: proj);
     if(vm == null)
       Environment.Exit(ERROR_EXIT_CODE);
 

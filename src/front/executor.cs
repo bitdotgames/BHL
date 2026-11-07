@@ -76,20 +76,27 @@ public class CompilationExecutor
     string tmp_dir = null,
     IUserBindings bindings = null,
     IFrontPostProcessor postproc = null,
-    int verbosity = -1
+    int verbosity = -1,
+    //NOTE: when given, its src_dirs/inc_dirs/defines are used as is, so imports resolve
+    //      the same way they do for a 'compile' - the caller passes the files to build
+    ProjectConf proj = null
   )
   {
-    var proj = new ProjectConf();
-    proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    proj.use_cache = use_cache;
-    proj.max_threads = files.Count == 1 ? 1 : MAX_THREADS;
-    foreach(var file in files)
+    bool synthesized_proj = proj == null;
+    if(synthesized_proj)
     {
-      var dir = Path.GetDirectoryName(file);
-      if(string.IsNullOrEmpty(dir))
-        throw new Exception("Could not get directory for file (not a full path ?): " + file);
-      if(proj.src_dirs.IndexOf(dir) == -1)
-        proj.src_dirs.Add(dir);
+      proj = new ProjectConf();
+      proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
+      proj.use_cache = use_cache;
+      proj.max_threads = files.Count == 1 ? 1 : MAX_THREADS;
+      foreach(var file in files)
+      {
+        var dir = Path.GetDirectoryName(file);
+        if(string.IsNullOrEmpty(dir))
+          throw new Exception("Could not get directory for file (not a full path ?): " + file);
+        if(proj.src_dirs.IndexOf(dir) == -1)
+          proj.src_dirs.Add(dir);
+      }
     }
     proj.result_file = bytecode_result_file ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".bhc");
     //NOTE: falls back to the OS temp dir for callers with no project context of their
@@ -98,7 +105,8 @@ public class CompilationExecutor
     //      across invocations instead of living in an OS-swept temp directory
     proj.tmp_dir = string.IsNullOrEmpty(tmp_dir) ? Path.GetTempPath() : tmp_dir;
     proj.verbosity = 0;
-    proj.Setup();
+    if(synthesized_proj)
+      proj.Setup();
 
     var conf = new CompileConf();
     conf.logger = new Logger(verbosity, new ConsoleLogger());
@@ -126,7 +134,12 @@ public class CompilationExecutor
     var bytes = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
     var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
 
-    vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
+    //NOTE: 'files[0]', not 'conf.files[0]' - _Exec sorts the latter when the project is
+    //      deterministic, so it no longer starts with the entry. With a real project a
+    //      module's name is its path relative to an inc_dir, not just the file's name
+    vm.LoadModule(synthesized_proj
+      ? Path.GetFileNameWithoutExtension(files[0])
+      : proj.inc_path.FilePath2ModuleName(BuildUtils.NormalizeFilePath(files[0])));
 
     return vm;
   }
