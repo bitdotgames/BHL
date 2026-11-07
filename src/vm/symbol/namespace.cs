@@ -198,28 +198,78 @@ public class Namespace : Symbol, IScope,
   // within a given module's merge.
   public static SymbolError CheckUniqueSymbols(IEnumerable<ModuleDeclared> modules)
   {
-    var ns = new Namespace();
+    //NOTE: a flat path -> symbol map rather than merging every module into one namespace.
+    //      That accumulated one link per module, and _Resolve scans links, so the merge
+    //      cost grew with the number of modules already merged - quadratic overall, paid
+    //      on every build including an incremental one that touched a single file
+    var seen = new Dictionary<string, Symbol>();
+
     foreach(var module in modules)
     {
-      var conflict = ns.TryLink(module.ns.UnlinkAll());
-      if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
-      {
-        //NOTE: a namespace the merge root synthesized for itself (see TryLink) belongs to
-        //      no single module, hence the fallback
-        string ModuleName(Symbol s) => (s.scope as Namespace)?.module?.name ?? "?";
-        string OriginSuffix(Symbol s) => s.origin != null
-          ? $" ({s.origin.source_file}:{s.origin.source_range.start.line})"
-          : "";
+      var err = CheckUniqueSymbols(module.ns, "", seen);
+      if(err != null)
+        return err;
+    }
 
-        return new SymbolError(conflict.local,
-          "symbol '" + conflict.other.GetFullTypePath() + "' declared in module '" + ModuleName(conflict.other) +
-          "'" + OriginSuffix(conflict.other) + " conflicts with an existing declaration in module '" +
-          ModuleName(conflict.local) + "'" + OriginSuffix(conflict.local));
+    return null;
+  }
+
+  static SymbolError CheckUniqueSymbols(Namespace ns, string prefix, Dictionary<string, Symbol> seen)
+  {
+    for(int i = 0; i < ns.members.Count; ++i)
+    {
+      var symb = ns.members[i];
+
+      if(symb is Namespace sub_ns)
+      {
+        //NOTE: an indirect namespace comes from a linked import, it's not declared here
+        if(sub_ns.indirectness != 0)
+          continue;
+
+        string path = prefix + sub_ns.name;
+        if(seen.TryGetValue(path, out var prev))
+        {
+          //NOTE: namespaces of the same path merge, anything else under it collides
+          if(!(prev is Namespace))
+            return Conflict(prev, sub_ns);
+        }
+        else
+          seen[path] = sub_ns;
+
+        var err = CheckUniqueSymbols(sub_ns, path + ".", seen);
+        if(err != null)
+          return err;
+      }
+      else
+      {
+        //NOTE: module local symbols are expected to shadow one another across modules
+        if(symb.IsModuleLocal())
+          continue;
+
+        string path = prefix + symb.name;
+        if(seen.TryGetValue(path, out var prev))
+          return Conflict(prev, symb);
+
+        seen[path] = symb;
       }
     }
 
     return null;
   }
+
+  static SymbolError Conflict(Symbol local, Symbol other)
+  {
+    string ModuleName(Symbol s) => (s.scope as Namespace)?.module?.name ?? "?";
+    string OriginSuffix(Symbol s) => s.origin != null
+      ? $" ({s.origin.source_file}:{s.origin.source_range.start.line})"
+      : "";
+
+    return new SymbolError(local,
+      "symbol '" + other.GetFullTypePath() + "' declared in module '" + ModuleName(other) +
+      "'" + OriginSuffix(other) + " conflicts with an existing declaration in module '" +
+      ModuleName(local) + "'" + OriginSuffix(local));
+  }
+
 
   public IScope GetFallbackScope()
   {
