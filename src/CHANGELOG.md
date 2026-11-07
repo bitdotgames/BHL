@@ -5,6 +5,22 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta18]
+
+Follow-ups to the library `name` introduced in beta17 - worth taking if you adopted it.
+
+### Fixed
+- A library declaring a `name` may no longer also declare `inc_dirs`. They were redundant (its
+  `src_dirs` are already on the include path under its name) and actively harmful: the entries
+  carried its name onto whatever they covered, including the including project's own files, and
+  their mere presence made that project's `inc_dirs` non-empty - suppressing the `src_dirs`
+  fallback that put its own sources on the include path. A project including such a library
+  could no longer import its own modules. A library without a `name` may still declare
+  `inc_dirs`, which is how it made its files addressable before.
+- `import "/mylib/util"` reaches a named library. A leading separator has always been tolerated
+  and meaningless - the combined path normalizes the same - but the new prefix match saw it and
+  refused, so the two spellings disagreed.
+
 ## [3.0.0-beta17]
 
 ### Added
