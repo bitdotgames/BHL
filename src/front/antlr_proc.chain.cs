@@ -243,6 +243,12 @@ public partial class ANTLR_Processor
 
     internal bool WalkItems(ExpChainItems items)
     {
+      //NOTE: a name is resolved with fallback to the enclosing scopes only while nothing has
+      //      narrowed the scope yet. A namespace prefix eaten by the head already narrowed it
+      //      (that's what _offset means), and so does every member access from here on -
+      //      past either, a name must be found in that scope or not at all
+      bool narrowed = _offset > 0;
+
       for(int c = _offset; c < items.Count; ++c)
       {
         var item    = items.At(c);
@@ -250,12 +256,12 @@ public partial class ANTLR_Processor
 
         if(item is bhlParser.CallArgsContext cargs)
         {
-          WalkItem(cargs, null, cargs.Start.Line, write: false, is_root: _offset == 0);
+          WalkItem(cargs, null, cargs.Start.Line, write: false, is_root: !narrowed);
           _curr_name = null;
         }
         else if(item is bhlParser.ArrAccessContext arracc)
         {
-          WalkItem(null, arracc, arracc.Start.Line, write: _write && is_last, is_root: c == _offset);
+          WalkItem(null, arracc, arracc.Start.Line, write: _write && is_last, is_root: !narrowed);
           _curr_name = null;
         }
         else if(item is bhlParser.MemberAccessContext macc)
@@ -263,7 +269,7 @@ public partial class ANTLR_Processor
           ClassSymbol class_symb = null;
           if(_curr_name != null)
           {
-            WalkItem(null, null, macc.Start.Line, write: false, is_root: c == _offset);
+            WalkItem(null, null, macc.Start.Line, write: false, is_root: !narrowed);
             class_symb = _curr_symb as ClassSymbol;
           }
           else
@@ -286,6 +292,7 @@ public partial class ANTLR_Processor
             return false;
 
           _curr_name = macc.NAME();
+          narrowed = true;
         }
         else
           throw new System.Exception("Unhandled chain item");
@@ -298,7 +305,10 @@ public partial class ANTLR_Processor
     bool CheckStaticInstanceAccess(bhlParser.MemberAccessContext macc, ClassSymbol class_symb)
     {
       bool is_via_class = class_symb != null;
-      var member = _scope.ResolveWithFallback(macc.NAME().GetText());
+      //NOTE: related only - a member access must find the name on the type itself or one it
+      //      inherits. Falling back to the enclosing scopes found unrelated globals and then
+      //      reported them as a static/instance mismatch rather than as not resolved
+      var member = _scope.ResolveRelatedOnly(macc.NAME().GetText());
 
       if(member is FuncSymbol fs)
       {

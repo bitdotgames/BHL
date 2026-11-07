@@ -248,6 +248,67 @@ public class TestClass : BHL_TestBase
 
   //NOTE: used to recurse until StackOverflow in ClassSymbol.DoSetupMembers, which is
   //      uncatchable - it took the whole process down instead of reporting an error
+  //NOTE: resolving the member used to fall back to the enclosing scopes, so this found the
+  //      global 'helper' and then failed downstream with an internal "Not instance type"
+  //      exception reported at 0:0 instead of a diagnostic
+  [Fact]
+  public void TestMemberCallDoesNotFallBackToOuterScope()
+  {
+    string bhl = @"
+    class Foo {
+      int x
+    }
+
+    func int helper() {
+      return 99
+    }
+
+    func int test() {
+      Foo f = {}
+      return f.helper()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "symbol 'helper' not resolved",
+      new PlaceAssert(bhl, @"
+      return f.helper()
+---------------^"
+      )
+    );
+  }
+
+  //NOTE: the static/instance check resolved with fallback too, so this reported a
+  //      static/instance mismatch against the unrelated global instead of saying the
+  //      class has no such member
+  [Fact]
+  public void TestStaticAccessToGlobalIsNotResolved()
+  {
+    string bhl = @"
+    class Foo {
+      int x
+    }
+
+    func int helper() {
+      return 9
+    }
+
+    func int test() {
+      return Foo.helper()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "symbol 'helper' not resolved",
+      new PlaceAssert(bhl, @"
+      return Foo.helper()
+-----------------^"
+      )
+    );
+  }
+
   [Fact]
   public void TestIndirectInheritanceCycleIsNotAllowed()
   {
