@@ -105,3 +105,24 @@ Also found while benchmarking: `NormalizePath` leaves a bare relative path
 alone, which silently broke the generated `.csproj` when `dll` is set - fixed
 by emitting absolute paths from `MakeLibraryCSProj` rather than changing the
 long-standing `./`-prefix convention.
+
+## [2026-11-07] ingest | Module identity and inc_dirs
+
+Asked for a take on the `inc_dirs` design and the observation that every
+library must sit under a uniquely named directory. Verified the constraint is
+real: two libraries each rooted at their own `inc_dir`, each in its own BHL
+`namespace`, still fail with `module 'util' ambiguous resolving` - symbol
+namespacing and module identity are independent mechanisms.
+
+The convention itself is standard (C, Python, Java all require it). What's
+weaker is that it's unwritten and unenforceable: module identity is decided by
+the consumer's `inc_dirs` rather than declared by the library, so the same
+library source compiles under `inc_dirs: ["./A"]` and fails with 3 errors under
+`inc_dirs: ["./"]`. Relative imports make a library's internal wiring position
+independent but don't stabilise its module names.
+
+Recommendation recorded: keep the resolution model, make the discipline
+explicit via a `module_prefix` declared by an included bhl.proj - `includes`
+already treats an included project as a unit with its own dirs and its own
+forbidden fields. Sketch only, not implemented.
+

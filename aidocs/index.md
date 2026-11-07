@@ -8,6 +8,7 @@ get ingested.
 
 - [Why a function is capped at 26 default arguments](architecture/default-args-limit.md) — FuncArgsInfo's 32 bits, why lifting it is a bytecode format change, three options costed, and why it was left alone.
 - [Caching the `.cs` bindings parser](architecture/cs-bindings-caching.md) — what's cached (the parse, the declared versions) and why `Register()` isn't: native symbols are NOT_PERSISTED by design, costed against the measured win.
+- [Module identity and `inc_dirs`](architecture/module-identity.md) — how a file gets its module name, why every library needs a uniquely named directory (a `namespace` doesn't help), and a sketch for declaring a prefix per included project.
 - [Symbol/type system — known inconsistencies](architecture/symbol-type-consistency.md) — audit of symbol/type/scope: inheritance-cycle crash, a ProxyType race across compile threads, native-list equality, plus what's verified sound.
 
 ## lsp/
