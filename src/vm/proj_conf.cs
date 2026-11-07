@@ -166,6 +166,22 @@ public partial class ProjectConf
   public string bindings_dll = "";
   public bool bindings_manual_build = false;
 
+  //NOTE: the files a compiled module depends on through its bindings. A sources-only entry
+  //      has no dll to watch, yet its symbols are what the modules were compiled against, so
+  //      leaving them out caches every module against symbols that may no longer exist
+  public IEnumerable<string> CollectBindingsFileDeps()
+  {
+    foreach(var b in bindings)
+    {
+      if(File.Exists(b.dll))
+        yield return b.dll;
+
+      foreach(var src in b.sources)
+        if(File.Exists(src))
+          yield return src;
+    }
+  }
+
   public void Setup()
   {
     if(max_threads <= 0)

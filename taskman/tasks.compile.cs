@@ -297,9 +297,7 @@ public static partial class Tasks
     conf.args_signature = string.Join(";", args) + ";sv=" + ModuleDeclared.STREAM_VERSION;
     conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(a.files);
-    foreach(var b in a.proj.bindings)
-      if(File.Exists(b.dll))
-        conf.global_file_deps.Add(b.dll);
+    conf.global_file_deps.AddRange(a.proj.CollectBindingsFileDeps());
     //NOTE: bhl.proj-only settings (e.g. defines) have no cache-invalidation signal
     //      otherwise, so track the proj file itself as a dep
     if(!string.IsNullOrEmpty(a.proj.proj_file) && File.Exists(a.proj.proj_file))

@@ -314,6 +314,34 @@ func RegisterBindings(std.bind.Types types) {{
     }
   }
 
+  // A sources-only entry has no dll to watch, so without its sources among the deps an edited
+  // binding leaves every module cached against symbols that no longer exist (see tasks.compile.cs)
+  [Fact]
+  public void BindingSourcesAreCollectedAsFileDeps()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      string src = Path.Combine(dir, "mybindings.cs");
+      File.WriteAllText(src, "//native bindings");
+
+      var proj = new ProjectConf();
+      proj.bindings.Add(new BindingsEntryConf
+      {
+        name = "mytest",
+        sources = new List<string> { src }
+      });
+
+      var deps = new List<string>(proj.CollectBindingsFileDeps());
+
+      Assert.Contains(src, deps);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void ExplicitDllIsNotOverridden()
   {
