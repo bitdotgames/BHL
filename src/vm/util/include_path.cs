@@ -180,6 +180,10 @@ public class IncludePath
 
   public string TryIncludePaths(string path)
   {
+    //NOTE: a leading separator is tolerated and meaningless for a plain dir (the combined path
+    //      normalizes the same), so it must not change whether a named library matches either
+    path = path.TrimStart('/', '\\');
+
     for(int i = 0; i < _items.Count; ++i)
     {
       var item = _items[i];

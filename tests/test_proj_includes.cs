@@ -96,6 +96,9 @@ func RegisterBindings(std.bind.Types types) {{
       //NOTE: reachable by the library's name, and only by it
       Assert.NotNull(proj.inc_path.TryIncludePaths("mylib/util"));
       Assert.Null(proj.inc_path.TryIncludePaths("util"));
+
+      //NOTE: a leading separator is tolerated for a plain dir, so it must be here too
+      Assert.NotNull(proj.inc_path.TryIncludePaths("/mylib/util"));
     }
     finally
     {
