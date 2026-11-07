@@ -442,7 +442,7 @@ public partial class ProjectConf
       var cs_files = new List<string>();
       foreach(var s in b.sources.Where(f => f.EndsWith(".cs")))
         cs_files.AddRange(BuildUtils.Glob(s));
-      return new CsSourceBindings(cs_files);
+      return new CsSourceBindings(cs_files, use_cache ? tmp_dir : null);
     }
 #endif
 

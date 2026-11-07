@@ -20,22 +20,109 @@ public class CsSourceBindings : IUserBindings
   public static readonly string[] Defines = new string[] { "BHL_FRONT" };
 
   readonly List<string> files;
+  readonly string cache_file;
 
-  public CsSourceBindings(List<string> files)
+  CsBindingsProgram prog;
+  string cache_key;
+
+  public CsSourceBindings(List<string> files, string tmp_dir = null)
   {
     this.files = files;
+    this.cache_file = string.IsNullOrEmpty(tmp_dir) ? null : Path.Combine(tmp_dir, "cs_bindings.declared");
   }
+
+  //NOTE: a build asks for the declared versions and then registers, the sources can't
+  //      change in between - parsing them once rather than per call halves the cost
+  CsBindingsProgram Prog => prog ?? (prog = CsBindingsProgram.Read(files, Defines));
 
   public void Register(Types ts)
   {
-    CsBindingsProgram.Read(files, Defines).Run(ts);
+    Prog.Run(ts);
   }
 
   //NOTE: (name, version) of the [BhlBinding] attributes, without running the registration
   public IEnumerable<(string name, string version)> GetDeclaredBindings()
   {
-    return CsBindingsProgram.Read(files, Defines).declared;
+    //NOTE: an incremental build with nothing to recompile needs the declared versions and
+    //      nothing else, so parsing the sources just for them dominates such a build
+    if(prog == null && TryReadDeclaredCache(out var cached))
+      return cached;
+
+    WriteDeclaredCache(Prog.declared);
+    return Prog.declared;
   }
+
+  string CacheKey()
+  {
+    if(cache_key != null)
+      return cache_key;
+
+    var sb = new StringBuilder();
+    foreach(var d in Defines)
+      sb.Append(d).Append(';');
+    foreach(var f in files)
+      sb.Append(f).Append(':').Append(Hash.CRC32(File.ReadAllBytes(f)).ToString("x8")).Append(';');
+
+    return cache_key = Hash.CRC32(sb.ToString()).ToString("x8");
+  }
+
+  bool TryReadDeclaredCache(out List<(string name, string version)> declared)
+  {
+    declared = null;
+
+    if(cache_file == null || !File.Exists(cache_file))
+      return false;
+
+    string[] lines;
+    try
+    {
+      lines = File.ReadAllLines(cache_file);
+    }
+    catch
+    {
+      return false;
+    }
+
+    if(lines.Length == 0 || lines[0] != CacheKey())
+      return false;
+
+    var res = new List<(string name, string version)>();
+    for(int i = 1; i < lines.Length; ++i)
+    {
+      var parts = lines[i].Split('\t');
+      if(parts.Length != 2)
+        return false;
+      res.Add((parts[0], parts[1]));
+    }
+
+    declared = res;
+    return true;
+  }
+
+  void WriteDeclaredCache(List<(string name, string version)> declared)
+  {
+    //NOTE: a name/version with a separator in it would read back wrong, skip the cache instead
+    if(cache_file == null ||
+       declared.Any(d => d.name.IndexOfAny(Separators) != -1 || d.version.IndexOfAny(Separators) != -1))
+      return;
+
+    var sb = new StringBuilder();
+    sb.Append(CacheKey()).Append('\n');
+    foreach(var d in declared)
+      sb.Append(d.name).Append('\t').Append(d.version).Append('\n');
+
+    try
+    {
+      Directory.CreateDirectory(Path.GetDirectoryName(cache_file));
+      File.WriteAllText(cache_file, sb.ToString());
+    }
+    catch
+    {
+      //NOTE: the cache is an optimization, a build must not fail over it
+    }
+  }
+
+  static readonly char[] Separators = new char[] { '\t', '\n', '\r' };
 }
 
 public class CsBindingsException : Exception

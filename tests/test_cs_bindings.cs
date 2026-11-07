@@ -166,6 +166,56 @@ static class Bindings
     );
   }
 
+  //NOTE: an incremental build with nothing to recompile needs only the declared versions, so
+  //      they're cached in tmp_dir to avoid parsing the sources just for them (cs_bindings.cs)
+  [Fact]
+  public void DeclaredVersionsAreCachedAndInvalidatedBySourceChange()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var path = Path.Combine(dir, "bindings.cs");
+
+      void WriteSource(string version) => File.WriteAllText(path, @"
+using bhl;
+[BhlBinding(""cs_cached"", """ + version + @""")]
+static class Bindings
+{
+  public static void Register(Types types)
+  {
+    types.ns.Define(new FuncSymbolNative(new Origin(), ""Foo"", types.T(""int""), null));
+  }
+}
+");
+
+      WriteSource("1.0.0");
+
+      var cache_file = Path.Combine(dir, "cs_bindings.declared");
+      Assert.False(File.Exists(cache_file));
+
+      //NOTE: a fresh instance each time, the cache is what has to carry over
+      List<(string name, string version)> Declared() =>
+        new CsSourceBindings(new List<string>() { path }, dir).GetDeclaredBindings().ToList();
+
+      Assert.Equal(("cs_cached", "1.0.0"), Declared()[0]);
+      Assert.True(File.Exists(cache_file));
+
+      //NOTE: served from the cache now, the source is untouched
+      Assert.Equal(("cs_cached", "1.0.0"), Declared()[0]);
+
+      WriteSource("2.0.0");
+      Assert.Equal(("cs_cached", "2.0.0"), Declared()[0]);
+
+      //NOTE: a corrupted cache must fall back to parsing, not fail the build
+      File.WriteAllText(cache_file, "garbage");
+      Assert.Equal(("cs_cached", "2.0.0"), Declared()[0]);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void DeclaredVersionComesFromBhlBindingAttribute()
   {
