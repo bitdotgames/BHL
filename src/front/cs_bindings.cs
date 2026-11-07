@@ -1432,6 +1432,28 @@ class CsInterpreter
   static Dictionary<string, System.Type> _bhl_types;
   static List<MethodInfo> _extensions;
 
+  //NOTE: generated bindings resolve the same handful of API types once per statement, so
+  //      without memoizing it the reflection enumeration dominates the whole registration
+  static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, MethodBase[]> _ctors =
+    new System.Collections.Concurrent.ConcurrentDictionary<System.Type, MethodBase[]>();
+  static readonly System.Collections.Concurrent.ConcurrentDictionary<(System.Type, string, bool), MethodBase[]> _methods =
+    new System.Collections.Concurrent.ConcurrentDictionary<(System.Type, string, bool), MethodBase[]>();
+  static readonly System.Collections.Concurrent.ConcurrentDictionary<(System.Type, System.Type), MethodInfo> _implicits =
+    new System.Collections.Concurrent.ConcurrentDictionary<(System.Type, System.Type), MethodInfo>();
+
+  static MethodBase[] Ctors(System.Type t)
+  {
+    return _ctors.GetOrAdd(t, x => x.GetConstructors().Cast<MethodBase>().ToArray());
+  }
+
+  static MethodBase[] Methods(System.Type t, string name, bool is_static)
+  {
+    return _methods.GetOrAdd((t, name, is_static), k =>
+      k.Item1.GetMethods(BindingFlags.Public | (k.Item3 ? BindingFlags.Static : BindingFlags.Instance))
+        .Where(mi => mi.Name == k.Item2).Cast<MethodBase>().ToArray()
+    );
+  }
+
   readonly CsBindingsProgram prog;
   string file;
   CsClass cls;
@@ -1578,7 +1600,7 @@ class CsInterpreter
         if(args.Count == 0 && type.IsValueType)
           obj = Activator.CreateInstance(type);
         else
-          obj = InvokeBest(type.Name, type.GetConstructors().Cast<MethodBase>(), null, args, nw.line);
+          obj = InvokeBest(type.Name, Ctors(type), null, args, nw.line);
         if(nw.items != null)
         {
           var add = type.GetMethod("Add");
@@ -1769,16 +1791,16 @@ class CsInterpreter
   {
     if(target is CsTypeRef tr)
     {
-      var statics = tr.type.GetMethods(BindingFlags.Public | BindingFlags.Static).Where(mi => mi.Name == name);
-      return InvokeBest(tr.type.Name + "." + name, statics.Cast<MethodBase>(), null, args, line);
+      var statics = Methods(tr.type, name, is_static: true);
+      return InvokeBest(tr.type.Name + "." + name, statics, null, args, line);
     }
 
     if(target == null)
       throw Error(line, $"'{name}' of null");
 
-    var instance = target.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance).Where(mi => mi.Name == name).ToList();
-    if(instance.Count > 0)
-      return InvokeBest(target.GetType().Name + "." + name, instance.Cast<MethodBase>(), target, args, line);
+    var instance = Methods(target.GetType(), name, is_static: false);
+    if(instance.Length > 0)
+      return InvokeBest(target.GetType().Name + "." + name, instance, target, args, line);
 
     //NOTE: extension methods get the target as their first argument
     var ext = Extensions().Where(mi => mi.Name == name && mi.GetParameters()[0].ParameterType.IsInstanceOfType(target)).ToList();
@@ -1979,7 +2001,13 @@ class CsInterpreter
     return false;
   }
 
+  //NOTE: hit per argument per candidate overload, i.e. the hottest reflection path of all
   static MethodInfo FindImplicit(System.Type from, System.Type to)
+  {
+    return _implicits.GetOrAdd((from, to), k => FindImplicitUncached(k.Item1, k.Item2));
+  }
+
+  static MethodInfo FindImplicitUncached(System.Type from, System.Type to)
   {
     var cands = to.GetMethods(BindingFlags.Public | BindingFlags.Static)
       .Concat(from.GetMethods(BindingFlags.Public | BindingFlags.Static));
