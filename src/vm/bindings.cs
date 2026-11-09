@@ -104,6 +104,21 @@ public static class BindingsRegistry
   }
 
   //NOTE: unfiltered by [BhlBinding] - GetForAssembly needs that too (a dll built before it existed)
+  static IEnumerable<Type> BindingTypesIn(System.Reflection.Assembly asm)
+  {
+    Type[] types;
+    try { types = asm.GetTypes(); }
+    catch(System.Reflection.ReflectionTypeLoadException e) { types = e.Types; }
+    catch(Exception) { types = null; }
+
+    if(types == null)
+      yield break;
+
+    foreach(var type in types)
+      if(type != null && !type.IsAbstract && !type.IsInterface && typeof(IUserBindings).IsAssignableFrom(type))
+        yield return type;
+  }
+
   static IEnumerable<Type> AllBindingTypes()
   {
     foreach(var asm in AppDomain.CurrentDomain.GetAssemblies())
@@ -111,14 +126,8 @@ public static class BindingsRegistry
       if(!MayDeclareBindings(asm))
         continue;
 
-      Type[] types;
-      try { types = asm.GetTypes(); }
-      catch(System.Reflection.ReflectionTypeLoadException e) { types = e.Types; }
-      catch(Exception) { continue; }
-
-      foreach(var type in types)
-        if(type != null && !type.IsAbstract && !type.IsInterface && typeof(IUserBindings).IsAssignableFrom(type))
-          yield return type;
+      foreach(var type in BindingTypesIn(asm))
+        yield return type;
     }
   }
 
@@ -161,10 +170,12 @@ public static class BindingsRegistry
   }
 
   //NOTE: not cached, unlike All - a caller passing in a just-loaded assembly (e.g.
-  //      DllBindings, right after Assembly.LoadFrom) needs it reflected fresh
+  //      DllBindings, right after Assembly.LoadFrom) needs it reflected fresh. Reflects that
+  //      assembly alone: the caller already has it, so there's nothing to search the domain
+  //      for, and it's honoured even if it never landed in AppDomain.CurrentDomain
   public static IEnumerable<Type> GetForAssembly(System.Reflection.Assembly assembly)
   {
-    return AllBindingTypes().Where(t => t.Assembly == assembly);
+    return BindingTypesIn(assembly);
   }
 
   //NOTE: a name with nothing found under it is skipped, not an error
