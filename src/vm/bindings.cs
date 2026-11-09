@@ -108,6 +108,9 @@ public static class BindingsRegistry
   {
     foreach(var asm in AppDomain.CurrentDomain.GetAssemblies())
     {
+      if(!MayDeclareBindings(asm))
+        continue;
+
       Type[] types;
       try { types = asm.GetTypes(); }
       catch(System.Reflection.ReflectionTypeLoadException e) { types = e.Types; }
@@ -116,6 +119,34 @@ public static class BindingsRegistry
       foreach(var type in types)
         if(type != null && !type.IsAbstract && !type.IsInterface && typeof(IUserBindings).IsAssignableFrom(type))
           yield return type;
+    }
+  }
+
+  //NOTE: GetTypes() is the expensive part - it materializes every type in the assembly, and
+  //      under IL2CPP that metadata is initialized from global-metadata.dat and never released
+  //      (no class or assembly unloading), so walking everything turns a lazy design into "all
+  //      of it, resident forever". Implementing IUserBindings requires a *direct* reference to
+  //      the assembly declaring it, so the assembly reference table - which costs no type
+  //      loading to read - rules out everything else. Anything we can't inspect is scanned,
+  //      keeping a runtime that doesn't support this no worse than before
+  static bool MayDeclareBindings(System.Reflection.Assembly asm)
+  {
+    var self = typeof(IUserBindings).Assembly;
+    if(asm == self)
+      return true;
+
+    try
+    {
+      string name = self.GetName().Name;
+      foreach(var r in asm.GetReferencedAssemblies())
+        if(r.Name == name)
+          return true;
+
+      return false;
+    }
+    catch(Exception)
+    {
+      return true;
     }
   }
 
