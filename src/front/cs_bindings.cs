@@ -119,7 +119,12 @@ public class CsSourceBindings : IUserBindings
       //NOTE: per process, so a concurrent writer gets its own and a failed move leaks at most one
       string tmp = cache_file + "." + System.Diagnostics.Process.GetCurrentProcess().Id + ".tmp";
       File.WriteAllText(tmp, sb.ToString());
-      File.Move(tmp, cache_file, overwrite: true);
+      //NOTE: no File.Move(tmp, cache_file, overwrite: true) - Unity compiles this file too and
+      //      lacks that overload (.NET Core 3.0+)
+      if(File.Exists(cache_file))
+        File.Replace(tmp, cache_file, null);
+      else
+        File.Move(tmp, cache_file);
     }
     catch
     {

@@ -205,6 +205,8 @@ static class Bindings
 
       WriteSource("2.0.0");
       Assert.Equal(("cs_cached", "2.0.0"), Declared()[0]);
+      //NOTE: the stale cache is replaced, not just bypassed
+      Assert.Contains("cs_cached\t2.0.0", File.ReadAllText(cache_file));
 
       //NOTE: a corrupted cache must fall back to parsing, not fail the build
       File.WriteAllText(cache_file, "garbage");
