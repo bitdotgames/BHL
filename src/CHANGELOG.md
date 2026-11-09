@@ -5,6 +5,37 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta22]
+
+### Changed
+- Bindings discovery no longer reflects over every loaded assembly. `BindingsRegistry` walked
+  `AppDomain.CurrentDomain.GetAssemblies()` and called `GetTypes()` on each, which materializes
+  every type in the assembly - under IL2CPP that metadata is initialized from
+  `global-metadata.dat` and never released, since there is no class or assembly unloading, so
+  the walk turned a lazy design into "all of it, resident for the process lifetime". It also ran
+  unconditionally: `Types()`'s constructor asks the registry for the prelude, so merely
+  constructing a `Types` walked everything.
+
+  Implementing `IUserBindings` requires a *direct* reference to the assembly declaring it, so
+  the assembly reference table - which costs no type loading to read - rules out everything
+  else. An assembly whose references can't be inspected is scanned anyway, so a runtime without
+  that support is no worse off than before, and no binding can be silently missed. On a trivial
+  CLI compile, 37 assemblies and 10470 types in 61ms became 2 assemblies and 689 types in 5ms.
+- `BindingsRegistry.GetForAssembly` reflects the assembly it's given rather than walking the
+  whole domain and filtering afterwards. Its only caller, `DllBindings`, passes the assembly it
+  just loaded. The assembly is now also honoured if it never landed in
+  `AppDomain.CurrentDomain`, where before it yielded nothing and surfaced as
+  "IUserBindings instance not found".
+
+### Documentation
+- `docs/lsp.md` and `docs/dap.md` corrected against the implementations: the DAP request table
+  was missing all of stepping (`next`, `stepIn`, `stepOut`) plus `evaluate`; the `example/dap/`
+  paths it referenced were moved to another repo; the `BHL_DEBUGGER` define it described doesn't
+  exist and the adapter is compiled into the VM assemblies unconditionally. `docs/lsp.md`
+  described missing/unused import handling as happening on save, one of them "as a workspace
+  command" - they are the "Add missing imports" and "Organize imports" code actions, and the
+  only registered command is `bhl.reload`.
+
 ## [3.0.0-beta21]
 
 Documentation only - the shipped binaries are identical to beta20.
