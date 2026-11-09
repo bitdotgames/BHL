@@ -5,6 +5,14 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta23]
+
+### Fixed
+- The Unity package compiles again (broken since beta15): the cached declared versions of `.cs`
+  bindings were written with `File.Move(src, dst, overwrite)`, an overload only .NET Core 3.0+ has,
+  so Unity failed with `error CS1739` in `src/front/cs_bindings.cs`. The cache file is now swapped
+  in with `File.Replace` (`File.Move` when there's none yet), still atomically.
+
 ## [3.0.0-beta22]
 
 ### Changed
