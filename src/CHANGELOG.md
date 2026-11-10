@@ -5,6 +5,14 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta24]
+
+### Added
+- A `bhl.proj` pulled in through `includes` may list the legacy `bindings_sources`, relative to it:
+  they join the including project's `bindings_sources`, read together with its own under its one
+  `IUserBindings` entry point - a package's generated bindings the project registers itself. An
+  included `bindings_dll` or `bindings_manual_build` is still an error (see docs/csharp-bindings.md).
+
 ## [3.0.0-beta23]
 
 ### Fixed
