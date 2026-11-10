@@ -66,7 +66,8 @@ source, the consumer's config decides.
 differ between them (the resulting bundle differs in size), but its internal
 wiring survives any consumer layout.
 
-`includes` sharpens all of this: it folds every included project's `inc_dirs`
+`includes` sharpens all of this (it also appends an included project's legacy
+`bindings_sources` to the including one's, see docs/csharp-bindings.md): it folds every included project's `inc_dirs`
 into one ordered flat list where first-match-wins decides names. Two libraries
 are one careless layout away from colliding, and `module 'util' ambiguous
 resolving` does not hint that the fix is to restructure directories.

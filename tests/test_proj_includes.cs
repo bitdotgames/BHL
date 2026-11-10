@@ -409,7 +409,7 @@ func RegisterBindings(std.bind.Types types) {{
   }
 
   [Fact]
-  public void IncludeWithLegacyBindingsFieldsThrows()
+  public void IncludeWithLegacyBindingsDllThrows()
   {
     var dir = MakeTempDir();
     try
@@ -420,6 +420,62 @@ func RegisterBindings(std.bind.Types types) {{
       proj.includes.Add(Path.Combine(dir, "pkg", "bhl.proj"));
 
       Assert.Throws<Exception>(() => proj.Setup());
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
+  public void IncludedLegacyBindingsSourcesJoinTheLegacyEntry()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"), @"{ ""bindings_sources"": [""./bind/*.cs""] }");
+
+      var proj = MakeProj(dir);
+      proj.bindings_sources.Add("./register.cs");
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.Setup();
+
+      Assert.Single(proj.bindings);
+      Assert.True(proj.bindings[0].is_legacy);
+      Assert.Equal(new List<string> {
+          BuildUtils.NormalizeFilePath(Path.Combine(dir, "register.cs")),
+          BuildUtils.NormalizeFilePath(Path.Combine(lib_dir, "bind", "*.cs"))
+        }, proj.bindings[0].sources);
+      Assert.Equal(proj.bindings[0].sources, proj.bindings_sources);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
+  [Fact]
+  public void NestedIncludedLegacyBindingsSourcesAreRelativeToTheirFile()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "pkg");
+      var sub_dir = Path.Combine(lib_dir, "sub");
+      WriteFile(Path.Combine(sub_dir, "bhl.proj"), @"{ ""bindings_sources"": [""./sub.cs""] }");
+      WriteFile(Path.Combine(lib_dir, "bhl.proj"), @"{ ""includes"": [""./sub/bhl.proj""], ""bindings_sources"": [""./lib.cs""] }");
+
+      //NOTE: no legacy fields of its own - the entry is made of the included ones
+      var proj = MakeProj(dir);
+      proj.includes.Add(Path.Combine(lib_dir, "bhl.proj"));
+      proj.Setup();
+
+      Assert.Single(proj.bindings);
+      Assert.True(proj.bindings[0].is_legacy);
+      Assert.Contains(BuildUtils.NormalizeFilePath(Path.Combine(lib_dir, "lib.cs")), proj.bindings[0].sources);
+      Assert.Contains(BuildUtils.NormalizeFilePath(Path.Combine(sub_dir, "sub.cs")), proj.bindings[0].sources);
+      Assert.Equal(2, proj.bindings[0].sources.Count);
     }
     finally
     {

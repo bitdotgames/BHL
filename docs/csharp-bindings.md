@@ -186,3 +186,22 @@ error naming the file and line:
 
 `tests/cs_bindings/sample_bindings.cs` is a complete sample, read and compiled by the tests.
 
+
+## Bindings sources of an included project
+
+A `bhl.proj` pulled in through `includes` (a package's) may list its C# sources in the legacy
+`bindings_sources`, relative to it: they join the including project's `bindings_sources`, read
+together with them, with the one entry point (`IUserBindings`) of the project. That's for the
+generated bindings of a package the project registers itself:
+
+```json
+// pkg/bhl.proj
+{ "src_dirs" : ["./scripts"], "bindings_sources" : ["./Bind/Auto/*.cs"] }
+
+// bhl.proj of the project, its register.cs calls the package's registration
+{ "src_dirs" : ["./"], "bindings_sources" : ["./register.cs"], "includes" : ["./pkg/bhl.proj"] }
+```
+
+An included `bindings_dll` or `bindings_manual_build` is an error: a dll is the build output of
+one project. A package registering its bindings itself, with its own name and version, is a
+`bindings` entry instead.

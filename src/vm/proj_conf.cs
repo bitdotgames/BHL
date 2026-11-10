@@ -452,14 +452,20 @@ public partial class ProjectConf
             "defines only apply to the including project"
           );
 
-        //NOTE: legacy bindings_sources/bindings_dll only get folded into 'bindings' by the
-        //      root's own Setup() - an included file's legacy fields would otherwise be
-        //      silently dropped (never read), so reject them outright instead
-        if(included.bindings_sources.Count > 0 || !string.IsNullOrEmpty(included.bindings_dll) || included.bindings_manual_build)
+        //NOTE: a dll is the build output of one project - two claiming one would be ambiguous,
+        //      and the root's own Setup() never reads an included one, so it's rejected
+        if(!string.IsNullOrEmpty(included.bindings_dll) || included.bindings_manual_build)
           throw new Exception(
-            $"Included bhl.proj '{included_file}' must not use the legacy 'bindings_sources'/" +
-            "'bindings_dll'/'bindings_manual_build' fields - use the 'bindings' array instead"
+            $"Included bhl.proj '{included_file}' must not use the legacy 'bindings_dll'/" +
+            "'bindings_manual_build' fields - use the 'bindings' array instead"
           );
+
+        //NOTE: the legacy bindings_sources of an included file join the including project's ones,
+        //      so the root's Setup() folds them into its single legacy entry: they're read together
+        //      with the root's own, with one IUserBindings entry point (e.g. a package's generated
+        //      bindings the project registers itself). A standalone binding is a 'bindings' entry
+        foreach(var src in included.bindings_sources)
+          proj.bindings_sources.Add(NormalizePath(included_file, src));
 
         included.CheckNoPostproc(included_file);
 
