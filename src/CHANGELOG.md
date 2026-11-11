@@ -5,6 +5,13 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta25]
+
+### Changed
+- The `.cs` bindings reader keeps an explicit `new Origin(file, line)`: only a bare `new Origin()`
+  points at the registration code. A generated binding passes its C# declaration (UnityBHL's
+  bindgen), so the LSP's go to definition of a native symbol jumps to the hand written code.
+
 ## [3.0.0-beta24]
 
 ### Added
