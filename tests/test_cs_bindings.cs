@@ -218,6 +218,51 @@ static class Bindings
     }
   }
 
+  //NOTE: a bare new Origin() points at the registration code, an explicit one (e.g. a generated binding's C#
+  //      declaration) is kept: go to definition of the LSP jumps there
+  [Fact]
+  public void ExplicitOriginIsKept()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var path = Path.Combine(dir, "bindings.cs");
+      File.WriteAllText(path, @"
+using bhl;
+[BhlBinding(""cs_origin"", ""1.0.0"")]
+static class Bindings
+{
+  public static void Register(Types types)
+  {
+    types.ns.Define(new FuncSymbolNative(new Origin(), ""Foo"", types.T(""int""), null));
+    types.ns.Define(new FuncSymbolNative(new Origin(""/src/Script.cs"", 42), ""Bar"", types.T(""int""), null));
+  }
+}
+");
+
+      var proj = new ProjectConf();
+      proj.tmp_dir = dir;
+      proj.use_cache = false;
+      proj.bindings.Add(new BindingsEntryConf { name = "cs_origin", sources = new List<string> { path } });
+      proj.Setup();
+
+      var ts = new Types();
+      proj.LoadBindings().Register(ts);
+
+      var foo = (Symbol)ts.ns.Resolve("Foo");
+      Assert.Equal(path, foo.origin.native_file_path);
+      Assert.Equal(8, foo.origin.native_line);
+
+      var bar = (Symbol)ts.ns.Resolve("Bar");
+      Assert.Equal("/src/Script.cs", bar.origin.native_file_path);
+      Assert.Equal(42, bar.origin.native_line);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void DeclaredVersionComesFromBhlBindingAttribute()
   {

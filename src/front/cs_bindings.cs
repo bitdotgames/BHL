@@ -1617,8 +1617,9 @@ class CsInterpreter
             add.Invoke(obj, new object[] { item });
           }
         }
-        //NOTE: points to the registration code instead of where the reader is
-        if(obj is Origin origin)
+        //NOTE: points to the registration code instead of where the reader is; an explicit
+        //      new Origin(file, line) (e.g. a generated binding's C# declaration) is kept
+        if(obj is Origin origin && args.Count == 0)
         {
           origin.native_file_path = file;
           origin.native_line = nw.line;

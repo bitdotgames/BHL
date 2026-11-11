@@ -21,6 +21,10 @@ new MyBindings().Register(types);
 var vm = new VM(types);
 ```
 
+`new Origin()` records where the symbol is registered (the caller's file and line); go to definition of the LSP
+jumps there. A generator passes the declaration it binds instead, `new Origin("/path/Script.cs", 42)`: the `.cs`
+bindings reader keeps an explicit one.
+
 ## Binding free functions
 
 Use `FuncSymbolNative`. The callback receives `VM.ExecState exec` — read arguments from `exec.stack` in reverse order (last argument is on top), and push the return value back:
