@@ -36,6 +36,24 @@ public class Workspace
 
   List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
 
+  //NOTE: one rebuild of the bindings rewrites many watched files at once, each raising several events:
+  //      they're coalesced into one BindingsChanged after a quiet period
+  const int BINDINGS_CHANGED_QUIET_MS = 300;
+  readonly Timer _bindingsChangedTimer;
+
+  //NOTE: a reload rebuilds the whole state, one at a time
+  readonly SemaphoreSlim _reloadLock = new SemaphoreSlim(1, 1);
+
+  public Workspace()
+  {
+    _bindingsChangedTimer = new Timer(_ => BindingsChanged?.Invoke());
+  }
+
+  void OnBindingsFileChanged()
+  {
+    _bindingsChangedTimer.Change(BINDINGS_CHANGED_QUIET_MS, Timeout.Infinite);
+  }
+
   public void Init(Types ts, ProjectConf conf, ILogger logger = null)
   {
     Types = ts;
@@ -90,9 +108,9 @@ public class Workspace
       // they typically build to a temp file and atomically replace the destination (rename-over,
       // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
       // by an external process is detected the same way an in-place `touch` is.
-      watcher.Changed += (_, _) => BindingsChanged?.Invoke();
-      watcher.Created += (_, _) => BindingsChanged?.Invoke();
-      watcher.Renamed += (_, _) => BindingsChanged?.Invoke();
+      watcher.Changed += (_, _) => OnBindingsFileChanged();
+      watcher.Created += (_, _) => OnBindingsFileChanged();
+      watcher.Renamed += (_, _) => OnBindingsFileChanged();
       // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
       // watch mask/dispatch appears to be tied to which handlers are attached at the moment
       // raising starts, so flipping this on first (as the previous code did, via the object
@@ -106,6 +124,7 @@ public class Workspace
 
   public void Shutdown()
   {
+    _bindingsChangedTimer.Dispose();
     foreach(var w in _bindingsWatchers)
       w.Dispose();
     _bindingsWatchers.Clear();
@@ -116,18 +135,26 @@ public class Workspace
 
   public async Task ReloadAsync(ProjectConf proj, CancellationToken ct = default)
   {
-    var new_types = new Types();
-    proj.LoadBindings().Register(new_types);
-    Init(new_types, proj, _logger);
-    await IndexFilesAsync(ct);
+    await _reloadLock.WaitAsync(ct);
+    try
+    {
+      var new_types = new Types();
+      proj.LoadBindings().Register(new_types);
+      Init(new_types, proj, _logger);
+      await IndexFilesAsync(ct);
+    }
+    finally
+    {
+      _reloadLock.Release();
+    }
   }
 
+  //NOTE: the new state is built aside and swapped in under the lock: requests never see it half built, and
+  //      nothing changes a collection another thread enumerates
   public Task IndexFilesAsync(CancellationToken ct = default)
   {
-    Indexed = true;
-
-    Path2Proc.Clear();
-    Path2Doc.Clear();
+    var path2proc = new Dictionary<string, ANTLR_Processor>();
+    var path2doc = new Dictionary<string, BHLDocument>();
 
     //NOTE: collected for the whole project at once so overlapping src_dirs don't hand the
     //      same file in twice, which Path2Proc.Add below would throw on
@@ -139,28 +166,32 @@ public class Workspace
       using(var sfs = File.OpenRead(norm_file))
       {
         var proc = ParseFile(norm_file, sfs);
-        Path2Proc.Add(norm_file, proc);
+        path2proc.Add(norm_file, proc);
       }
     }
 
     ct.ThrowIfCancellationRequested();
 
-    ANTLR_Processor.ProcessAll(BuildBundle());
+    ANTLR_Processor.ProcessAll(new ProjectCompilationStateBundle(Types, path2proc));
 
     ct.ThrowIfCancellationRequested();
 
-    foreach(var kv in Path2Proc)
+    foreach(var kv in path2proc)
     {
       var document = new BHLDocument(kv.Key);
       document.Update(File.ReadAllText(kv.Key), kv.Value);
-      Path2Doc.Add(kv.Key, document);
+      path2doc.Add(kv.Key, document);
+    }
+
+    lock(_syncRoot)
+    {
+      Path2Proc = path2proc;
+      Path2Doc = path2doc;
+      Indexed = true;
     }
 
     return Task.CompletedTask;
   }
-
-  ProjectCompilationStateBundle BuildBundle()
-    => new (Types, Path2Proc);
 
   ANTLR_Processor ParseFile(string file, Stream stream)
   {

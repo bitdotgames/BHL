@@ -154,4 +154,57 @@ public class TestLSPBindingsWatcher : IDisposable
 
     Assert.True(await wait, "expected BindingsChanged to fire after editing a .cs binding source read without a build");
   }
+
+  // A rebuild of generated bindings rewrites many watched files at once, each raising several
+  // events: one BindingsChanged for the whole burst, else one reload each, all at once
+  [Fact]
+  public async Task coalesces_a_burst_into_one_change()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    var sources = new System.Collections.Generic.List<string>();
+    for(int i = 0; i < 20; ++i)
+    {
+      var cs_path = Path.Combine(dir, $"bindings_{i}.cs");
+      File.WriteAllText(cs_path, "v1");
+      sources.Add(cs_path);
+    }
+
+    var conf = new ProjectConf
+    {
+      bindings = new() { new BindingsEntryConf { sources = sources } }
+    };
+    workspace.Init(new Types(), conf);
+
+    int changes = 0;
+    workspace.BindingsChanged += () => System.Threading.Interlocked.Increment(ref changes);
+    foreach(var cs_path in sources)
+      File.WriteAllText(cs_path, "v2 - regenerated");
+
+    await Task.Delay(TimeSpan.FromSeconds(2));
+    Assert.Equal(1, changes);
+  }
+
+  // Reloads used to clear and refill the shared index concurrently: "Collection was modified"
+  [Fact]
+  public async Task concurrent_reloads_dont_corrupt_the_index()
+  {
+    var src = Path.Combine(dir, "src");
+    Directory.CreateDirectory(src);
+    for(int i = 0; i < 5; ++i)
+      File.WriteAllText(Path.Combine(src, $"f{i}.bhl"), $"func int F{i}() {{ return {i} }}");
+
+    var conf = new ProjectConf();
+    conf.src_dirs.Add(src);
+    conf.Setup();
+    workspace.Init(new Types(), conf);
+
+    var reloads = new System.Collections.Generic.List<Task>();
+    for(int i = 0; i < 8; ++i)
+      reloads.Add(Task.Run(() => workspace.ReloadAsync(conf)));
+    await Task.WhenAll(reloads);
+
+    Assert.Equal(5, workspace.IndexedFileCount);
+  }
 }
