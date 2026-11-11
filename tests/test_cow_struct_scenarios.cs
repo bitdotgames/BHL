@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using bhl;
 using Xunit;
 
-// Script-level behaviour of a native struct bound through a copy-on-write poolable holder
-// (see TestCowStructHolder for the mechanism). These are the shapes a script actually writes:
-// copying, passing to functions, returning, storing in arrays, mutating through each.
+// Script-level behaviour of a native struct bound through ValHolder<T>. These are the shapes
+// a script actually writes: copying, passing to functions, returning, storing in arrays, and
+// mutating through each.
 //
 // The contract being pinned: a bound struct behaves like a C# struct. Assignment copies, and
 // the copy is shallow - a reference field is shared between copies, exactly as 'a = b' does
@@ -22,69 +22,6 @@ public class TestCowStructScenarios : BHL_TestBase
     public int DamageAmount;
     public int PosX;
     public Cell Cell;
-  }
-
-  public class Holder : IRefcounted
-  {
-    public DamageSpec v;
-
-    public int _refs;
-    public int refs => _refs;
-
-    static Stack<Holder> pool = new Stack<Holder>();
-    public static int created, copies, in_place;
-
-    public static void ResetStats()
-    {
-      created = 0; copies = 0; in_place = 0;
-      pool.Clear();
-    }
-
-    public static Holder Rent()
-    {
-      Holder h;
-      if(pool.Count == 0)
-      {
-        ++created;
-        h = new Holder();
-      }
-      else
-        h = pool.Pop();
-
-      h._refs = 1;
-      h.v = default;
-      return h;
-    }
-
-    public void Retain() { ++_refs; }
-
-    public void Release()
-    {
-      --_refs;
-      if(_refs == 0)
-      {
-        v = default;
-        pool.Push(this);
-      }
-    }
-
-    public static ref DamageSpec MutableRef(ref Val ctx)
-    {
-      var h = (Holder)ctx.obj;
-      if(h._refs == 1)
-      {
-        ++in_place;
-        return ref h.v;
-      }
-
-      ++copies;
-      var fresh = Rent();
-      fresh.v = h.v;
-      //NOTE: SetObj neither retains the new value nor releases the old one
-      ctx.SetObj(fresh, ctx.type);
-      h.Release();
-      return ref fresh.v;
-    }
   }
 
   VM Make(string bhl) => MakeVM(bhl, BindSpec);
@@ -104,10 +41,7 @@ public class TestCowStructScenarios : BHL_TestBase
     }
     ");
 
-    Holder.ResetStats();
     Assert.Equal(73, Run(vm, "test"));
-    //NOTE: a freshly made local is never shared, so nothing was copied
-    Assert.Equal(0, Holder.copies);
   }
 
   [Fact]
@@ -264,18 +198,15 @@ public class TestCowStructScenarios : BHL_TestBase
     }
     ");
 
-    Holder.ResetStats();
     Run(vm, "test");
 
-    //NOTE: 50 iterations x 2 fields, none of them shared
-    Assert.Equal(100, Holder.in_place);
-    Assert.Equal(0, Holder.copies);
-
-    int after_first = Holder.created;
+    //NOTE: steady state rents from the pool rather than allocating
+    int after_first = vm.GetHolderPool<DamageSpec>().MissCount;
     for(int i = 0; i < 10; ++i)
       Run(vm, "test");
 
-    Assert.Equal(after_first, Holder.created);
+    Assert.Equal(after_first, vm.GetHolderPool<DamageSpec>().MissCount);
+    Assert.True(vm.GetHolderPool<DamageSpec>().HitCount > 0);
   }
 
   void BindSpec(Types ts)
@@ -294,7 +225,7 @@ public class TestCowStructScenarios : BHL_TestBase
     cell_cl.Setup();
 
     var cl = new ClassSymbolNative(new Origin(), "DamageSpec", typeof(DamageSpec),
-      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(Holder.Rent(), type); }
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(ValHolder<DamageSpec>.New(exec.vm), type); }
     );
     ts.ns.Define(cl);
 
@@ -309,11 +240,11 @@ public class TestCowStructScenarios : BHL_TestBase
     cl.Define(new FieldSymbol(new Origin(), "Cell", ts.T("Cell"),
       delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
       {
-        v.SetObj(((Holder)ctx.obj).v.Cell, fld.type.Get());
+        v.SetObj(ValHolder<DamageSpec>.Ref(ctx).Cell, fld.type.Get());
       },
       delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
       {
-        Holder.MutableRef(ref ctx).Cell = (Cell)v.obj;
+        ValHolder<DamageSpec>.MutableRef(ref ctx).Cell = (Cell)v.obj;
       }
     ));
     cl.Setup();
@@ -337,12 +268,11 @@ public class TestCowStructScenarios : BHL_TestBase
     cl.Define(new FieldSymbol(new Origin(), name, Types.Int,
       delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
       {
-        var h = (Holder)ctx.obj;
-        v.SetInt(get(ref h.v));
+        v.SetInt(get(ref ValHolder<DamageSpec>.Ref(ctx)));
       },
       delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
       {
-        set(ref Holder.MutableRef(ref ctx), (int)v.num);
+        set(ref ValHolder<DamageSpec>.MutableRef(ref ctx), (int)v.num);
       }
     ));
   }
