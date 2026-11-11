@@ -2,7 +2,7 @@ CXX      ?= c++
 CXXFLAGS ?= -O2 -std=c++17
 
 # every VM variant runs the same real bytecode, so they're directly comparable
-VARIANTS = vm vm_table vm_goto vm_pre vm_fast vm_si vm_si2
+VARIANTS = vm vm_table vm_goto vm_pre vm_fast vm_si vm_si2 vm_si3
 
 ITERS ?= 20000
 N     ?= 15

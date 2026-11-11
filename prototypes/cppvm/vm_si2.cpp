@@ -8,23 +8,31 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 #include <chrono>
 
 enum Op : uint8_t {
   OP_Constant     = 1,
   OP_Add          = 2,
   OP_Sub          = 3,
+  OP_Div          = 4,
+  OP_Mul          = 5,
   OP_GetVarScalar = 8,
   OP_Frame        = 14,
   OP_Return       = 15,
   OP_Jump         = 16,
   OP_JumpZ        = 17,
   OP_CallLocal    = 22,
+  OP_Mod          = 52,
   OP_EqualScalar  = 55,
-  //NOTE: fused in the pre-decode pass - a peephole over the instruction stream, not a
-  //      fib-specific hack. These three patterns dominate any arithmetic-heavy BHL code
-  SI_LocalConstSub      = 200,  // GetVarScalar a, Constant b, Sub
-  SI_LocalConstNeJump   = 201,  // GetVarScalar a, Constant b, EqualScalar, JumpZ t
+  OP_LT           = 58,
+  OP_LTE          = 59,
+  OP_GT           = 60,
+  OP_GTE          = 61,
+  //NOTE: fused in the pre-decode pass. Matched by shape, not by operator - the operator is
+  //      kept in Instr::sub and switched on, so one opcode covers all five forms
+  SI_LocalConstArith    = 200,  // GetVarScalar a, Constant b, <arith>
+  SI_LocalConstCmpJump  = 201,  // GetVarScalar a, Constant b, <cmp>, JumpZ t
   SI_ConstReturn        = 202,  // Constant a, Return
 };
 
@@ -103,10 +111,19 @@ static inline uint32_t dec32(const uint8_t* b, int& ip) { uint32_t v = b[ip+1] |
 //      unchanged - Val, refcounting and ReleaseLocals all stay
 struct Instr {
   uint8_t  op;
+  uint8_t  sub;   //NOTE: fits in op's padding, so Instr stays 16 bytes
   int32_t  a;
   int32_t  b;
   int32_t  jt;
 };
+
+static inline bool is_arith(uint8_t op) {
+  return op == OP_Add || op == OP_Sub || op == OP_Mul || op == OP_Div || op == OP_Mod;
+}
+
+static inline bool is_cmp(uint8_t op) {
+  return op == OP_EqualScalar || op == OP_LT || op == OP_LTE || op == OP_GT || op == OP_GTE;
+}
 
 static void fuse();
 static void compact();
@@ -168,7 +185,7 @@ static void compact()
     Instr& in = prog[i];
     if(in.op == OP_Jump || in.op == OP_JumpZ || in.op == OP_CallLocal)
       in.a = (in.a < old_len) ? map[in.a] : prog_len;
-    if(in.op == SI_LocalConstNeJump)
+    if(in.op == SI_LocalConstCmpJump)
       in.jt = (in.jt < old_len) ? map[in.jt] : prog_len;
   }
 }
@@ -180,10 +197,11 @@ static void fuse()
   for(int i = 0; i + 3 < prog_len; ++i)
   {
     if(prog[i].op == OP_GetVarScalar && prog[i+1].op == OP_Constant &&
-       prog[i+2].op == OP_EqualScalar && prog[i+3].op == OP_JumpZ)
+       is_cmp(prog[i+2].op) && prog[i+3].op == OP_JumpZ)
     {
       int local = prog[i].a, cst = prog[i+1].a, tgt = prog[i+3].a;
-      prog[i].op = SI_LocalConstNeJump; prog[i].a = local; prog[i].b = cst;
+      uint8_t cmp = prog[i+2].op;
+      prog[i].op = SI_LocalConstCmpJump; prog[i].sub = cmp; prog[i].a = local; prog[i].b = cst;
       prog[i+1].op = OP_Nop; prog[i+2].op = OP_Nop;
       prog[i+3].op = OP_Nop;
       prog[i].jt = tgt;
@@ -192,9 +210,9 @@ static void fuse()
   }
   for(int i = 0; i + 2 < prog_len; ++i)
   {
-    if(prog[i].op == OP_GetVarScalar && prog[i+1].op == OP_Constant && prog[i+2].op == OP_Sub)
+    if(prog[i].op == OP_GetVarScalar && prog[i+1].op == OP_Constant && is_arith(prog[i+2].op))
     {
-      prog[i].op = SI_LocalConstSub; prog[i].b = prog[i+1].a;
+      prog[i].op = SI_LocalConstArith; prog[i].sub = prog[i+2].op; prog[i].b = prog[i+1].a;
       prog[i+1].op = OP_Nop; prog[i+2].op = OP_Nop;
       i += 2;
     }
@@ -244,13 +262,32 @@ static double run_fib(double arg)
         stack[sp].num = CONSTANTS[in.a]; stack[sp]._refc = nullptr; stack[sp].obj = nullptr; ++sp;
         break;
       case OP_Nop: break;
-      case SI_LocalConstSub:
-        stack[sp].num = stack[loc + in.a].num - CONSTANTS[in.b];
+      case SI_LocalConstArith: {
+        double l = stack[loc + in.a].num, r = CONSTANTS[in.b], res;
+        switch(in.sub) {
+          case OP_Add: res = l + r; break;
+          case OP_Sub: res = l - r; break;
+          case OP_Mul: res = l * r; break;
+          case OP_Div: res = l / r; break;
+          default:     res = std::fmod(l, r); break;
+        }
+        stack[sp].num = res;
         stack[sp]._refc = nullptr; stack[sp].obj = nullptr; ++sp;
         break;
-      case SI_LocalConstNeJump:
-        if(stack[loc + in.a].num != CONSTANTS[in.b]) { pc = in.jt; continue; }
+      }
+      case SI_LocalConstCmpJump: {
+        double l = stack[loc + in.a].num, r = CONSTANTS[in.b];
+        bool t;
+        switch(in.sub) {
+          case OP_EqualScalar: t = (l == r); break;
+          case OP_LT:          t = (l <  r); break;
+          case OP_LTE:         t = (l <= r); break;
+          case OP_GT:          t = (l >  r); break;
+          default:             t = (l >= r); break;
+        }
+        if(!t) { pc = in.jt; continue; }
         break;
+      }
       case SI_ConstReturn: {
         double rv = CONSTANTS[in.a];
         if(dirty) {
@@ -274,6 +311,13 @@ static double run_fib(double arg)
       case OP_EqualScalar: { double r = stack[--sp].num; stack[sp-1].num = (r == stack[sp-1].num) ? 1 : 0; break; }
       case OP_Add: { double r = stack[--sp].num; stack[sp-1].num += r; break; }
       case OP_Sub: { double r = stack[--sp].num; stack[sp-1].num -= r; break; }
+      case OP_Mul: { double r = stack[--sp].num; stack[sp-1].num *= r; break; }
+      case OP_Div: { double r = stack[--sp].num; stack[sp-1].num /= r; break; }
+      case OP_Mod: { double r = stack[--sp].num; stack[sp-1].num = std::fmod(stack[sp-1].num, r); break; }
+      case OP_LT:  { double r = stack[--sp].num; stack[sp-1].num = (stack[sp-1].num <  r) ? 1 : 0; break; }
+      case OP_LTE: { double r = stack[--sp].num; stack[sp-1].num = (stack[sp-1].num <= r) ? 1 : 0; break; }
+      case OP_GT:  { double r = stack[--sp].num; stack[sp-1].num = (stack[sp-1].num >  r) ? 1 : 0; break; }
+      case OP_GTE: { double r = stack[--sp].num; stack[sp-1].num = (stack[sp-1].num >= r) ? 1 : 0; break; }
       case OP_JumpZ: if(stack[--sp].num == 0) { pc = in.a; continue; } break;
       case OP_Jump:  pc = in.a; continue;
       case OP_CallLocal: {
