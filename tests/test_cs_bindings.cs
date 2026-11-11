@@ -250,7 +250,9 @@ static class Bindings
       proj.LoadBindings().Register(ts);
 
       var foo = (Symbol)ts.ns.Resolve("Foo");
-      Assert.Equal(path, foo.origin.native_file_path);
+      //NOTE: Setup() normalizes bindings sources, so the origin carries the canonical form -
+      //      on Windows that means forward slashes and a lowercased drive letter
+      Assert.Equal(BuildUtils.NormalizeFilePath(path), foo.origin.native_file_path);
       Assert.Equal(8, foo.origin.native_line);
 
       var bar = (Symbol)ts.ns.Resolve("Bar");
