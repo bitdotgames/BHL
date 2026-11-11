@@ -79,6 +79,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   List<Offset> offsets = new List<Offset>();
+  List<int> func_entries = new List<int>();
 
   internal struct Patch
   {
@@ -266,6 +267,7 @@ public class ModuleCompiler : AST_Visitor
     foreach(var lambda in lambdas)
     {
       lambda.symbol._ip_addr = GetCodeSize();
+      func_entries.Add(lambda.symbol._ip_addr);
       foreach(var instr in lambda.code)
         head.Add(instr);
     }
@@ -302,6 +304,9 @@ public class ModuleCompiler : AST_Visitor
     byte[] code_bytes;
     Ip2SrcLine ip2src_line;
     GetByteCode(out init_bytes, out code_bytes, out ip2src_line);
+
+    //NOTE: after PatchOffsets, so instruction positions and jump targets are final
+    FuseSuperInstructions(code_bytes);
 
     var compiled = new CompiledModule(
       init_func_idx,
@@ -781,6 +786,26 @@ public class ModuleCompiler : AST_Visitor
         2 /*rel.offset*/
       )
     );
+    //widths add up to the replaced run's span so instruction walking still lands right
+    DeclareOpcode(
+      new Definition(
+        Opcodes.LocalConstArith,
+        1 /*local idx*/, 1 /*dead Constant op*/, 3 /*const idx*/, 1 /*arith op*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.LocalConstCmpJump,
+        1 /*local idx*/, 1 /*dead Constant op*/, 3 /*const idx*/,
+        1 /*cmp op*/, 1 /*dead JumpZ op*/, 2 /*rel.offset*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ConstReturn,
+        3 /*const idx*/, 1 /*dead Return op*/
+      )
+    );
     DeclareOpcode(
       new Definition(
         Opcodes.JumpPeekZ,
@@ -1119,6 +1144,7 @@ public class ModuleCompiler : AST_Visitor
     var fsymb = ast.symbol;
 
     fsymb._ip_addr = GetCodeSize();
+    func_entries.Add(fsymb._ip_addr);
 
     Emit(Opcodes.Frame,
       new int[] { fsymb._local_vars_num, fsymb.GetReturnedArgsNum() },
@@ -2045,6 +2071,101 @@ public class ModuleCompiler : AST_Visitor
     }
 
     Console.WriteLine(res);
+  }
+
+  //NOTE: the offset is always the last 2 operand bytes of these
+  static bool HasRelOffset(Opcodes op)
+  {
+    return op == Opcodes.Jump || op == Opcodes.JumpZ ||
+           op == Opcodes.JumpPeekZ || op == Opcodes.JumpPeekNZ ||
+           op == Opcodes.DefArg || op == Opcodes.LocalConstCmpJump;
+  }
+
+  static bool IsArithOpcode(Opcodes op)
+  {
+    return op == Opcodes.Add || op == Opcodes.Sub || op == Opcodes.Mul ||
+           op == Opcodes.Div || op == Opcodes.Mod;
+  }
+
+  static bool IsCmpOpcode(Opcodes op)
+  {
+    return op == Opcodes.EqualScalar || op == Opcodes.LT || op == Opcodes.LTE ||
+           op == Opcodes.GT || op == Opcodes.GTE;
+  }
+
+  //NOTE: nothing is renumbered - the fused op keeps the run's bytes and its handler steps ip
+  //      past them. The hazard is landing mid-run, so jump targets and func entries block it
+  void FuseSuperInstructions(byte[] bs)
+  {
+    var barriers = new HashSet<int>(func_entries);
+    foreach(var o in offsets)
+      barriers.Add(o.dst.pos);
+
+    var starts = new List<int>();
+    for(int i = 0; i < bs.Length; )
+    {
+      starts.Add(i);
+      i += PredictOpcodeSize(LookupOpcode((Opcodes)bs[i]), bs, i) + 1;
+    }
+
+    for(int k = 0; k < starts.Count; ++k)
+    {
+      //how far the run can reach before something could jump into it
+      int free = 1;
+      while(free < 4 && k + free < starts.Count && !barriers.Contains(starts[k + free]))
+        ++free;
+
+      Opcodes Op(int j) => (Opcodes)bs[starts[k + j]];
+
+      if(free >= 4 && Op(0) == Opcodes.GetVarScalar && Op(1) == Opcodes.Constant &&
+         IsCmpOpcode(Op(2)) && Op(3) == Opcodes.JumpZ)
+      {
+        bs[starts[k]] = (byte)Opcodes.LocalConstCmpJump;
+        k += 3;
+      }
+      else if(free >= 3 && Op(0) == Opcodes.GetVarScalar && Op(1) == Opcodes.Constant &&
+              IsArithOpcode(Op(2)))
+      {
+        bs[starts[k]] = (byte)Opcodes.LocalConstArith;
+        k += 2;
+      }
+      else if(free >= 2 && Op(0) == Opcodes.Constant && Op(1) == Opcodes.Return)
+      {
+        bs[starts[k]] = (byte)Opcodes.ConstReturn;
+        k += 1;
+      }
+    }
+
+    VerifyFusedCode(bs);
+  }
+
+  //NOTE: reads the jump targets back out of the fused bytes and checks each still lands on an
+  //      instruction boundary. Derived from the bytes rather than from 'offsets', so a target
+  //      the barrier set never knew about shows up here instead of as a wild ip at runtime
+  static void VerifyFusedCode(byte[] bs)
+  {
+    var starts = new HashSet<int>();
+    var targets = new List<int>();
+
+    for(int i = 0; i < bs.Length; )
+    {
+      starts.Add(i);
+
+      var op = (Opcodes)bs[i];
+      int end = i + PredictOpcodeSize(LookupOpcode(op), bs, i) + 1;
+
+      if(HasRelOffset(op))
+      {
+        int pos = end - 3;
+        targets.Add(end + (short)Bytecode.Decode16(bs, ref pos));
+      }
+
+      i = end;
+    }
+
+    foreach(int t in targets)
+      if(t != bs.Length && !starts.Contains(t))
+        throw new Exception("Superinstruction swallowed a jump target at " + t);
   }
 
   public static int PredictOpcodeSize(Definition op, byte[] bytes, int start_pos)
