@@ -676,6 +676,9 @@ public partial class VM
       op_handlers[(int)Opcodes.Pop] = OpcodePop;
       op_handlers[(int)Opcodes.Jump] = OpcodeJump;
       op_handlers[(int)Opcodes.JumpZ] = OpcodeJumpZ;
+      op_handlers[(int)Opcodes.LocalConstArith] = OpcodeLocalConstArith;
+      op_handlers[(int)Opcodes.LocalConstCmpJump] = OpcodeLocalConstCmpJump;
+      op_handlers[(int)Opcodes.ConstReturn] = OpcodeConstReturn;
       op_handlers[(int)Opcodes.JumpPeekZ] = OpcodeJumpPeekZ;
       op_handlers[(int)Opcodes.JumpPeekNZ] = OpcodeJumpPeekNZ;
 
@@ -790,6 +793,9 @@ public partial class VM
       op_handlers[(int)Opcodes.Pop] = &OpcodePop;
       op_handlers[(int)Opcodes.Jump] = &OpcodeJump;
       op_handlers[(int)Opcodes.JumpZ] = &OpcodeJumpZ;
+      op_handlers[(int)Opcodes.LocalConstArith] = &OpcodeLocalConstArith;
+      op_handlers[(int)Opcodes.LocalConstCmpJump] = &OpcodeLocalConstCmpJump;
+      op_handlers[(int)Opcodes.ConstReturn] = &OpcodeConstReturn;
       op_handlers[(int)Opcodes.JumpPeekZ] = &OpcodeJumpPeekZ;
       op_handlers[(int)Opcodes.JumpPeekNZ] = &OpcodeJumpPeekNZ;
 
@@ -817,6 +823,47 @@ public partial class VM
       {
         ValRef vr = (ValRef)tmp._refc;
         return ref vr.val;
+      }
+    }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void PushConst(ExecState exec, ref Const cn)
+    {
+      ref Val v = ref exec.stack.Push();
+      //TODO: what about specialized opcodes for each constant type?
+      switch(cn.type)
+      {
+        case ConstType.INT:
+        {
+          v.type = Types.Int;
+          v.num = cn.num;
+        }
+          break;
+        case ConstType.BOOL:
+        {
+          v.type = Types.Bool;
+          v.num = cn.num;
+        }
+          break;
+        case ConstType.STR:
+        {
+          v.type = Types.String;
+          v.obj = cn.str;
+        }
+          break;
+        case ConstType.FLT:
+        {
+          v.type = Types.Float;
+          v.num = cn.num;
+        }
+          break;
+        case ConstType.NIL:
+        {
+          v = Null;
+        }
+          break;
+        default:
+          throw new Exception("Bad type");
       }
     }
 
@@ -873,47 +920,7 @@ public partial class VM
 #endif
         {
           int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          ref var cn = ref frame.constants[const_idx];
-
-          ref Val v = ref exec.stack.Push();
-          //TODO: what about specialized opcodes for each constant type?
-          //v.type = Types.Int;
-          //v.num = cn.num;
-
-          switch(cn.type)
-          {
-            case ConstType.INT:
-            {
-              v.type = Types.Int;
-              v.num = cn.num;
-            }
-              break;
-            case ConstType.BOOL:
-            {
-              v.type = Types.Bool;
-              v.num = cn.num;
-            }
-              break;
-            case ConstType.STR:
-            {
-              v.type = Types.String;
-              v.obj = cn.str;
-            }
-              break;
-            case ConstType.FLT:
-            {
-              v.type = Types.Float;
-              v.num = cn.num;
-            }
-              break;
-            case ConstType.NIL:
-            {
-              v = Null;
-            }
-              break;
-            default:
-              throw new Exception("Bad type");
-          }
+          PushConst(exec, ref frame.constants[const_idx]);
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
@@ -1228,6 +1235,91 @@ public partial class VM
         {
           short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
           exec.ip += offset;
+        }
+#if BHL_USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if BHL_USE_OPCODE_SWITCH
+          case Opcodes.LocalConstArith:
+#else
+        //fused GetVarScalar a, Constant b, <arith> - the arith opcode byte is read in place
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeLocalConstArith(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          ++exec.ip; //dead Constant opcode
+          int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          var arith = (Opcodes)bytes[++exec.ip];
+
+          ref var src = ref frame.locals.vals[frame.locals_offset + local_idx];
+          double r = frame.constants[const_idx].num;
+
+          ref Val v = ref exec.stack.Push();
+          v.type = src.type;
+          switch(arith)
+          {
+            case Opcodes.Add: v.num = src.num + r; break;
+            case Opcodes.Sub: v.num = src.num - r; break;
+            case Opcodes.Mul: v.num = src.num * r; break;
+            case Opcodes.Div: v.num = src.num / r; break;
+            default:          v.num = src.num % r; break;
+          }
+        }
+#if BHL_USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if BHL_USE_OPCODE_SWITCH
+          case Opcodes.LocalConstCmpJump:
+#else
+        //fused GetVarScalar a, Constant b, <cmp>, JumpZ t - jumps when the compare is false
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeLocalConstCmpJump(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          ++exec.ip; //dead Constant opcode
+          int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          var cmp = (Opcodes)bytes[++exec.ip];
+          ++exec.ip; //dead JumpZ opcode
+          int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+          double l = frame.locals.vals[frame.locals_offset + local_idx].num;
+          double r = frame.constants[const_idx].num;
+
+          bool res;
+          switch(cmp)
+          {
+            case Opcodes.EqualScalar: res = l == r; break;
+            case Opcodes.LT:          res = l < r;  break;
+            case Opcodes.LTE:         res = l <= r; break;
+            case Opcodes.GT:          res = l > r;  break;
+            default:                  res = l >= r; break;
+          }
+
+          if(!res)
+            exec.ip += offset;
+        }
+#if BHL_USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if BHL_USE_OPCODE_SWITCH
+          case Opcodes.ConstReturn:
+#else
+        //fused Constant a, Return
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeConstReturn(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          ++exec.ip; //dead Return opcode
+
+          PushConst(exec, ref frame.constants[const_idx]);
+
+          exec.ip = EXIT_FRAME_IP - 1;
         }
 #if BHL_USE_OPCODE_SWITCH
           break;

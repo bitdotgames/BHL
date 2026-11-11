@@ -117,8 +117,12 @@ public enum Opcodes
   GetRef                = 85,
   SetRef                = 86,
 
+  //superinstructions: keep the bytes of the run they replace, handler steps ip past it
+  LocalConstArith       = 89,  // GetVarScalar a, Constant b, <arith>
+  LocalConstCmpJump     = 90,  // GetVarScalar a, Constant b, <cmp>, JumpZ t
+  ConstReturn           = 91,  // Constant a, Return
 
-  MAX                   = 89
+  MAX                   = 92
 }
 
 }

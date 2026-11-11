@@ -16,8 +16,9 @@ namespace bhl
 public class CompileCacheBlob
 {
   const uint MAGIC = 0x4c48425f;
-  //NOTE: bumped whenever the layout changes - an older blob then reads as a cold cache
-  const uint VERSION = 2;
+  //NOTE: bumped whenever the layout or the emitted bytecode changes - an older blob then
+  //      reads as a cold cache
+  const uint VERSION = 3;
 
   struct Entry
   {
