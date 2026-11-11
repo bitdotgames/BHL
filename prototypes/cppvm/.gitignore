@@ -1,0 +1,9 @@
+vm
+vm_table
+vm_goto
+vm_pre
+vm_fast
+vm_si
+vm_si2
+native
+out.s
