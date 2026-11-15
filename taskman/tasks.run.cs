@@ -134,5 +134,9 @@ public static partial class Tasks
       if(a.tick_ms > 0)
         System.Threading.Thread.Sleep(a.tick_ms);
     }
+
+#if BHL_OPCODE_PROFILE
+    Console.WriteLine(OpcodeProfiler.Report());
+#endif
   }
 }
