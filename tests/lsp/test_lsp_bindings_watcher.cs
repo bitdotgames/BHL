@@ -243,4 +243,47 @@ public class TestLSPBindingsWatcher : IDisposable
 
     Assert.True(await wait, "expected BindingsChanged to still fire after repeated Init calls");
   }
+
+  // A binding added after the glob ran is still a binding - the file names resolved at Init
+  // are a snapshot, the pattern is what actually defines the set.
+  [Fact]
+  public async Task fires_on_a_newly_added_file_matching_a_pattern()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    File.WriteAllText(Path.Combine(dir, "existing.cs"), "v1");
+
+    var conf = new ProjectConf
+    {
+      bindings = new() { new BindingsEntryConf { sources = new() { dir + "/*.cs" } } }
+    };
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
+    File.WriteAllText(Path.Combine(dir, "added_later.cs"), "brand new binding");
+
+    Assert.True(await wait, "expected BindingsChanged for a new file matching a bindings pattern");
+  }
+
+  // ...but only what the pattern describes: a neighbour of a different kind stays ignored.
+  [Fact]
+  public async Task ignores_a_new_file_not_matching_any_pattern()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    File.WriteAllText(Path.Combine(dir, "existing.cs"), "v1");
+
+    var conf = new ProjectConf
+    {
+      bindings = new() { new BindingsEntryConf { sources = new() { dir + "/*.cs" } } }
+    };
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(2));
+    File.WriteAllText(Path.Combine(dir, "notes.txt"), "not a binding");
+
+    Assert.False(await wait, "a file outside every bindings pattern must not trigger a reload");
+  }
 }

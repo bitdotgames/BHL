@@ -35,7 +35,7 @@ public class Workspace
   public event System.Action BindingsChanged;
 
   List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
-  HashSet<string> _watchedBindingsPaths = new HashSet<string>();
+  HashSet<(string path, string pattern)> _watchedBindings = new();
 
   //NOTE: one rebuild of the bindings rewrites many watched files at once, each raising several events:
   //      they're coalesced into one BindingsChanged after a quiet period
@@ -67,12 +67,12 @@ public class Workspace
   //      the entries read without an external build: .bhl ones (ScriptedBindings compiles
   //      them itself) and .cs ones without a dll (CsSourceBindings reads them as is) -
   //      otherwise editing such a binding source has nothing to trigger a reload at all
-  static IEnumerable<string> CollectBindingsWatchPaths(ProjectConf conf)
+  static IEnumerable<(string path, string pattern)> CollectBindingsWatchPaths(ProjectConf conf)
   {
     foreach(var b in conf.bindings)
     {
       if(!string.IsNullOrEmpty(b.dll))
-        yield return b.dll;
+        yield return (b.dll, b.dll);
 
       foreach(var pattern in b.sources)
       {
@@ -80,34 +80,50 @@ public class Workspace
         if(!read_as_is)
           continue;
         foreach(var resolved in BuildUtils.Glob(pattern))
-          yield return resolved;
+          yield return (resolved, pattern);
       }
     }
+  }
+
+  //NOTE: a file matching a pattern but absent from the resolved set is a binding added after
+  //      the glob ran. Matched against the name alone - no filesystem call on the event path
+  static bool MatchesAnyGlob(string[] globs, string name)
+  {
+    foreach(var g in globs)
+      if(System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(g, name, ignoreCase: true))
+        return true;
+    return false;
   }
 
   //NOTE: creating a FileSystemWatcher costs tens of ms, so this watches one directory per
   //      group of files instead of one watcher per file, and skips the rebuild entirely when
   //      the set hasn't changed - a reload re-Inits with the very same conf
-  void WatchBindingsPaths(IEnumerable<string> paths)
+  void WatchBindingsPaths(IEnumerable<(string path, string pattern)> entries)
   {
-    var wanted = new HashSet<string>();
-    foreach(var path in paths)
-      if(!string.IsNullOrEmpty(path) && File.Exists(path))
-        wanted.Add(path);
+    var wanted = new HashSet<(string path, string pattern)>();
+    foreach(var e in entries)
+      if(!string.IsNullOrEmpty(e.path) && File.Exists(e.path))
+        wanted.Add(e);
 
-    if(_bindingsWatchers.Count > 0 && _watchedBindingsPaths.SetEquals(wanted))
+    if(_bindingsWatchers.Count > 0 && _watchedBindings.SetEquals(wanted))
       return;
 
     foreach(var w in _bindingsWatchers)
       w.Dispose();
     _bindingsWatchers.Clear();
-    _watchedBindingsPaths = wanted;
+    _watchedBindings = wanted;
 
-    foreach(var grp in wanted.GroupBy(p => Path.GetDirectoryName(p)))
+    foreach(var grp in wanted.GroupBy(e => Path.GetDirectoryName(e.path)))
     {
       //NOTE: matched by name within this very directory, so the watched set stays exact
       //      without comparing full paths - which a symlinked prefix would break
-      var names = new HashSet<string>(grp.Select(Path.GetFileName), System.StringComparer.OrdinalIgnoreCase);
+      var names = new HashSet<string>(grp.Select(e => Path.GetFileName(e.path)), System.StringComparer.OrdinalIgnoreCase);
+
+      //NOTE: literal patterns are already in 'names', so a directory reached only by those
+      //      keeps an empty array and the fallback costs nothing
+      var globs = grp.Select(e => Path.GetFileName(e.pattern))
+        .Where(p => p.IndexOf('*') != -1 || p.IndexOf('?') != -1)
+        .Distinct().ToArray();
 
       var watcher = new System.IO.FileSystemWatcher(grp.Key)
       {
@@ -119,7 +135,8 @@ public class Workspace
 
       void OnEvent(object _, System.IO.FileSystemEventArgs e)
       {
-        if(names.Contains(Path.GetFileName(e.FullPath)))
+        var name = Path.GetFileName(e.FullPath);
+        if(names.Contains(name) || MatchesAnyGlob(globs, name))
           OnBindingsFileChanged();
       }
 
@@ -147,7 +164,7 @@ public class Workspace
     foreach(var w in _bindingsWatchers)
       w.Dispose();
     _bindingsWatchers.Clear();
-    _watchedBindingsPaths.Clear();
+    _watchedBindings.Clear();
   }
 
   public Task ReloadAsync(CancellationToken ct = default)
