@@ -19,12 +19,6 @@ public struct Val
   //      less casting in refcounting routines
   public IRefcounted _refc;
 
-  //NOTE: extra values below are for efficient encoding of small structs,
-  //      e.g Vector3, Color, etc
-  public double _num2;
-  public double _num3;
-  public double _num4;
-
   public string str
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,9 +262,6 @@ public struct Val
   {
     bool res =
         num == o.num &&
-        _num2 == o._num2 &&
-        _num3 == o._num3 &&
-        _num4 == o._num4 &&
         (obj?.Equals(o.obj) ?? obj == o.obj)
       ;
 
@@ -285,9 +276,6 @@ public struct Val
     else
       str += "(?)";
     str += " num:" + num;
-    str += " num2:" + _num2;
-    str += " num3:" + _num3;
-    str += " num4:" + _num4;
     str += " obj:" + obj;
     str += " obj.type:" + obj?.GetType().Name;
     str += " (refcs:" + _refc?.refs + ")";
