@@ -27,6 +27,7 @@ make langs    # same workload in lua/luajit/python/php, skips what isn't install
 | `vm_si.cpp` | superinstructions, fused runs padded with `Nop` |
 | `vm_si2.cpp` | same, `Nop` padding squeezed out and jumps renumbered; fused runs matched by shape, with the operator kept in `Instr::sub` and switched on |
 | `vm_si3.cpp` | same matching, but emitting one fused opcode per operator so the loop never branches on it |
+| `vm_reg.cpp` | register based: same Val, same refcounting, same pre-decoded dispatch, only the architecture differs |
 | `native.cpp` | plain recursive C++ `fib`, the floor |
 
 ## Numbers
@@ -42,6 +43,7 @@ treat anything closer than that as a tie.
 | LuaJIT (JIT on) | 2.17 |
 | | |
 | `vm_si3` (superinstr, one opcode per operator) | **14.15** |
+| `vm_reg` (register based) | see below |
 | LuaJIT interpreter (`-joff`) | 14.59 |
 | `vm_si2` (superinstr, operator switched on) | 14.96 |
 | `vm_si` (superinstr, `Nop` padded) | 21.00 |
@@ -88,6 +90,34 @@ pre-decoded instructions is already cheap enough that one more branch in the hot
 up. Emitting one fused opcode per operator instead (`vm_si3`, 14.15) gets most of it back -
 a wider dispatch switch is free, an inner switch is not. So: generalize in the matcher,
 specialize in the opcode.
+
+**Register based lands exactly where superinstructions do.** `vm_reg` runs the same workload
+with the same value and the same refcounting, differing only in architecture. Measured in one
+session against the stack variants:
+
+| | µs/op | dispatches per fib(15) |
+|---|---|---|
+| `vm_pre` (stack, no fusing) | 29.98 | 28083 |
+| `vm_si3` (stack + superinstructions) | 15.51 | 12445 |
+| `vm_reg` (register based) | 16.27 | 12445 |
+
+So against a plain stack VM, register based is **1.84x faster and dispatches 2.26x fewer
+instructions** - comfortably ahead of the ~32% the Shi/Gregg/Ertl study reports, which fits,
+since Val is 56 bytes here and every avoided push/pop is a wide slot. But against the stack VM
+with superinstructions it is a tie, to the instruction: both execute 12445. They are two routes
+to the same place.
+
+What this benchmark cannot show is the difference that matters. Superinstructions tie here
+because the three fused patterns were picked to cover exactly this function; across the test
+corpus they fire at 666 sites and miss the commonest runs entirely (`Frame,Constant` 675,
+`Frame,New` 442, `SetVar,GetVar` 397). A register VM collapses all of those structurally, with
+no peephole, no barrier analysis and no hand-picking. Fib is the one shape where the hand
+picking wins by definition.
+
+Caveat the stack variants don't carry: they run the real bytecode the C# compiler emits, while
+BHL has no register backend, so `vm_reg`'s program is hand encoded. It follows what a Lua style
+`freereg` allocator would produce rather than hand optimized code, but it is still a best case -
+a real allocator would sometimes emit extra moves.
 
 Conclusion: a C++ runtime isn't worth it for speed alone. If one ever happens it should be
 for reach (engines without a CLR), not performance.
