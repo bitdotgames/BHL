@@ -37,6 +37,23 @@ public class Workspace
   List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
   HashSet<(string path, string pattern)> _watchedBindings = new();
 
+  //NOTE: a parse tree depends only on the file's bytes and the preprocessor defines, never on
+  //      Types - so a bindings reload can reuse every one of them. Keyed on content rather
+  //      than mtime: nothing watches .bhl files, so a generated script or a branch switch
+  //      rewrites them behind the server's back and a timestamp would miss it
+  class ParsedFile
+  {
+    public string hash;
+    public ANTLR_Parsed parsed;
+    public FileImports imports;
+    //NOTE: syntax errors belong to the tree, so they're kept here and copied into every
+    //      processor built from it - the processor appends its own, so it can't share a list
+    public CompileErrors errors;
+    public CompileWarnings warnings;
+  }
+  Dictionary<string, ParsedFile> _parse_cache = new Dictionary<string, ParsedFile>();
+  readonly bool _parse_cache_enabled;
+
   //NOTE: one rebuild of the bindings rewrites many watched files at once, each raising several events:
   //      they're coalesced into one BindingsChanged after a quiet period
   const int BINDINGS_CHANGED_QUIET_MS = 300;
@@ -45,8 +62,11 @@ public class Workspace
   //NOTE: a reload rebuilds the whole state, one at a time
   readonly SemaphoreSlim _reloadLock = new SemaphoreSlim(1, 1);
 
-  public Workspace()
+  //NOTE: the cache trades memory for reload time - it keeps every parse tree alive, which on a
+  //      few hundred files is a hundred odd MB, so it can be turned off
+  public Workspace(bool parse_cache = true)
   {
+    _parse_cache_enabled = parse_cache;
     _bindingsChangedTimer = new Timer(_ => BindingsChanged?.Invoke());
   }
 
@@ -57,6 +77,11 @@ public class Workspace
 
   public void Init(Types ts, ProjectConf conf, ILogger logger = null)
   {
+    //NOTE: a different conf can mean different defines or include paths, and both change what
+    //      a file parses into
+    if(!ReferenceEquals(ProjConf, conf))
+      _parse_cache.Clear();
+
     Types = ts;
     ProjConf = conf;
     _logger = logger;
@@ -200,12 +225,34 @@ public class Workspace
 
     foreach(var norm_file in files)
     {
-      using(var sfs = File.OpenRead(norm_file))
+      ParsedFile parsed;
+
+      if(_parse_cache_enabled)
       {
-        var proc = ParseFile(norm_file, sfs);
-        path2proc.Add(norm_file, proc);
+        var bytes = File.ReadAllBytes(norm_file);
+        var hash = System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+
+        if(!_parse_cache.TryGetValue(norm_file, out parsed) || parsed.hash != hash)
+        {
+          using(var ms = new MemoryStream(bytes, writable: false))
+            parsed = ParseFile(norm_file, ms);
+          parsed.hash = hash;
+          _parse_cache[norm_file] = parsed;
+        }
       }
+      else
+      {
+        using(var sfs = File.OpenRead(norm_file))
+          parsed = ParseFile(norm_file, sfs);
+      }
+
+      path2proc.Add(norm_file, MakeProcessor(norm_file, parsed));
     }
+
+    //NOTE: a file dropped from the project shouldn't keep its tree alive
+    if(_parse_cache.Count > path2proc.Count)
+      foreach(var gone in _parse_cache.Keys.Where(k => !path2proc.ContainsKey(k)).ToList())
+        _parse_cache.Remove(gone);
 
     ct.ThrowIfCancellationRequested();
 
@@ -230,7 +277,7 @@ public class Workspace
     return Task.CompletedTask;
   }
 
-  ANTLR_Processor ParseFile(string file, Stream stream)
+  ParsedFile ParseFile(string file, Stream stream)
   {
     var imports = CompilationExecutor.ParseWorker.ParseMaybeImports(ProjConf.inc_path, file, stream);
     var module = new bhl.ModuleDeclared(ProjConf.inc_path.FilePath2ModuleName(file), file);
@@ -238,18 +285,39 @@ public class Workspace
     //TODO: use different error handlers?
     var err_hub = CompileErrorsHub.MakeStandard(file);
 
-    var proc = ANTLR_Processor.ParseAndMakeProcessor(
+    var parsed = ANTLR_Processor.Parse(
       module,
-      imports,
       stream,
-      Types,
       err_hub,
       new HashSet<string>(ProjConf.defines),
       out var _
     );
 
-    return proc;
+    return new ParsedFile() {
+      parsed = parsed, imports = imports,
+      errors = err_hub.errors, warnings = err_hub.warnings
+    };
   }
+
+  //NOTE: processors carry all the per-run state (annotations, errors, resolved symbols), so a
+  //      reused tree always gets a fresh one
+  ANTLR_Processor MakeProcessor(string file, ParsedFile cached)
+  {
+    var module = new bhl.ModuleDeclared(ProjConf.inc_path.FilePath2ModuleName(file), file);
+    var err_hub = CompileErrorsHub.MakeStandard(file);
+    err_hub.errors.AddRange(cached.errors);
+    err_hub.warnings.AddRange(cached.warnings);
+
+    return new ANTLR_Processor(
+      cached.parsed,
+      module,
+      cached.imports,
+      Types,
+      err_hub.errors,
+      err_hub.warnings
+    );
+  }
+
 
   public BHLDocument GetOrLoadDocument(DocumentUri uri)
   {
@@ -317,7 +385,8 @@ public class Workspace
 
       // Parse the changed file first to get its updated module name and parse tree.
       var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-      var proc = ParseFile(changed_path, ms);
+      //NOTE: an unsaved buffer differs from what's on disk, so it never enters _parse_cache
+      var proc = MakeProcessor(changed_path, ParseFile(changed_path, ms));
 
       // Identify direct importers of the changed module BEFORE any Reset(),
       // because Reset() clears each processor's imports list.

@@ -286,4 +286,32 @@ public class TestLSPBindingsWatcher : IDisposable
 
     Assert.False(await wait, "a file outside every bindings pattern must not trigger a reload");
   }
+
+  // The parse cache is keyed on content, so a file rewritten behind the server's back - a
+  // generated script, a branch switch - must be reparsed. Nothing watches .bhl files, so a
+  // timestamp wouldn't be consulted at all here.
+  [Theory]
+  [InlineData(true)]
+  [InlineData(false)]
+  public async Task reload_sees_a_bhl_file_rewritten_on_disk(bool parse_cache)
+  {
+    var src = Path.Combine(dir, "test.bhl");
+    File.WriteAllText(src, "func int test() { return 1 }");
+
+    var conf = new ProjectConf { src_dirs = new() { dir } };
+    conf.Setup();
+
+    var ws = new Workspace(parse_cache: parse_cache);
+    ws.Init(new Types(), conf);
+    await ws.IndexFilesAsync();
+    Assert.Empty(ws.GetCompileErrors(filter_empty: true));
+
+    //NOTE: same length, so even size+mtime heuristics would have to notice the content
+    File.WriteAllText(src, "func int test() { return ? }");
+    await ws.ReloadAsync();
+
+    Assert.NotEmpty(ws.GetCompileErrors(filter_empty: true));
+
+    ws.Shutdown();
+  }
 }

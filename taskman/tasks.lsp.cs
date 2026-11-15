@@ -43,6 +43,7 @@ public static partial class Tasks
   public class LspArgs
   {
     public string log_file_path = "";
+    public bool no_parse_cache = false;
   }
 
   //NOTE: shared by lsp() for real parsing and by 'bhl help lsp' for documentation
@@ -52,6 +53,10 @@ public static partial class Tasks
     {
       "log-file=", "log file path",
       v => a.log_file_path = v
+    },
+    {
+      "no-parse-cache", "don't keep parse trees between reloads: reloads get slower, the server uses less memory",
+      v => a.no_parse_cache = v != null
     }
   };
 
@@ -96,7 +101,7 @@ public static partial class Tasks
         new LoggingStream(stdin, Log.Logger, "IN:"),
         new LoggingStream(stdout, Log.Logger, "OUT:"),
         new Types(),
-        new Workspace(),
+        new Workspace(parse_cache: !a.no_parse_cache),
         cts.Token
       );
 
