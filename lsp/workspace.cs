@@ -35,6 +35,7 @@ public class Workspace
   public event System.Action BindingsChanged;
 
   List<System.IO.FileSystemWatcher> _bindingsWatchers = new();
+  HashSet<string> _watchedBindingsPaths = new HashSet<string>();
 
   //NOTE: one rebuild of the bindings rewrites many watched files at once, each raising several events:
   //      they're coalesced into one BindingsChanged after a quiet period
@@ -84,33 +85,51 @@ public class Workspace
     }
   }
 
+  //NOTE: creating a FileSystemWatcher costs tens of ms, so this watches one directory per
+  //      group of files instead of one watcher per file, and skips the rebuild entirely when
+  //      the set hasn't changed - a reload re-Inits with the very same conf
   void WatchBindingsPaths(IEnumerable<string> paths)
   {
+    var wanted = new HashSet<string>();
+    foreach(var path in paths)
+      if(!string.IsNullOrEmpty(path) && File.Exists(path))
+        wanted.Add(path);
+
+    if(_bindingsWatchers.Count > 0 && _watchedBindingsPaths.SetEquals(wanted))
+      return;
+
     foreach(var w in _bindingsWatchers)
       w.Dispose();
     _bindingsWatchers.Clear();
+    _watchedBindingsPaths = wanted;
 
-    foreach(var path in paths)
+    foreach(var grp in wanted.GroupBy(p => Path.GetDirectoryName(p)))
     {
-      if(string.IsNullOrEmpty(path) || !File.Exists(path))
-        continue;
+      //NOTE: matched by name within this very directory, so the watched set stays exact
+      //      without comparing full paths - which a symlinked prefix would break
+      var names = new HashSet<string>(grp.Select(Path.GetFileName), System.StringComparer.OrdinalIgnoreCase);
 
-      var watcher = new System.IO.FileSystemWatcher(
-        Path.GetDirectoryName(path),
-        Path.GetFileName(path))
+      var watcher = new System.IO.FileSystemWatcher(grp.Key)
       {
         // FileName included alongside LastWrite/Size — it's part of .NET's own default
         // NotifyFilter combination and is documented as relevant to create/rename detection.
         NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
           | System.IO.NotifyFilters.FileName,
       };
+
+      void OnEvent(object _, System.IO.FileSystemEventArgs e)
+      {
+        if(names.Contains(Path.GetFileName(e.FullPath)))
+          OnBindingsFileChanged();
+      }
+
       // External build tools rarely rewrite the DLL in place (which would raise Changed);
       // they typically build to a temp file and atomically replace the destination (rename-over,
       // or delete+recreate), which raises Renamed/Created instead. Watch all three so a rebuild
       // by an external process is detected the same way an in-place `touch` is.
-      watcher.Changed += (_, _) => OnBindingsFileChanged();
-      watcher.Created += (_, _) => OnBindingsFileChanged();
-      watcher.Renamed += (_, _) => OnBindingsFileChanged();
+      watcher.Changed += OnEvent;
+      watcher.Created += OnEvent;
+      watcher.Renamed += (s, e) => OnEvent(s, e);
       // Subscribe handlers BEFORE enabling raising events — on Linux (inotify-backed), the
       // watch mask/dispatch appears to be tied to which handlers are attached at the moment
       // raising starts, so flipping this on first (as the previous code did, via the object
@@ -128,6 +147,7 @@ public class Workspace
     foreach(var w in _bindingsWatchers)
       w.Dispose();
     _bindingsWatchers.Clear();
+    _watchedBindingsPaths.Clear();
   }
 
   public Task ReloadAsync(CancellationToken ct = default)

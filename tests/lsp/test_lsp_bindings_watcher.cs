@@ -207,4 +207,40 @@ public class TestLSPBindingsWatcher : IDisposable
 
     Assert.Equal(5, workspace.IndexedFileCount);
   }
+
+  // A directory now carries one watcher for all its watched files, so an unrelated file
+  // living next to them must not be mistaken for a bindings change - a reload is expensive.
+  [Fact]
+  public async Task ignores_unwatched_file_in_a_watched_directory()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(2));
+    File.WriteAllText(Path.Combine(dir, "unrelated.txt"), "touch me not");
+
+    Assert.False(await wait, "a file that isn't a bindings source must not trigger a reload");
+  }
+
+  // Re-Init with the same conf is what every reload does, and rebuilding the watchers there
+  // cost seconds on a real project. Skipping it must not leave the workspace unwatched.
+  [Fact]
+  public async Task keeps_watching_after_reinit_with_the_same_conf()
+  {
+    if(!await EnvironmentSupportsFileWatchingAsync())
+      return;
+
+    var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
+    workspace.Init(new Types(), conf);
+    workspace.Init(new Types(), conf);
+    workspace.Init(new Types(), conf);
+
+    var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
+    File.WriteAllText(dll_path, "v2");
+
+    Assert.True(await wait, "expected BindingsChanged to still fire after repeated Init calls");
+  }
 }
