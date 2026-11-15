@@ -86,6 +86,7 @@ public class TestLSPBindingsWatcher : IDisposable
 
     var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(dll_path, "v2 - rewritten in place");
@@ -101,6 +102,7 @@ public class TestLSPBindingsWatcher : IDisposable
 
     var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
 
@@ -127,6 +129,7 @@ public class TestLSPBindingsWatcher : IDisposable
       bindings = new() { new BindingsEntryConf { sources = new() { bhl_path } } }
     };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(bhl_path, "v2 - edited source");
@@ -148,6 +151,7 @@ public class TestLSPBindingsWatcher : IDisposable
       bindings = new() { new BindingsEntryConf { sources = new() { cs_path } } }
     };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(cs_path, "v2 - edited source");
@@ -176,6 +180,7 @@ public class TestLSPBindingsWatcher : IDisposable
       bindings = new() { new BindingsEntryConf { sources = sources } }
     };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     int changes = 0;
     workspace.BindingsChanged += () => System.Threading.Interlocked.Increment(ref changes);
@@ -199,6 +204,7 @@ public class TestLSPBindingsWatcher : IDisposable
     conf.src_dirs.Add(src);
     conf.Setup();
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var reloads = new System.Collections.Generic.List<Task>();
     for(int i = 0; i < 8; ++i)
@@ -218,6 +224,7 @@ public class TestLSPBindingsWatcher : IDisposable
 
     var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(2));
     File.WriteAllText(Path.Combine(dir, "unrelated.txt"), "touch me not");
@@ -235,8 +242,11 @@ public class TestLSPBindingsWatcher : IDisposable
 
     var conf = new ProjectConf { bindings = new() { new BindingsEntryConf { dll = dll_path } } };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(dll_path, "v2");
@@ -259,6 +269,7 @@ public class TestLSPBindingsWatcher : IDisposable
       bindings = new() { new BindingsEntryConf { sources = new() { dir + "/*.cs" } } }
     };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(10));
     File.WriteAllText(Path.Combine(dir, "added_later.cs"), "brand new binding");
@@ -280,6 +291,7 @@ public class TestLSPBindingsWatcher : IDisposable
       bindings = new() { new BindingsEntryConf { sources = new() { dir + "/*.cs" } } }
     };
     workspace.Init(new Types(), conf);
+    await workspace.BindingsWatchersReady;
 
     var wait = WaitForChangeAsync(workspace, TimeSpan.FromSeconds(2));
     File.WriteAllText(Path.Combine(dir, "notes.txt"), "not a binding");
