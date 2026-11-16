@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using bhl.marshall;
 
 namespace bhl
@@ -20,6 +22,49 @@ public partial class Types : INamedResolver, IProxyTypeCache
   }
 
   internal Dictionary<string, ModuleDeclared> modules = new Dictionary<string, ModuleDeclared>();
+
+  //NOTE: O(1) access to a binding's own types, keyed by a tag type it declares. Index global,
+  //      symbol per Types - several Types coexist, their symbols compare unequal. Never serialized
+  static int _type_index_count;
+
+  public static int NextTypeIndex()
+  {
+    return Interlocked.Increment(ref _type_index_count) - 1;
+  }
+
+  //NOTE: one static per closed generic - tags should be structs, so it's specialized
+  static class TypeIndexOf<T>
+  {
+    public static readonly int idx = NextTypeIndex();
+  }
+
+  //NOTE: written while registering bindings, before the compile goes parallel - no locking.
+  //      System.Array: a bare 'Array' is bhl's own one here
+  IType[] _type_index = System.Array.Empty<IType>();
+
+  //NOTE: throws for a never indexed tag - use FindIndexedType when the binding may not be there
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public IType GetIndexedType<T>()
+  {
+    return _type_index[TypeIndexOf<T>.idx];
+  }
+
+  //NOTE: null for a never indexed tag, e.g. a project whose bhl.proj doesn't list the binding
+  public IType FindIndexedType<T>()
+  {
+    int idx = TypeIndexOf<T>.idx;
+    return idx < _type_index.Length ? _type_index[idx] : null;
+  }
+
+  public void IndexType<T>(IType t)
+  {
+    int idx = TypeIndexOf<T>.idx;
+    //NOTE: to the tag count, not idx, so many types resize once. Max() as the unfenced
+    //      count may lag another thread's
+    if(idx >= _type_index.Length)
+      System.Array.Resize(ref _type_index, System.Math.Max(idx + 1, _type_index_count));
+    _type_index[idx] = t;
+  }
 
   //NOTE: interning of ProxyType instances requested by name, e.g T("Color"),
   //      so that similar requests return the same cached instance;

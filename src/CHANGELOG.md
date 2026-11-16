@@ -5,6 +5,15 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta27]
+
+### Added
+- `Types.IndexType<TTag>(type)` / `Types.GetIndexedType<TTag>()`: O(1) access to a binding's own
+  types from C#, keyed by a tag type the binding declares. The index is global and the symbol per
+  `Types` - several `Types` coexist (a compile's, the VM's, an editor tool's) and their symbols
+  compare unequal, so a binding keeping the symbol in a static has whichever `Register()` ran last
+  silently own it. Tags should be structs. Indices are never serialized, unlike `module_idx`
+
 ## [3.0.0-beta26]
 
 ### Changed
