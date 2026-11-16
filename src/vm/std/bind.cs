@@ -51,7 +51,7 @@ public static partial class std
     }
 
     //NOTE: always virtual and bodyless - a non-virtual stub could never be overridden or do anything, so there's no point offering that
-    public static FuncSymbolScript DefineVirtualMethod(ClassSymbolScript cl, string name, ProxyType ret_type, FuncArgSymbol[] args)
+    public static FuncSymbolScript DefineVirtualMethod(ClassSymbolScript cl, string name, ProxyType ret_type, params FuncArgSymbol[] args)
     {
       if(!_class_owner_module.TryGetValue(cl, out var owner))
         throw new System.Exception("DefineVirtualMethod: class '" + name + "' has no owning module - was it created via NewClassSymbolScript?");

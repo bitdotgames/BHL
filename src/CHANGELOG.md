@@ -5,6 +5,15 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta26]
+
+### Changed
+- `std.bind.DefineVirtualMethod(cl, name, ret_type, args)` takes its arguments as `params`, so a
+  method without any is declared as `DefineVirtualMethod(cl, "Awake", Types.Void)`. A `.cs` bindings
+  source read by `CsSourceBindings` had no way to pass an empty one: the straight-line subset has
+  neither generic calls (`Array.Empty<FuncArgSymbol>()`) nor array creation (`new FuncArgSymbol[0]`),
+  and `null` faults on `args.Length`. Source compatible - an explicit array still binds
+
 ## [3.0.0-beta25]
 
 ### Changed
