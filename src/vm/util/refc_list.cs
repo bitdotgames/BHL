@@ -7,8 +7,6 @@ namespace bhl
 
 public class RefcList<T> : List<T>, IRefcounted, IDisposable
 {
-  internal Pool<RefcList<T>> pool;
-
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
   internal int _refs;
@@ -43,7 +41,6 @@ public class RefcList<T> : List<T>, IRefcounted, IDisposable
     }
 
     list._refs = 1;
-    list.pool = pool;
 
     return list;
   }
@@ -81,7 +78,9 @@ public class RefcList<T> : List<T>, IRefcounted, IDisposable
     lst._refs = -1;
     lst.Clear();
 
-    lst.pool.stack.Push(lst);
+    //NOTE: back to this thread's pool rather than the one it was rented from - an object
+    //      released on another thread would otherwise have two threads pushing into one stack
+    GetPool().stack.Push(lst);
   }
 }
 

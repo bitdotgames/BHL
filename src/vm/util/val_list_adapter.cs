@@ -9,8 +9,6 @@ namespace bhl
 //TODO: writing is not implemented yet
 public class ValList<T> : IList<T>, IRefcounted, IDisposable
 {
-  internal Pool<ValList<T>> pool;
-
   Func<Val, T> val2native;
 
   ValList val_list;
@@ -61,7 +59,6 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
     vls.val_list = val_list;
     vls.val2native = val2native;
     vls.source_type = source_type;
-    vls.pool = pool;
 
     return vls;
   }
@@ -112,7 +109,9 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
 
     lst._refs = -1;
 
-    lst.pool.stack.Push(lst);
+    //NOTE: back to this thread's pool rather than the one it was rented from - an object
+    //      released on another thread would otherwise have two threads pushing into one stack
+    GetPool().stack.Push(lst);
   }
 
   public struct Enumerator<T1> : IEnumerator<T1>
