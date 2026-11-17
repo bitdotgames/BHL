@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace bhl
 {
@@ -8,13 +9,30 @@ namespace bhl
 //      ran on this thread - with VMs ticked from one thread, that's what a leak check needs
 public abstract class ValHolder
 {
-  [ThreadStatic] static int _outstanding;
+  //NOTE: no counter of its own - a pool already knows how many it handed out and never got
+  //      back, that's BusyCount. Registered once per held type, so renting stays free
+  [ThreadStatic] static List<Func<int>> _busy_counts;
 
-  //NOTE: holders rented and not yet returned. Zero between runs, or something leaked
-  public static int Outstanding => _outstanding;
+  protected static void TrackPool(Func<int> busy_count)
+  {
+    if(_busy_counts == null)
+      _busy_counts = new List<Func<int>>();
+    _busy_counts.Add(busy_count);
+  }
 
-  protected static void Rented() => ++_outstanding;
-  protected static void Returned() => --_outstanding;
+  //NOTE: holders rented and not yet returned, across every held type. Zero between runs, or
+  //      something leaked
+  public static int Outstanding
+  {
+    get
+    {
+      int n = 0;
+      if(_busy_counts != null)
+        for(int i = 0; i < _busy_counts.Count; ++i)
+          n += _busy_counts[i]();
+      return n;
+    }
+  }
 }
 
 //NOTE: holds a native struct inside a Val's 'obj' slot, for structs that can't be encoded in
@@ -45,7 +63,13 @@ public class ValHolder<T> : ValHolder, IRefcounted where T : struct
   static Pool<ValHolder<T>> GetPool()
   {
     if(_pool == null)
-      _pool = new Pool<ValHolder<T>>(32);
+    {
+      //NOTE: the instance is captured, not the thread static field - another thread asking for
+      //      Outstanding must not end up reading its own pool through this
+      var pool = new Pool<ValHolder<T>>(32);
+      _pool = pool;
+      TrackPool(() => pool.BusyCount);
+    }
     return _pool;
   }
 
@@ -77,7 +101,6 @@ public class ValHolder<T> : ValHolder, IRefcounted where T : struct
     h._refs = 1;
     h.v = default(T);
 
-    Rented();
     return h;
   }
 
@@ -88,7 +111,6 @@ public class ValHolder<T> : ValHolder, IRefcounted where T : struct
 
     h._refs = -1;
     h.v = default(T);
-    Returned();
     //NOTE: back to this thread's pool rather than the one it came from - an object rented on
     //      another thread would otherwise have two threads pushing into the same stack
     GetPool().stack.Push(h);
