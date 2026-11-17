@@ -5,6 +5,21 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-beta28]
+
+### Changed
+- `ValHolder<T>` pools per thread like the other pooled types, so `New()` and `NewVal(type, v)`
+  no longer take a `VM` and the holder no longer keeps one. Two VMs on a thread share a pool on
+  purpose: a reloaded VM inherits a warm one. `vm.GetHolderPool<T>()` is gone, replaced by
+  `ValHolder<T>.Pool`, and `ValHolder.Outstanding` reports holders rented and not returned
+- `ArrayTypeSymbol.ArrCreate` takes a `VM` instead of a `VM.ExecState` - it only ever used
+  `exec.vm`
+
+### Fixed
+- `ValList<T>` and `RefcList<T>` recycle into the current thread's pool rather than the one they
+  were rented from, so an object released on another thread can't have two threads pushing into
+  one unsynchronized stack
+
 ## [3.0.0-beta27]
 
 ### Added
