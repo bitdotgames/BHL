@@ -85,6 +85,14 @@ public class TestColorValHolder : BHL_TestBase
       new FuncArgSymbol("r", ts.T("float"))
     ));
 
+    //NOTE: the VM carrying variant - a pooled holder can't be built without one
+    NativeListTypeSymbol.DefineOnceWithVMItems<ColorStruct>(
+      ts.ns, "ArrayT_Color",
+      (v) => Ref(v),
+      (vm, itype, n) => ValHolder<ColorStruct>.NewVal(vm, itype.Get(), n),
+      ts.T("Color")
+    );
+
     cl.Setup();
   }
 
@@ -208,6 +216,41 @@ public class TestColorValHolder : BHL_TestBase
 
     double res = Execute(vm, "test").Stack.Pop();
     Assert.Equal(12, res);
+    CommonChecks(vm);
+  }
+
+  // A native list of holder backed structs: the conversion back to a Val needs the VM for the
+  // pool, which is what DefineOnceWithVMItems exists for.
+  [Fact]
+  public void TestNativeArrayOfHolderBackedStructs()
+  {
+    var vm = Make(@"
+    func float test()
+    {
+      ArrayT_Color cs = new ArrayT_Color
+
+      Color c = new Color
+      for(int i = 0; i < 3; i++) {
+        c.r = (float)i + 1
+        cs.Add(c)
+      }
+
+      //NOTE: Add stored a copy each time, so later writes to c didn't rewrite history
+      float s = 0
+      foreach(Color e in cs) {
+        s = s*10 + e.r
+      }
+
+      //NOTE: and an element read back is a copy too
+      Color first = cs[0]
+      first.r = 9
+
+      return s*10 + cs[0].r
+    }
+    ");
+
+    double res = Execute(vm, "test").Stack.Pop();
+    Assert.Equal(1231, res);
     CommonChecks(vm);
   }
 

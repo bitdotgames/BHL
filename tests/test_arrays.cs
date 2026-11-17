@@ -721,7 +721,7 @@ public class TestArrays : BHL_TestBase
     }
 
     {
-      int val = ArrayInts.ArrGetAt(arr, 0);
+      int val = ArrayInts.ArrGetAt(null, arr, 0);
       Assert.Equal(10, val);
 
       Assert.Equal(10, list[0]);
