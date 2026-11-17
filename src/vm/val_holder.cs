@@ -3,6 +3,20 @@ using System;
 namespace bhl
 {
 
+//NOTE: the non-generic base exists for the counter: a leak check wants one number across
+//      every held type, not one per T. It's thread local like the pool, so it tracks whatever
+//      ran on this thread - with VMs ticked from one thread, that's what a leak check needs
+public abstract class ValHolder
+{
+  [ThreadStatic] static int _outstanding;
+
+  //NOTE: holders rented and not yet returned. Zero between runs, or something leaked
+  public static int Outstanding => _outstanding;
+
+  protected static void Rented() => ++_outstanding;
+  protected static void Returned() => --_outstanding;
+}
+
 //NOTE: holds a native struct inside a Val's 'obj' slot, for structs that can't be encoded in
 //      Val's numeric slots - anything holding a reference (those slots aren't GC scanned) or
 //      simply too big for them.
@@ -16,30 +30,40 @@ namespace bhl
 //      Bindings go through MutableRef()/Ref() rather than casting Val.obj themselves, so the
 //      representation stays an implementation detail and the retain/release around a copy
 //      lives in one place (Val.SetObj neither retains the new value nor releases the old).
-public class ValHolder<T> : IRefcounted where T : struct
+public class ValHolder<T> : ValHolder, IRefcounted where T : struct
 {
   public T v;
-
-  internal VM vm;
 
   internal int _refs;
   public int refs => _refs;
 
-  //NOTE: use New() instead
-  internal ValHolder(VM vm)
+  //NOTE: thread local, like every other pooled type here, so two VMs on different threads
+  //      never share one. Two VMs on the same thread do, on purpose: a reloaded VM inherits a
+  //      warm pool instead of allocating its own from cold
+  [ThreadStatic] static Pool<ValHolder<T>> _pool;
+
+  static Pool<ValHolder<T>> GetPool()
   {
-    this.vm = vm;
+    if(_pool == null)
+      _pool = new Pool<ValHolder<T>>(32);
+    return _pool;
   }
 
-  public static ValHolder<T> New(VM vm)
+  public static Pool<ValHolder<T>> Pool => GetPool();
+
+  //NOTE: use New() instead
+  internal ValHolder()
+  {}
+
+  public static ValHolder<T> New()
   {
-    var pool = vm.GetHolderPool<T>();
+    var pool = GetPool();
 
     ValHolder<T> h;
     if(pool.stack.Count == 0)
     {
       ++pool.miss;
-      h = new ValHolder<T>(vm);
+      h = new ValHolder<T>();
     }
     else
     {
@@ -53,6 +77,7 @@ public class ValHolder<T> : IRefcounted where T : struct
     h._refs = 1;
     h.v = default(T);
 
+    Rented();
     return h;
   }
 
@@ -63,7 +88,10 @@ public class ValHolder<T> : IRefcounted where T : struct
 
     h._refs = -1;
     h.v = default(T);
-    h.vm.GetHolderPool<T>().stack.Push(h);
+    Returned();
+    //NOTE: back to this thread's pool rather than the one it came from - an object rented on
+    //      another thread would otherwise have two threads pushing into the same stack
+    GetPool().stack.Push(h);
   }
 
   public void Retain()
@@ -87,9 +115,9 @@ public class ValHolder<T> : IRefcounted where T : struct
 
   ///////////////////////////////////////
 
-  public static Val NewVal(VM vm, IType type, T v)
+  public static Val NewVal(IType type, T v)
   {
-    var h = New(vm);
+    var h = New();
     h.v = v;
     return Val.NewObj(h, type);
   }
@@ -109,7 +137,7 @@ public class ValHolder<T> : IRefcounted where T : struct
     if(h._refs == 1)
       return ref h.v;
 
-    var fresh = New(h.vm);
+    var fresh = New();
     fresh.v = h.v;
 
     //NOTE: SetObj is 'this = NewObj(..)' - it neither retains what it's given nor releases

@@ -2678,7 +2678,7 @@ public partial class VM
           ref var arr = ref exec.stack.Peek();
 
           var class_type = (ArrayTypeSymbol)arr.type;
-          var res = class_type.ArrGetAt(exec.vm, arr, idx);
+          var res = class_type.ArrGetAt(arr, idx);
 
           arr._refc?.Release();
           //let's replace with the result

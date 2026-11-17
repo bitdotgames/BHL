@@ -201,12 +201,12 @@ public class TestCowStructScenarios : BHL_TestBase
     Run(vm, "test");
 
     //NOTE: steady state rents from the pool rather than allocating
-    int after_first = vm.GetHolderPool<DamageSpec>().MissCount;
+    int after_first = ValHolder<DamageSpec>.Pool.MissCount;
     for(int i = 0; i < 10; ++i)
       Run(vm, "test");
 
-    Assert.Equal(after_first, vm.GetHolderPool<DamageSpec>().MissCount);
-    Assert.True(vm.GetHolderPool<DamageSpec>().HitCount > 0);
+    Assert.Equal(after_first, ValHolder<DamageSpec>.Pool.MissCount);
+    Assert.True(ValHolder<DamageSpec>.Pool.HitCount > 0);
   }
 
   void BindSpec(Types ts)
@@ -225,7 +225,7 @@ public class TestCowStructScenarios : BHL_TestBase
     cell_cl.Setup();
 
     var cl = new ClassSymbolNative(new Origin(), "DamageSpec", typeof(DamageSpec),
-      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(ValHolder<DamageSpec>.New(exec.vm), type); }
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(ValHolder<DamageSpec>.New(), type); }
     );
     ts.ns.Define(cl);
 

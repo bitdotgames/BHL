@@ -904,6 +904,9 @@ public class BHL_TestBase
     Assert.Equal(0, vm.fptrs_pool.BusyCount);
     if(check_fibers)
       Assert.Equal(0, vm.fibers_pool.BusyCount);
+    //NOTE: thread wide rather than per VM, since a holder's pool is - with the suite running
+    //      sequentially that still pins a leak to the test that caused it
+    Assert.Equal(0, ValHolder.Outstanding);
     if(check_coros)
       Assert.Equal(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }

@@ -178,14 +178,11 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       throw new Exception("Invalid array item: '" + val.type?.GetName() + "' can't be stored in '" + GetName() + "'");
   }
 
-  //NOTE: these two build something the VM owns - a ValList, or an item that may be a pooled
-  //      ValHolder - so they take the VM and nothing more. The rest of the API converts in the
-  //      other direction, Val to native, which needs nothing from it
+  //NOTE: builds the list object the VM owns, so it takes the VM and nothing more
   public abstract void ArrCreate(VM vm, ref Val arr);
   public abstract int ArrCount(Val arr);
   public abstract void ArrAdd(Val arr, Val val);
-  //NOTE: may be null when there's no VM at hand - see CopyItems
-  public abstract Val ArrGetAt(VM vm, Val arr, int idx);
+  public abstract Val ArrGetAt(Val arr, int idx);
   public abstract void ArrSetAt(Val arr, int idx, Val val);
   public abstract void ArrRemoveAt(Val arr, int idx);
   public abstract int ArrIndexOf(Val arr, Val val);
@@ -253,7 +250,7 @@ public class GenericArrayTypeSymbol :
     return idx;
   }
 
-  public override Val ArrGetAt(VM vm, Val arr, int idx)
+  public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = AsValList(arr);
     var res = lst[idx];
@@ -363,29 +360,6 @@ public abstract class NativeListTypeSymbol :
     return lst;
   }
 
-  //NOTE: for items that need the VM to be built, e.g. a pooled ValHolder
-  public static NativeListTypeSymbol<T> DefineOnceWithVMItems<T>(
-    Namespace ns, string name,
-    Func<Val, T> val2native,
-    Func<VM, ProxyType, T, Val> native2val_vm,
-    ProxyType item_type
-  )
-  {
-    var defined = ns.Resolve(name);
-    if(defined != null)
-    {
-      if(defined is NativeListTypeSymbol<T> typed)
-        return typed;
-      throw new Exception($"'{name}' is already defined and it's not a native list of {typeof(T).Name}");
-    }
-
-    var lst = new NativeListTypeSymbol<T>(new Origin(), name, val2native, null, item_type)
-      .WithVMItems(native2val_vm);
-    lst.Setup();
-    ns.Define(lst);
-    return lst;
-  }
-
   //NOTE: the one for C# bindings sources read by the compiler (BHL_FRONT): no native type and conversions
   public static void DefineOnce(Namespace ns, string name, ProxyType item_type)
   {
@@ -485,10 +459,6 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
   Func<ProxyType, T, Val> native2val;
   public Func<ProxyType, T, Val> Native2Val => native2val;
 
-  //NOTE: set instead of native2val when building an item needs the VM, e.g. a pooled ValHolder
-  Func<VM, ProxyType, T, Val> native2val_vm;
-  public Func<VM, ProxyType, T, Val> Native2ValVM => native2val_vm;
-
   public NativeListTypeSymbol(
     Origin origin, string name,
     Func<Val, T> val2native,
@@ -499,15 +469,6 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
   {
     this.val2native = val2native;
     this.native2val = native2val;
-  }
-
-  //NOTE: a named setter rather than a constructor overload on purpose - the C# bindings
-  //      interpreter resolves overloads less precisely than the compiler does, and an
-  //      ambiguous NativeListTypeSymbol ctor breaks every binding read from sources
-  public NativeListTypeSymbol<T> WithVMItems(Func<VM, ProxyType, T, Val> native2val_vm)
-  {
-    this.native2val_vm = native2val_vm;
-    return this;
   }
 
   protected override void DefineMembers()
@@ -521,7 +482,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
           int idx = exec.stack.PopFast();
           ref var arr = ref exec.stack.Peek();
 
-          var res = ArrGetAt(exec.vm, arr, idx);
+          var res = ArrGetAt(arr, idx);
 
           arr._refc?.Release();
           arr = res;
@@ -593,8 +554,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
     int before = dst.Count;
     for(int i = 0; i < count; ++i)
     {
-      //NOTE: no VM here - a binding that needs one to build an item says so
-      var item = src_type.ArrGetAt(null, src, i);
+      var item = src_type.ArrGetAt(src, i);
       var native = val2native(item);
       item.ReleaseData();
       if(i < before)
@@ -620,17 +580,9 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
     lst.Insert(idx, val2native(val));
   }
 
-  public override Val ArrGetAt(VM vm, Val arr, int idx)
+  public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = (IList<T>)arr.obj;
-
-    if(native2val_vm != null)
-    {
-      if(vm == null)
-        throw new Exception($"'{name}' builds its items with the VM, which isn't available here");
-      return native2val_vm(vm, item_type, lst[idx]);
-    }
-
     return native2val(item_type, lst[idx]);
   }
 

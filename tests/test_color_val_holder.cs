@@ -23,7 +23,7 @@ public class TestColorValHolder : BHL_TestBase
     var cl = new ClassSymbolNative(new Origin(), "Color", typeof(ColorStruct),
       delegate(VM.ExecState exec, ref Val v, IType type)
       {
-        v.SetObj(ValHolder<ColorStruct>.New(exec.vm), type);
+        v.SetObj(ValHolder<ColorStruct>.New(), type);
       }
     );
     ts.ns.Define(cl);
@@ -51,7 +51,7 @@ public class TestColorValHolder : BHL_TestBase
         var self = exec.stack.Pop();
         var c = Ref(self);
 
-        exec.stack.Push(ValHolder<ColorStruct>.NewVal(exec.vm, ts.T("Color").Get(),
+        exec.stack.Push(ValHolder<ColorStruct>.NewVal(ts.T("Color").Get(),
           new ColorStruct() { r = c.r + k, g = c.g + k }));
 
         self._refc?.Release();
@@ -78,18 +78,17 @@ public class TestColorValHolder : BHL_TestBase
       (VM.ExecState exec, FuncArgsInfo args_info) =>
       {
         double r = exec.stack.Pop();
-        exec.stack.Push(ValHolder<ColorStruct>.NewVal(exec.vm, ts.T("Color").Get(),
+        exec.stack.Push(ValHolder<ColorStruct>.NewVal(ts.T("Color").Get(),
           new ColorStruct() { r = (float)r }));
         return null;
       },
       new FuncArgSymbol("r", ts.T("float"))
     ));
 
-    //NOTE: the VM carrying variant - a pooled holder can't be built without one
-    NativeListTypeSymbol.DefineOnceWithVMItems<ColorStruct>(
+    NativeListTypeSymbol.DefineOnce<ColorStruct>(
       ts.ns, "ArrayT_Color",
       (v) => Ref(v),
-      (vm, itype, n) => ValHolder<ColorStruct>.NewVal(vm, itype.Get(), n),
+      (itype, n) => ValHolder<ColorStruct>.NewVal(itype.Get(), n),
       ts.T("Color")
     );
 
@@ -219,8 +218,7 @@ public class TestColorValHolder : BHL_TestBase
     CommonChecks(vm);
   }
 
-  // A native list of holder backed structs: the conversion back to a Val needs the VM for the
-  // pool, which is what DefineOnceWithVMItems exists for.
+  // A native list of holder backed structs.
   [Fact]
   public void TestNativeArrayOfHolderBackedStructs()
   {
@@ -274,12 +272,12 @@ public class TestColorValHolder : BHL_TestBase
 
     Execute(vm, "test").Stack.Pop();
 
-    int misses = vm.GetHolderPool<ColorStruct>().MissCount;
+    int misses = ValHolder<ColorStruct>.Pool.MissCount;
     for(int i = 0; i < 10; ++i)
       Execute(vm, "test").Stack.Pop();
 
-    Assert.Equal(misses, vm.GetHolderPool<ColorStruct>().MissCount);
-    Assert.True(vm.GetHolderPool<ColorStruct>().HitCount > 0);
+    Assert.Equal(misses, ValHolder<ColorStruct>.Pool.MissCount);
+    Assert.True(ValHolder<ColorStruct>.Pool.HitCount > 0);
     CommonChecks(vm);
   }
 }
