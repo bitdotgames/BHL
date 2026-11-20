@@ -103,7 +103,8 @@ public partial class Types : INamedResolver, IProxyTypeCache
 
     CopyFromStaticModule();
 
-    BindingsRegistry.RegisterForType(this, BindingsRegistry.PreludeName);
+    RegisterBindingsVersion(BindingsRegistry.PreludeName, PreludeBindings.Version);
+    new PreludeBindings().Register(this);
   }
 
   public bool IsImported(ModuleDeclared d)
@@ -186,15 +187,18 @@ public partial class Types : INamedResolver, IProxyTypeCache
   }
 }
 
-//NOTE: the built-in std/std.io/std.bind modules, unified under BindingsRegistry like any
-//      other binding so Types() bootstraps through RegisterForType() too. Discovered by
-//      reflection - [Preserve] keeps IL2CPP/Mono from stripping it as unreferenced
+//NOTE: the built-in std/std.io/std.bind modules. Types() attaches them directly (no registry
+//      scan); BindingsRegistry still lists them like any other binding (IsRegistered,
+//      TryGetVersion, a bytecode requiring them), discovered by reflection - [Preserve] keeps
+//      IL2CPP/Mono from stripping it as unreferenced by the registry
 #if UNITY_5_3_OR_NEWER
 [UnityEngine.Scripting.Preserve]
 #endif
-[BhlBinding(BindingsRegistry.PreludeName, "1.0.0")]
+[BhlBinding(BindingsRegistry.PreludeName, Version)]
 public class PreludeBindings : IUserBindings
 {
+  public const string Version = "1.0.0";
+
   public void Register(Types ts)
   {
     ts.RegisterModule(std.MakeModule(ts));
