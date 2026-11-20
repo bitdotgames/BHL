@@ -62,6 +62,40 @@ if (obj is Animal) {
 }
 ```
 
+### Matching Into a Variable
+
+`is` can declare a variable that holds the cast result, so a successful check hands you the
+typed value without a second cast:
+
+```bhl
+if(obj is Animal a) {
+    a.speak()
+}
+```
+
+The variable is assigned before the rest of the condition runs, so `&&` can use it:
+
+```bhl
+if(obj is Animal a && a.legs > 2) {
+    ...
+}
+```
+
+It is scoped to the enclosing block, like a normal declaration, and holds `null` when the
+check fails - so only read it where the check has already passed. The name must sit on the
+same line as the type, otherwise the next line would be read as part of the expression:
+
+```bhl
+bool ok = obj is Animal
+speak()                    // 'speak' is a call, not a pattern variable
+```
+
+Scalars can't be matched this way, since they have no `null` to hold a failed cast:
+
+```bhl
+if(value is int i) { }     // error: 'int' can't be matched into a variable
+```
+
 ### Safe Casting
 ```bhl
 // Using 'as' operator for safe casting

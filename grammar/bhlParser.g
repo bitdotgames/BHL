@@ -82,7 +82,7 @@ exp
   | exp operatorShift exp                     #ExpShift
   | exp operatorComparison exp                #ExpCompare
   | exp AS type                               #ExpAs
-  | exp IS type                               #ExpIs
+  | exp IS type ({this.notLineTerminator()}? NAME)? #ExpIs
   | exp BAND exp                              #ExpBitwiseAnd
   | exp BOR exp                               #ExpBitwiseOr
   | exp LAND exp                              #ExpLogicalAnd

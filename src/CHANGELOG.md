@@ -5,6 +5,14 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `is` can bind the cast result to a variable: `if(b is Foo f) { f.x }`. The variable is
+  assigned before the rest of the condition, so `b is Foo f && f.x > 0` works; it holds `null`
+  when the check fails. The name must be on the same line as the type. Scalars can't be
+  matched, they have no `null`
+
 ## [3.0.0-beta28]
 
 ### Changed

@@ -1779,21 +1779,75 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_AddSemanticToken(ctx.IS(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
-
-    var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
-    PushAST(ast);
-    TryVisit(exp);
-    PopAST();
 
     Annotate(ctx).eval_type = Types.Bool;
 
     //TODO: do we need to pre-check absolutely unrelated types?
     //types.CheckCast(Annotate(ctx), Annotate(exp));
 
+    if(ctx.NAME() != null)
+    {
+      PeekAST().AddChild(ProcIsPatternVar(ctx, tp, exp));
+      return null;
+    }
+
+    var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
+    PushAST(ast);
+    TryVisit(exp);
+    PopAST();
+
     PeekAST().AddChild(ast);
 
     return null;
+  }
+
+  //NOTE: 'b is Foo f' assigns 'b as Foo' to f and then tests f. A failed 'as' yields null, so
+  //      f is always assigned and usable right after, e.g. 'b is Foo f && f.x > 0'
+  IAST ProcIsPatternVar(bhlParser.ExpIsContext ctx, ProxyType tp, bhlParser.ExpContext exp)
+  {
+    var name = ctx.NAME();
+    var type = tp.Get();
+
+    LSP_AddSemanticToken(name, SemanticToken.Variable);
+
+    //NOTE: the null a failed cast yields has nowhere to go in a scalar
+    if(Types.IsScalar(type) || type is EnumSymbol)
+    {
+      AddError(name, $"'{type}' can't be matched into a variable, it has no null value");
+      return new AST_Interim();
+    }
+
+    var var_ann = Annotate(name);
+    var_ann.eval_type = type;
+
+    var symb = new VariableSymbol(var_ann, name.GetText(), tp);
+    if(!curr_scope.TryDefine(symb, out SymbolError err))
+    {
+      AddError(name, err.Message);
+      return new AST_Interim();
+    }
+
+    LSP_SetSymbol(name, symb);
+
+    var res = new AST_Interim();
+
+    //NOTE: a var write takes its value from the stack, not from a child, so the cast is a
+    //      sibling ahead of it
+    var cast = new AST_TypeAs(type, NeedToForceCastType(type), ctx.Start.Line);
+    PushAST(cast);
+    TryVisit(exp);
+    PopAST();
+    res.AddChild(cast);
+    res.AddChild(new AST_VarWrite(ctx.Start.Line, symb, name, is_decl: true));
+
+    //NOTE: testing the assigned variable rather than comparing it to null - a failed 'as'
+    //      leaves null there, and null is not a Foo
+    var test = new AST_TypeIs(type, ctx.Start.Line);
+    test.AddChild(new AST_VarRead(ctx.Start.Line, symb, name));
+    res.AddChild(test);
+
+    return res;
   }
 
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
