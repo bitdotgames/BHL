@@ -5,6 +5,14 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- `Types()` attaches the prelude (`PreludeBindings`) directly instead of through `BindingsRegistry`:
+  the registry's first use scans every assembly which references bhl (`GetTypes()`, under IL2CPP
+  that metadata stays resident), so a VM whose bytecode requires no registry bindings no longer
+  pays for it at startup. The registry still lists the prelude (`IsRegistered`, `TryGetVersion`).
+
 ## [3.0.0-beta29]
 
 ### Added
