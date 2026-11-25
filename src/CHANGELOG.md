@@ -5,7 +5,7 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0-beta30]
 
 ### Changed
 - `Types()` attaches the prelude (`PreludeBindings`) directly instead of through `BindingsRegistry`:
