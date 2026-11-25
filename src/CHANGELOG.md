@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that metadata stays resident), so a VM whose bytecode requires no registry bindings no longer
   pays for it at startup. The registry still lists the prelude (`IsRegistered`, `TryGetVersion`).
 
+### Fixed
+- The compile cache rebuilds modules when a bindings source matched by a glob (`autobind/*.cs`)
+  changes: `CollectBindingsFileDeps` checked each `bindings_sources` entry as a file, so only
+  literal paths were watched, and cached modules kept stale indices of the native functions
+  (a call landed on another binding at runtime)
+
 ## [3.0.0-beta29]
 
 ### Added

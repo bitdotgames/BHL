@@ -182,9 +182,11 @@ public partial class ProjectConf
       if(File.Exists(b.dll))
         yield return b.dll;
 
-      foreach(var src in b.sources)
-        if(File.Exists(src))
-          yield return src;
+      //NOTE: a source may be a glob ('autobind/*.cs'), as LoadBindingsEntry expands it - not a file to check as is
+      foreach(var pattern in b.sources)
+        foreach(var src in BuildUtils.Glob(pattern))
+          if(File.Exists(src))
+            yield return src;
     }
   }
 

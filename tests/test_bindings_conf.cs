@@ -342,6 +342,37 @@ func RegisterBindings(std.bind.Types types) {{
     }
   }
 
+  // Generated bindings are usually listed by a glob ('autobind/*.cs'): each file it matches is a dep
+  [Fact]
+  public void GlobbedBindingSourcesAreCollectedAsFileDeps()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      string a = Path.Combine(dir, "bind_a.cs").Replace('\\', '/');
+      string b = Path.Combine(dir, "bind_b.cs").Replace('\\', '/');
+      File.WriteAllText(a, "//native bindings");
+      File.WriteAllText(b, "//native bindings");
+      File.WriteAllText(Path.Combine(dir, "notes.txt"), "");
+
+      var proj = new ProjectConf();
+      proj.bindings.Add(new BindingsEntryConf
+      {
+        name = "mytest",
+        sources = new List<string> { Path.Combine(dir, "*.cs") }
+      });
+
+      var deps = new List<string>(proj.CollectBindingsFileDeps());
+      deps.Sort(StringComparer.Ordinal);
+
+      Assert.Equal(new List<string> { a, b }, deps);
+    }
+    finally
+    {
+      Directory.Delete(dir, true);
+    }
+  }
+
   [Fact]
   public void ExplicitDllIsNotOverridden()
   {
