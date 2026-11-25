@@ -190,6 +190,40 @@ public class TestModule : BHL_TestBase
     );
   }
 
+  // A file deleted (or renamed) leaves the others' mtimes older than the result: the list of the files tells the build
+  // is stale, the result has no module of it
+  [Fact]
+  public async Task TestIncrementalBuildOfDeletedFile()
+  {
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("a.bhl", "func int a() { return 1 }", ref files);
+    int bidx = NewTestFile("b.bhl", "func int b() { return 2 }", ref files);
+
+    {
+      var exec = new CompilationExecutor();
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, MakeCompileConf(files, use_cache: true)));
+      var vm = new VM(ts, loader);
+      Assert.True(vm.LoadModule("b"));
+    }
+
+    System.IO.File.Delete(files[bidx]);
+    files.RemoveAt(bidx);
+
+    {
+      var exec = new CompilationExecutor();
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, MakeCompileConf(files, use_cache: true)));
+      var vm = new VM(ts, loader);
+      Assert.Equal(1, exec.cache_hits);
+      Assert.Equal(0, exec.cache_miss);
+      Assert.True(vm.LoadModule("a"));
+      Assert.False(vm.LoadModule("b"));
+    }
+  }
+
   [Fact]
   public async Task TestIncrementalBuildOfChangedFiles()
   {

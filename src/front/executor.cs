@@ -217,6 +217,8 @@ public class CompilationExecutor
 
     var args_changed = CheckArgsSignatureFile(conf);
     conf.debug_info_changed = CheckDebugInfoSignatureFile(conf);
+    string files_signature = FilesSignature(conf);
+    bool files_changed = ReadFilesSignature(conf) != files_signature;
 
     //NOTE: bhl.proj/self binary can also silently change compiled content
     var global_deps = new List<string>(conf.global_file_deps);
@@ -225,9 +227,11 @@ public class CompilationExecutor
     if(!string.IsNullOrEmpty(conf.self_file))
       global_deps.Add(conf.self_file);
 
+    //NOTE: the list of the files too: one renamed or deleted keeps the mtimes older than the result
     if(conf.proj.use_cache &&
        !args_changed &&
        !conf.debug_info_changed &&
+       !files_changed &&
        !BuildUtils.NeedToRegen(conf.proj.result_file, conf.files) &&
        !BuildUtils.NeedToRegen(conf.proj.result_file, global_deps)
       )
@@ -365,6 +369,8 @@ public class CompilationExecutor
 
             BuildUtils.Rm(conf.proj.result_file);
             File.Move(tmp_res_file, conf.proj.result_file);
+            //NOTE: after the result only: a failed build keeps the old list, the next run builds again
+            WriteFilesSignature(conf, files_signature);
             return workers;
           })
         .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
@@ -939,6 +945,29 @@ public class CompilationExecutor
     if(changed)
       File.WriteAllText(tmp_args_file, conf.args_signature);
     return changed;
+  }
+
+  //The list of the compiled files of the result (sorted): a file added, renamed or deleted changes it - the mtimes can't
+  //tell (a renamed or deleted file keeps them older than the result)
+  static string FilesSignature(CompileConf conf)
+  {
+    var files = new List<string>(conf.files);
+    files.Sort(StringComparer.Ordinal);
+    return Hash.CRC32(string.Join("\n", files)).ToString("x8");
+  }
+
+  static string FilesSignatureFile(CompileConf conf) =>
+    conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".files";
+
+  static string ReadFilesSignature(CompileConf conf)
+  {
+    var file = FilesSignatureFile(conf);
+    return File.Exists(file) ? File.ReadAllText(file) : null;
+  }
+
+  static void WriteFilesSignature(CompileConf conf, string signature)
+  {
+    File.WriteAllText(FilesSignatureFile(conf), signature);
   }
 
   //NOTE: kept separate from args_signature so this doesn't force a full rebuild on
