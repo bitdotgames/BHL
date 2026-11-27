@@ -207,16 +207,35 @@ public class CsBindingsProgram
     return found.Count == 1 ? found[0].methods["Register"] : null;
   }
 
-  //NOTE: full names of classes some other class hands to types.RegisterBindings()
+  //NOTE: full names of classes some other class hands to types.RegisterBindings(). Resolved
+  //      the same way the interpreter resolves the call, so an ambiguous name is reported as
+  //      ambiguous here too rather than quietly marking every match as registered - which
+  //      would drop a real root and report the leftovers as a cycle
   HashSet<string> RegisteredByOthers()
   {
     var res = new HashSet<string>();
     foreach(var cls in classes.Values)
       foreach(var name in cls.registers)
-        foreach(var match in classes.Values)
-          if(match.full_name == name || match.full_name.EndsWith("." + name))
-            res.Add(match.full_name);
+      {
+        var match = ResolveRegistered(name, $"'{cls.full_name}' registers it");
+        if(match != null)
+          res.Add(match.full_name);
+      }
     return res;
+  }
+
+  //NOTE: a trailing part of the full name is enough, as elsewhere in these sources
+  internal CsClass ResolveRegistered(string name, string whence)
+  {
+    var found = classes.Values
+      .Where(k => k.full_name == name || k.full_name.EndsWith("." + name)).ToList();
+
+    if(found.Count > 1)
+      throw new CsBindingsException(
+        $"C# bindings: '{name}' is ambiguous ({whence}): {string.Join(", ", found.Select(k => k.full_name))}"
+      );
+
+    return found.Count == 1 ? found[0] : null;
   }
 }
 
@@ -1791,14 +1810,9 @@ class CsInterpreter
     if(c.args.Count != 1 || c.args[0].name != null || !(c.args[0].expr is CsNew nw))
       return false;
 
-    var found = prog.classes.Values
-      .Where(k => k.full_name == nw.type || k.full_name.EndsWith("." + nw.type)).ToList();
-    if(found.Count == 0)
+    var target = prog.ResolveRegistered(nw.type, $"registered at {file}:{c.line}");
+    if(target == null)
       return false;
-    if(found.Count > 1)
-      throw Error(c.line, $"'{nw.type}' is ambiguous: {string.Join(", ", found.Select(k => k.full_name))}");
-
-    var target = found[0];
     if(!target.methods.TryGetValue("Register", out var reg))
       throw Error(c.line, $"'{target.full_name}' has no 'Register' method");
 

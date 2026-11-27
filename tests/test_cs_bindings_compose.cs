@@ -107,6 +107,44 @@ public class AppBindings : IUserBindings
     finally { Directory.Delete(dir, true); }
   }
 
+  // the same short name in two namespaces: the entry search resolves registrations the same
+  // way the interpreter does, so this reads as ambiguous rather than as a missing entry
+  [Fact]
+  public void TestAmbiguousRegisteredNameIsReportedAsSuch()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var a = Path.Combine(dir, "a.cs");
+      File.WriteAllText(a, @"
+using bhl;
+namespace one
+{
+[BhlBinding(""compose_one"", ""1.0.0"")]
+public class Shared : IUserBindings { public void Register(Types types) {} }
+}
+");
+      var b = Path.Combine(dir, "b.cs");
+      File.WriteAllText(b, @"
+using bhl;
+namespace two
+{
+[BhlBinding(""compose_two"", ""1.0.0"")]
+public class Shared : IUserBindings { public void Register(Types types) {} }
+}
+");
+      var app = WriteApp(dir, "    types.RegisterBindings(new Shared());");
+
+      var e = Assert.Throws<CsBindingsException>(() => Read(a, b, app));
+      Assert.Contains("is ambiguous", e.Message);
+      Assert.Contains("one.Shared", e.Message);
+      Assert.Contains("two.Shared", e.Message);
+      //NOTE: and names who asked for it, instead of blaming the entry search
+      Assert.Contains("app.AppBindings", e.Message);
+    }
+    finally { Directory.Delete(dir, true); }
+  }
+
   [Fact]
   public void TestSelfRegistrationIsRejected()
   {
