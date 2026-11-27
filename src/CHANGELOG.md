@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   function
 
 ### Changed
+- An included bhl.proj's bindings entries are folded in ahead of the including project's own,
+  so a library registers before whatever depends on it. Only projects mixing their own
+  `bindings` entries with included ones are affected; a legacy `bindings_sources` project has
+  a single entry either way
 - Several classes with a `Register` are allowed when one registers another: the entry is the
   one no other registers. Two unregistered roots are still ambiguous, and a registration cycle
   is reported as such

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using bhl;
 using Xunit;
 
@@ -675,4 +676,36 @@ func RegisterBindings(std.bind.Types types) {{
   }
 
   static string JsonQuote(string s) => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
+  // a library registers before whatever depends on it: the entry order is what the compiler
+  // registers in, and the bytecode's native indices follow it
+  [Fact]
+  public void IncludedBindingsComeBeforeTheRootsOwn()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib_dir = Path.Combine(dir, "lib");
+      Directory.CreateDirectory(lib_dir);
+      File.WriteAllText(Path.Combine(lib_dir, "bhl.proj"), @"{
+        ""name"": ""lib"",
+        ""src_dirs"": [""./""],
+        ""bindings"": [ { ""name"": ""lib_b"", ""sources"": [""./lib_bind.cs""] } ]
+      }");
+      File.WriteAllText(Path.Combine(lib_dir, "lib_bind.cs"), "//nothing to read here");
+
+      File.WriteAllText(Path.Combine(dir, "bhl.proj"), @"{
+        ""includes"": [""./lib/bhl.proj""],
+        ""src_dirs"": [""./""],
+        ""bindings"": [ { ""name"": ""root_b"", ""sources"": [""./root_bind.cs""] } ]
+      }");
+      File.WriteAllText(Path.Combine(dir, "root_bind.cs"), "//nothing to read here");
+
+      var proj = ProjectConf.ReadFromFile(Path.Combine(dir, "bhl.proj"));
+
+      var names = proj.bindings.Where(b => !b.is_legacy).Select(b => b.name).ToList();
+      Assert.Equal(new List<string>() { "lib_b", "root_b" }, names);
+    }
+    finally { Directory.Delete(dir, true); }
+  }
 }

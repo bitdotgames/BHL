@@ -416,6 +416,11 @@ public partial class ProjectConf
     var patterns = proj.includes;
     proj.includes = new List<string>();
 
+    //NOTE: an include's bindings land ahead of this project's own, so a library registers
+    //      before whatever depends on it - the order native symbols are indexed in, which the
+    //      bytecode carries, has to match the order the host registers them in at runtime
+    int insert_at = 0;
+
     foreach(var pattern_raw in patterns)
     {
       string pattern = NormalizePath(anchor_file, pattern_raw);
@@ -514,7 +519,7 @@ public partial class ProjectConf
             b.sources[i] = NormalizePath(included_file, b.sources[i]);
           if(!string.IsNullOrEmpty(b.dll))
             b.dll = NormalizePath(included_file, b.dll);
-          proj.bindings.Add(b);
+          proj.bindings.Insert(insert_at++, b);
         }
       }
 
