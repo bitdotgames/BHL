@@ -146,10 +146,16 @@ public partial class Types : INamedResolver, IProxyTypeCache
     var attr = (BhlBindingAttribute)System.Attribute.GetCustomAttribute(
       bindings.GetType(), typeof(BhlBindingAttribute));
 
-    //NOTE: no attribute means it declares its version itself, if at all
-    if(attr != null)
-      RegisterBindingsVersion(attr.Name, attr.Version);
+    //NOTE: an identity is required - without one nothing can require it, check its version or
+    //      pin its place in the registration order, and a forgotten attribute would look
+    //      exactly like a binding that meant not to have one
+    if(attr == null)
+      throw new System.Exception(
+        $"'{bindings.GetType().FullName}' has no [BhlBinding] - bindings registered this way " +
+        "must declare a name and a version"
+      );
 
+    RegisterBindingsVersion(attr.Name, attr.Version);
     bindings.Register(this);
   }
 

@@ -8,10 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- The C# bindings reader follows `types.RegisterBindings(new LibBindings())`: the class is
-  looked up in the parsed sources rather than through a C# type lookup, its `[BhlBinding]` is
-  declared and its `Register()` is run. One line in a library's dependent now means the same
-  at compile time as at runtime, so a shared library no longer needs its own `bhl.proj` entry
+- The C# bindings reader recognizes `types.RegisterBindings(new LibBindings())` and ignores it:
+  every binding is its own `bhl.proj` entry, so the class named there is loaded by that entry.
+  Without this the call fails to compile, since no C# type lookup of ours can resolve it
 
 ### Fixed
 - A binding registering in a different order than the bytecode was built with is now a hard
@@ -24,18 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so a library registers before whatever depends on it. Only projects mixing their own
   `bindings` entries with included ones are affected; a legacy `bindings_sources` project has
   a single entry either way
-- Several classes with a `Register` are allowed when one registers another: the entry is the
-  one no other registers. Two unregistered roots are still ambiguous, and a registration cycle
-  is reported as such
+- `Types.RegisterBindings` requires a `[BhlBinding]`: without one nothing can require the
+  binding, check its version or pin its place in the registration order, and a forgotten
+  attribute looked exactly like a binding that meant not to have one
 - A bindings entry supplies exactly one binding, the one it is named after. Sources declaring
   several now ask for an entry each, instead of `name` matching whichever one it liked
 - The duplicate check is on the declared names rather than the entry names, so the same binding
   arriving through two entries is caught
-- A binding's declared version is only recorded if the entry actually reaches it, the same as
-  at runtime - a class sitting unregistered in the sources no longer lands in the bytecode's
-  required list
-- Registering a class that isn't in the entry's own sources is a no-op at compile time: it
-  belongs to another entry, which loads it itself
 
 ## [3.0.0-beta32]
 

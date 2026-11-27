@@ -84,15 +84,14 @@ public class TestExplicitBindings
     Assert.Equal("1.2.0", version);
   }
 
-  //NOTE: without an attribute there's nothing to record, but Register still runs
+  //NOTE: a forgotten attribute would otherwise look like a binding that meant not to have one
   [Fact]
-  public void TestRegisterBindingsWithoutAttributeStillRegisters()
+  public void TestRegisterBindingsWithoutAttributeIsRejected()
   {
     var ts = new Types();
-    ts.RegisterBindings(new StaleModBindings());
 
-    Assert.False(ts.TryGetBindingsVersion(ModName, out _));
-    Assert.NotNull(ts.FindRegisteredModule(ModName));
+    var e = Assert.Throws<Exception>(() => ts.RegisterBindings(new StaleModBindings()));
+    Assert.Contains("has no [BhlBinding]", e.Message);
   }
 
   [Fact]

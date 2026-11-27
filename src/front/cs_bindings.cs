@@ -148,35 +148,7 @@ public class CsBindingsException : Exception
 
 public class CsBindingsProgram
 {
-  //NOTE: what the entry reaches, not every [BhlBinding] lying around in the sources - a class
-  //      nothing registers contributes nothing, the same as at runtime
-  public List<(string name, string version)> declared
-  {
-    get
-    {
-      var res = new List<(string name, string version)>();
-      var entry = FindEntryClass();
-      if(entry != null)
-        CollectDeclared(entry, res, new HashSet<string>());
-      return res;
-    }
-  }
-
-  void CollectDeclared(CsClass cls, List<(string name, string version)> res, HashSet<string> seen)
-  {
-    if(!seen.Add(cls.full_name))
-      return;
-
-    if(cls.declared_name != null)
-      res.Add((cls.declared_name, cls.declared_version));
-
-    foreach(var name in cls.registers)
-    {
-      var target = ResolveRegistered(name, $"'{cls.full_name}' registers it");
-      if(target != null)
-        CollectDeclared(target, res, seen);
-    }
-  }
+  public List<(string name, string version)> declared = new List<(string name, string version)>();
 
   //NOTE: by full name; partial classes in several files are one class
   internal Dictionary<string, CsClass> classes = new Dictionary<string, CsClass>();
@@ -220,57 +192,13 @@ public class CsBindingsProgram
   {
     var found = candidates.Where(c => c.methods.ContainsKey("Register")).ToList();
     if(found.Count > 1)
-    {
-      var registered = RegisteredByOthers();
-      var roots = found.Where(c => !registered.Contains(c.full_name)).ToList();
-
-      if(roots.Count == 0)
-        throw new CsBindingsException(
-          $"C# bindings: every {what} with a 'Register' is registered by another one - " +
-          "there's a cycle, so there's no entry"
-        );
-
-      if(roots.Count > 1)
-        throw new CsBindingsException(
-          $"C# bindings: 'Register' is declared in more than one {what} ({string.Join(", ", roots.Select(c => c.full_name))}) - " +
-          "the entry is the one no other registers, via types.RegisterBindings(new ...)"
-        );
-
-      found = roots;
-    }
-    return found.Count == 1 ? found[0] : null;
-  }
-
-  //NOTE: full names of classes some other class hands to types.RegisterBindings(). Resolved
-  //      the same way the interpreter resolves the call, so an ambiguous name is reported as
-  //      ambiguous here too rather than quietly marking every match as registered - which
-  //      would drop a real root and report the leftovers as a cycle
-  HashSet<string> RegisteredByOthers()
-  {
-    var res = new HashSet<string>();
-    foreach(var cls in classes.Values)
-      foreach(var name in cls.registers)
-      {
-        var match = ResolveRegistered(name, $"'{cls.full_name}' registers it");
-        if(match != null)
-          res.Add(match.full_name);
-      }
-    return res;
-  }
-
-  //NOTE: a trailing part of the full name is enough, as elsewhere in these sources
-  internal CsClass ResolveRegistered(string name, string whence)
-  {
-    var found = classes.Values
-      .Where(k => k.full_name == name || k.full_name.EndsWith("." + name)).ToList();
-
-    if(found.Count > 1)
       throw new CsBindingsException(
-        $"C# bindings: '{name}' is ambiguous ({whence}): {string.Join(", ", found.Select(k => k.full_name))}"
+        $"C# bindings: 'Register' is declared in more than one {what} ({string.Join(", ", found.Select(c => c.full_name))}) - " +
+        "one bindings entry is one binding, give each its own entry"
       );
-
     return found.Count == 1 ? found[0] : null;
   }
+
 }
 
 ///////////////////////////////////////////////////
@@ -750,10 +678,6 @@ class CsClass
   public Dictionary<string, CsMethod> methods = new Dictionary<string, CsMethod>();
   //NOTE: types named in 'RegisterBindings(new X())', collected while parsing so the entry
   //      can be told from what it registers without running anything
-  public List<string> registers = new List<string>();
-  //NOTE: its own [BhlBinding], if any
-  public string declared_name;
-  public string declared_version;
 }
 
 class CsMethod
@@ -788,20 +712,6 @@ class CsParser
   int pos;
   readonly List<string> namespaces = new List<string>();
   CsClass cls;
-
-  //NOTE: records 'types.RegisterBindings(new X())' on the class being parsed, so the entry can
-  //      be told apart from what it registers without running anything
-  void NoteRegisterBindings(CsCall call)
-  {
-    if(cls == null)
-      return;
-    if(!(call.target is CsMember m) || m.name != "RegisterBindings")
-      return;
-    if(call.args.Count != 1 || !(call.args[0].expr is CsNew nw))
-      return;
-
-    cls.registers.Add(nw.type);
-  }
 
   public CsParser(string file, List<CsToken> toks, CsBindingsProgram prog)
   {
@@ -951,8 +861,7 @@ class CsParser
         continue;
       if(a.args.Count != 2)
         throw new CsBindingsException(file, a.line, "[BhlBinding] expects (name, version) string literals");
-      cls.declared_name = (string)a.args[0];
-      cls.declared_version = (string)a.args[1];
+      prog.declared.Add(((string)a.args[0], (string)a.args[1]));
     }
 
     //NOTE: of the base classes and interfaces only IUserBindings matters (see Run)
@@ -1375,11 +1284,7 @@ class CsParser
       if(Accept("."))
         e = new CsMember() { line = Peek(-1).line, target = e, name = ExpectIdent() };
       else if(Is("("))
-      {
-        var call = new CsCall() { line = Peek().line, target = e, args = ParseArgs() };
-        NoteRegisterBindings(call);
-        e = call;
-      }
+        e = new CsCall() { line = Peek().line, target = e, args = ParseArgs() };
       else
         break;
     }
@@ -1837,41 +1742,20 @@ class CsInterpreter
     throw Error(m.line, $"'{target.GetType().Name}' has no member '{m.name}'");
   }
 
-  //NOTE: 'types.RegisterBindings(new Foo())' is followed rather than evaluated: Foo is a class
-  //      of the parsed sources, so its [BhlBinding] is declared and its Register() is run here.
-  //      That makes one registration call mean the same at compile time as at runtime, instead
-  //      of a library's bindings having to be listed in bhl.proj separately
-  bool TryEvalRegisterBindings(CsCall c, Dictionary<string, object> scope)
+  //NOTE: every binding is its own bhl.proj entry, so the class named here is always loaded
+  //      by that entry - there's nothing to do at compile time, and the real call still runs
+  //      at runtime. Recognized rather than evaluated because 'new Foo()' names a class no C#
+  //      type lookup of ours can resolve
+  static bool IsRegisterBindingsCall(CsCall c)
   {
-    if(!(c.target is CsMember m) || m.name != "RegisterBindings")
-      return false;
-    if(c.args.Count != 1 || c.args[0].name != null || !(c.args[0].expr is CsNew nw))
-      return false;
-
-    //NOTE: not in these sources means it's supplied by another bindings entry, which loads it
-    //      on its own - nothing to follow here, and at runtime the real call still runs
-    var target = prog.ResolveRegistered(nw.type, $"registered at {file}:{c.line}");
-    if(target == null)
-      return true;
-    if(!target.methods.TryGetValue("Register", out var reg))
-      throw Error(c.line, $"'{target.full_name}' has no 'Register' method");
-
-    if(!registering.Add(target.full_name))
-      throw Error(c.line, $"'{target.full_name}' registers itself, directly or through another");
-
-    Call(reg, new List<object>() { Eval(m.target, scope) }, c.line);
-    registering.Remove(target.full_name);
-
-    return true;
+    return c.target is CsMember m && m.name == "RegisterBindings" &&
+           c.args.Count == 1 && c.args[0].name == null && c.args[0].expr is CsNew;
   }
-
-  HashSet<string> registering = new HashSet<string>();
 
   object EvalCall(CsCall c, Dictionary<string, object> scope)
   {
-    //NOTE: before the args are evaluated - 'new SomeBindings()' names a class of these very
-    //      sources, which no C# type lookup can resolve
-    if(TryEvalRegisterBindings(c, scope))
+    //NOTE: before the args are evaluated, 'new Foo()' would fail to resolve
+    if(IsRegisterBindingsCall(c))
       return null;
 
     var args = EvalArgs(c.args, scope);
