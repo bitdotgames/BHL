@@ -12,6 +12,7 @@ using Xunit;
 public class TestExplicitBindings
 {
   public const string ModName = "test_explicit_mod_4f91";
+  public const string ModName2 = "test_explicit_mod_b30c";
 
   [BhlBinding(ModName, "1.2.0")]
   public class ModBindings : IUserBindings
@@ -25,6 +26,12 @@ public class TestExplicitBindings
     public void Register(Types ts) => ts.RegisterModule(new ModuleDeclared(ModName));
   }
 
+  [BhlBinding(ModName2, "1.0.0")]
+  public class ModBindings2 : IUserBindings
+  {
+    public void Register(Types ts) => ts.RegisterModule(new ModuleDeclared(ModName2));
+  }
+
   static string MakeTempDir()
   {
     string dir = Path.Combine(Path.GetTempPath(), "bhl_explicit_bindings_" + Guid.NewGuid().ToString("N"));
@@ -32,10 +39,13 @@ public class TestExplicitBindings
     return dir;
   }
 
-  static async Task<(byte[] bytes, string dir)> CompileImporter()
+  static Task<(byte[] bytes, string dir)> CompileImporter() => CompileImporter(false);
+
+  static async Task<(byte[] bytes, string dir)> CompileImporter(bool two)
   {
     var dir = MakeTempDir();
-    File.WriteAllText(Path.Combine(dir, "importer.bhl"), $"import \"{ModName}\"\n");
+    File.WriteAllText(Path.Combine(dir, "importer.bhl"),
+      two ? $"import \"{ModName}\"\nimport \"{ModName2}\"\n" : $"import \"{ModName}\"\n");
 
     var proj = new ProjectConf();
     proj.src_dirs.Add(dir);
@@ -46,6 +56,8 @@ public class TestExplicitBindings
     proj.use_cache = false;
     proj.verbosity = 0;
     proj.bindings.Add(new BindingsEntryConf { name = ModName });
+    if(two)
+      proj.bindings.Add(new BindingsEntryConf { name = ModName2 });
     proj.Setup();
 
     var conf = new CompileConf();
@@ -124,5 +136,42 @@ public class TestExplicitBindings
     {
       Directory.Delete(dir, true);
     }
+  }
+
+  // a native symbol's index is its registration position and the bytecode carries that index,
+  // so registering in a different order would silently call the wrong function
+  [Fact]
+  public async Task TestRegisteringInADifferentOrderIsRejected()
+  {
+    var (bytes, dir) = await CompileImporter(two: true);
+    try
+    {
+      var ts = new Types();
+      //NOTE: bhl.proj lists ModName first, so this is backwards
+      ts.RegisterBindings(new ModBindings2());
+      ts.RegisterBindings(new ModBindings());
+
+      var loader = new ModuleLoader(ts, new MemoryStream(bytes));
+
+      var e = Assert.Throws<Exception>(() => BindingsRegistry.EnsureRequiredBindings(ts, loader));
+      Assert.Contains("different order", e.Message);
+    }
+    finally { Directory.Delete(dir, true); }
+  }
+
+  [Fact]
+  public async Task TestRegisteringInTheSameOrderIsFine()
+  {
+    var (bytes, dir) = await CompileImporter(two: true);
+    try
+    {
+      var ts = new Types();
+      ts.RegisterBindings(new ModBindings());
+      ts.RegisterBindings(new ModBindings2());
+
+      var loader = new ModuleLoader(ts, new MemoryStream(bytes));
+      BindingsRegistry.EnsureRequiredBindings(ts, loader);
+    }
+    finally { Directory.Delete(dir, true); }
   }
 }

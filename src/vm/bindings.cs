@@ -249,6 +249,35 @@ public static class BindingsRegistry
 
       RegisterForType(ts, name);
     }
+
+    CheckRegistrationOrder(ts, loader);
+  }
+
+  //NOTE: a native symbol's index into its module is its registration position, and that index
+  //      is what the bytecode carries - so bindings registering in a different order than they
+  //      did at compile time makes a call land on a different function, silently. The bytecode
+  //      records the order it was built with; this is where the two are compared
+  static void CheckRegistrationOrder(Types ts, ModuleLoader loader)
+  {
+    var expected = loader.RequiredBindings.Select(r => r.name).ToList();
+    if(expected.Count < 2)
+      return;
+
+    var wanted = new HashSet<string>(expected);
+    var actual = ts.BindingsOrder.Where(n => wanted.Contains(n)).ToList();
+
+    for(int i = 0; i < expected.Count && i < actual.Count; ++i)
+    {
+      if(expected[i] == actual[i])
+        continue;
+
+      throw new Exception(
+        $"Bindings registered in a different order than the bytecode was built with: " +
+        $"expected {string.Join(", ", expected)}, got {string.Join(", ", actual)} - " +
+        "native function indices depend on it, so the order a binding's Register() is called " +
+        "in must match the order of the 'bindings' entries in bhl.proj"
+      );
+    }
   }
 
   static void CheckVersion(string name, string available, string required)

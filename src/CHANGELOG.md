@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   declared and its `Register()` is run. One line in a library's dependent now means the same
   at compile time as at runtime, so a shared library no longer needs its own `bhl.proj` entry
 
+### Fixed
+- A binding registering in a different order than the bytecode was built with is now a hard
+  failure at load. A native symbol's index into its module is its registration position and
+  that index is what the bytecode carries, so a different order silently called a different
+  function
+
 ### Changed
 - Several classes with a `Register` are allowed when one registers another: the entry is the
   one no other registers. Two unregistered roots are still ambiguous, and a registration cycle

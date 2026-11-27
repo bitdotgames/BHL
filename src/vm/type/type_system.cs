@@ -153,9 +153,15 @@ public partial class Types : INamedResolver, IProxyTypeCache
     bindings.Register(this);
   }
 
+  //NOTE: the order matters, it's the order native symbols were indexed in - see
+  //      BindingsRegistry.EnsureRequiredBindings
+  List<string> bindings_order = new List<string>();
+  public IReadOnlyList<string> BindingsOrder => bindings_order;
+
   public void RegisterBindingsVersion(string name, string version)
   {
     bindings_versions.Add(name, version);
+    bindings_order.Add(name);
   }
 
   public bool TryGetBindingsVersion(string name, out string version)
