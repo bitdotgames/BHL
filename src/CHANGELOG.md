@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Several classes with a `Register` are allowed when one registers another: the entry is the
   one no other registers. Two unregistered roots are still ambiguous, and a registration cycle
   is reported as such
+- A bindings entry supplies exactly one binding, the one it is named after. Sources declaring
+  several now ask for an entry each, instead of `name` matching whichever one it liked
+- The duplicate check is on the declared names rather than the entry names, so the same binding
+  arriving through two entries is caught
+- A binding's declared version is only recorded if the entry actually reaches it, the same as
+  at runtime - a class sitting unregistered in the sources no longer lands in the bytecode's
+  required list
+- Registering a class that isn't in the entry's own sources is a no-op at compile time: it
+  belongs to another entry, which loads it itself
 
 ## [3.0.0-beta32]
 

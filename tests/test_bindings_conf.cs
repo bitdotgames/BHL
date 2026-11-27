@@ -387,4 +387,42 @@ func RegisterBindings(std.bind.Types types) {{
 
     Assert.EndsWith("my_custom_output.bhc", proj.bindings[0].dll);
   }
+
+  // an entry names one binding, so its sources must declare exactly that one
+  [Fact]
+  public void TestEntryDeclaringTwoBindingsIsRejected()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var path = Path.Combine(dir, "two.cs");
+      File.WriteAllText(path, @"
+using bhl;
+namespace two_test
+{
+[BhlBinding(""conf_two_a"", ""1.0.0"")]
+public class A : IUserBindings
+{
+  public void Register(Types types) { types.RegisterBindings(new B()); }
+}
+
+[BhlBinding(""conf_two_b"", ""1.0.0"")]
+public class B : IUserBindings
+{
+  public void Register(Types types) {}
+}
+}
+");
+      var proj = new ProjectConf();
+      proj.tmp_dir = dir;
+      proj.use_cache = false;
+      proj.bindings.Add(new BindingsEntryConf { name = "conf_two_a", sources = new List<string> { path } });
+      proj.Setup();
+
+      var e = Assert.Throws<Exception>(() => proj.LoadBindings());
+      Assert.Contains("declares more than one binding", e.Message);
+      Assert.Contains("give each its own entry", e.Message);
+    }
+    finally { Directory.Delete(dir, true); }
+  }
 }

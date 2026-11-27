@@ -148,7 +148,35 @@ public class CsBindingsException : Exception
 
 public class CsBindingsProgram
 {
-  public List<(string name, string version)> declared = new List<(string name, string version)>();
+  //NOTE: what the entry reaches, not every [BhlBinding] lying around in the sources - a class
+  //      nothing registers contributes nothing, the same as at runtime
+  public List<(string name, string version)> declared
+  {
+    get
+    {
+      var res = new List<(string name, string version)>();
+      var entry = FindEntryClass();
+      if(entry != null)
+        CollectDeclared(entry, res, new HashSet<string>());
+      return res;
+    }
+  }
+
+  void CollectDeclared(CsClass cls, List<(string name, string version)> res, HashSet<string> seen)
+  {
+    if(!seen.Add(cls.full_name))
+      return;
+
+    if(cls.declared_name != null)
+      res.Add((cls.declared_name, cls.declared_version));
+
+    foreach(var name in cls.registers)
+    {
+      var target = ResolveRegistered(name, $"'{cls.full_name}' registers it");
+      if(target != null)
+        CollectDeclared(target, res, seen);
+    }
+  }
 
   //NOTE: by full name; partial classes in several files are one class
   internal Dictionary<string, CsClass> classes = new Dictionary<string, CsClass>();
@@ -169,10 +197,10 @@ public class CsBindingsProgram
   //      IUserBindings (it may combine several generated modules), else the only 'Register'
   public void Run(Types ts)
   {
-    var entry = FindEntry(classes.Values.Where(c => c.is_user_bindings), "class implementing IUserBindings") ??
-                FindEntry(classes.Values, "class");
-    if(entry == null)
+    var entry_cls = FindEntryClass();
+    if(entry_cls == null)
       throw new CsBindingsException("C# bindings: no 'Register' method found in the sources");
+    var entry = entry_cls.methods["Register"];
 
     foreach(var d in declared)
       ts.RegisterBindingsVersion(d.name, d.version);
@@ -182,7 +210,13 @@ public class CsBindingsProgram
 
   //NOTE: several of them are expected once one registers another, so the entry is the one
   //      nobody registers - the root of the graph the RegisterBindings calls describe
-  CsMethod FindEntry(IEnumerable<CsClass> candidates, string what)
+  CsClass FindEntryClass()
+  {
+    return FindEntry(classes.Values.Where(c => c.is_user_bindings), "class implementing IUserBindings") ??
+           FindEntry(classes.Values, "class");
+  }
+
+  CsClass FindEntry(IEnumerable<CsClass> candidates, string what)
   {
     var found = candidates.Where(c => c.methods.ContainsKey("Register")).ToList();
     if(found.Count > 1)
@@ -204,7 +238,7 @@ public class CsBindingsProgram
 
       found = roots;
     }
-    return found.Count == 1 ? found[0].methods["Register"] : null;
+    return found.Count == 1 ? found[0] : null;
   }
 
   //NOTE: full names of classes some other class hands to types.RegisterBindings(). Resolved
@@ -717,6 +751,9 @@ class CsClass
   //NOTE: types named in 'RegisterBindings(new X())', collected while parsing so the entry
   //      can be told from what it registers without running anything
   public List<string> registers = new List<string>();
+  //NOTE: its own [BhlBinding], if any
+  public string declared_name;
+  public string declared_version;
 }
 
 class CsMethod
@@ -914,7 +951,8 @@ class CsParser
         continue;
       if(a.args.Count != 2)
         throw new CsBindingsException(file, a.line, "[BhlBinding] expects (name, version) string literals");
-      prog.declared.Add(((string)a.args[0], (string)a.args[1]));
+      cls.declared_name = (string)a.args[0];
+      cls.declared_version = (string)a.args[1];
     }
 
     //NOTE: of the base classes and interfaces only IUserBindings matters (see Run)
@@ -1810,9 +1848,11 @@ class CsInterpreter
     if(c.args.Count != 1 || c.args[0].name != null || !(c.args[0].expr is CsNew nw))
       return false;
 
+    //NOTE: not in these sources means it's supplied by another bindings entry, which loads it
+    //      on its own - nothing to follow here, and at runtime the real call still runs
     var target = prog.ResolveRegistered(nw.type, $"registered at {file}:{c.line}");
     if(target == null)
-      return false;
+      return true;
     if(!target.methods.TryGetValue("Register", out var reg))
       throw Error(c.line, $"'{target.full_name}' has no 'Register' method");
 

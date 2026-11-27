@@ -145,6 +145,46 @@ public class Shared : IUserBindings { public void Register(Types types) {} }
     finally { Directory.Delete(dir, true); }
   }
 
+  // a class nothing registers contributes nothing, the same as at runtime
+  [Fact]
+  public void TestUnreachedBindingIsNotDeclared()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var lib = WriteLib(dir);
+      var app = WriteApp(dir, "    types.ns.Define(new FuncSymbolNative(new Origin(), \"noop\", Types.Int, null));");
+
+      //NOTE: two roots would be ambiguous, so give the library a reason not to be one
+      File.WriteAllText(lib, File.ReadAllText(lib).Replace(": IUserBindings", ""));
+
+      var ts = Read(lib, app);
+
+      Assert.True(ts.TryGetBindingsVersion("compose_app", out _));
+      //NOTE: present in the sources, reached by nothing
+      Assert.False(ts.TryGetBindingsVersion("compose_lib", out _));
+      Assert.Null(ts.ns.Resolve("lib_answer"));
+    }
+    finally { Directory.Delete(dir, true); }
+  }
+
+  // a library supplied by its own bhl.proj entry isn't in these sources - its entry loads it,
+  // so there's nothing to follow here
+  [Fact]
+  public void TestRegisteringAClassFromAnotherEntryIsSkipped()
+  {
+    var dir = MakeTempDir();
+    try
+    {
+      var app = WriteApp(dir, "    types.RegisterBindings(new elsewhere.OtherBindings());");
+
+      var ts = Read(app);
+
+      Assert.True(ts.TryGetBindingsVersion("compose_app", out _));
+    }
+    finally { Directory.Delete(dir, true); }
+  }
+
   [Fact]
   public void TestSelfRegistrationIsRejected()
   {

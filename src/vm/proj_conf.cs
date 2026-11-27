@@ -643,15 +643,32 @@ public partial class ProjectConf
       if(declared.Count == 0)
         throw new Exception($"Bindings entry '{bindings[i].name}' does not declare a version");
 
-      //NOTE: catches a stale/typo'd `name` early
-      if(!declared.Any(d => d.name == bindings[i].name))
+      //NOTE: one entry supplies one binding, so that `name` means something - several of them
+      //      under one entry leaves no way to say which one it is, and lets the same binding
+      //      arrive twice through two entries without the duplicate check noticing
+      if(declared.Count > 1)
         throw new Exception(
-          $"Bindings entry '{bindings[i].name}' does not match its actual declared name(s) " +
-          $"({string.Join(", ", declared.Select(d => d.name))}) - check bhl.proj's 'name' field"
+          $"Bindings entry '{bindings[i].name}' declares more than one binding " +
+          $"({string.Join(", ", declared.Select(d => d.name))}) - give each its own entry"
+        );
+
+      //NOTE: catches a stale/typo'd `name` early
+      if(declared[0].name != bindings[i].name)
+        throw new Exception(
+          $"Bindings entry '{bindings[i].name}' is actually '{declared[0].name}' - " +
+          "check bhl.proj's 'name' field"
         );
 
       versions.AddRange(declared);
     }
+
+    //NOTE: on the declared names rather than the entry names - what matters is a binding
+    //      arriving twice, which would otherwise surface as a raw dictionary-key exception
+    //      deep inside Types.RegisterBindingsVersion
+    var seen = new HashSet<string>();
+    foreach(var v in versions)
+      if(!seen.Add(v.name))
+        throw new Exception($"Bindings '{v.name}' is supplied by more than one entry");
 
     IUserBindings combined =
       loaded.Count == 0 ? new EmptyUserBindings() :
