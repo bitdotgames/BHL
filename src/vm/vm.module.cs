@@ -122,7 +122,7 @@ public partial class VM : INamedResolver
   public Action<Module> OnModuleLoaded;
 
   //NOTE: for registering a native module into an already-constructed VM (e.g. after
-  //      BindingsRegistry.RegisterRequiredBindings adds it to types.modules post-hoc) -
+  //      BindingsRegistry.EnsureRequiredBindings adds it to types.modules post-hoc) -
   //      the ctor only mirrors types.modules into this VM's own registry once, at
   //      construction time, so anything added to types.modules afterward needs this
   public void RegisterModule(ModuleDeclared decl)

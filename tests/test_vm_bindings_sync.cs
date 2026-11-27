@@ -9,7 +9,7 @@ using Xunit;
 // UnityBHL's BHL.cs, which creates an empty VM and attaches bytecode/bindings later) only
 // gets types.modules mirrored into its OWN module registry once, at construction time (see
 // VM's ctor in vm.cs). A native module registered onto types.modules AFTERWARD (e.g. via
-// BindingsRegistry.RegisterRequiredBindings) is invisible to VM.FindModule unless also synced
+// BindingsRegistry.EnsureRequiredBindings) is invisible to VM.FindModule unless also synced
 // in explicitly via the new public VM.RegisterModule(ModuleDeclared) - see vm.module.cs.
 public class TestVMBindingsSync
 {
@@ -73,7 +73,7 @@ public class TestVMBindingsSync
       //NOTE: mirrors BHL.cs's DefaultVMCreator.MakeVM() - VM built before any bindings exist
       var vm = new VM();
       var loader = new ModuleLoader(vm.types, new MemoryStream(bytes));
-      BindingsRegistry.RegisterRequiredBindings(vm.types, loader);
+      BindingsRegistry.EnsureRequiredBindings(vm.types, loader);
       vm.Loader = loader;
 
       Assert.Throws<Exception>(() => vm.LoadModule("importer"));
@@ -92,7 +92,7 @@ public class TestVMBindingsSync
     {
       var vm = new VM();
       var loader = new ModuleLoader(vm.types, new MemoryStream(bytes));
-      BindingsRegistry.RegisterRequiredBindings(vm.types, loader);
+      BindingsRegistry.EnsureRequiredBindings(vm.types, loader);
 
       foreach(var (name, _) in loader.RequiredBindings)
       {

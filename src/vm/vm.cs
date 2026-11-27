@@ -123,13 +123,13 @@ public partial class VM : INamedResolver
 
   //NOTE: the runtime-only counterpart to CompilationExecutor.CompileAndLoadVM - no compiler
   //      frontend involved, just a compiled bundle's raw bytes. Registers whatever native
-  //      bindings the bundle declares as required (see BindingsRegistry.RegisterRequiredBindings)
+  //      bindings the bundle declares as required (see BindingsRegistry.EnsureRequiredBindings)
   //      before constructing the VM, since VM's own ctor snapshots types.modules as-is
   public static VM FromBytecode(Stream bytecode, Types types = null)
   {
     types ??= new Types();
     var loader = new ModuleLoader(types, bytecode);
-    BindingsRegistry.RegisterRequiredBindings(types, loader);
+    BindingsRegistry.EnsureRequiredBindings(types, loader);
     return new VM(types, loader);
   }
 

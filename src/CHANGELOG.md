@@ -5,6 +5,19 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `Types.RegisterBindings(IUserBindings)`: attaches bindings the caller already holds, reading
+  `[BhlBinding]` off that one instance's type. No domain scan, no `Activator` - under IL2CPP a
+  scan materializes metadata that is never released
+
+### Changed
+- `BindingsRegistry.RegisterRequiredBindings` is now `EnsureRequiredBindings`: whatever `Types`
+  already carries is only version checked, and the registry is consulted only for what's left.
+  A host registering all of its bindings explicitly never triggers the scan; drivers with no
+  compile-time knowledge of the binding classes keep working as before
+
 ## [3.0.0-beta31]
 
 ### Fixed

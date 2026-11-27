@@ -103,8 +103,7 @@ public partial class Types : INamedResolver, IProxyTypeCache
 
     CopyFromStaticModule();
 
-    RegisterBindingsVersion(BindingsRegistry.PreludeName, PreludeBindings.Version);
-    new PreludeBindings().Register(this);
+    RegisterBindings(new PreludeBindings());
   }
 
   public bool IsImported(ModuleDeclared d)
@@ -137,6 +136,21 @@ public partial class Types : INamedResolver, IProxyTypeCache
   {
     modules.TryGetValue(name, out var m);
     return m;
+  }
+
+  //NOTE: attaches bindings the caller already holds, instead of having BindingsRegistry find
+  //      them by name. Only the instance's own type is reflected, for its [BhlBinding] - no
+  //      domain scan, which under IL2CPP materializes metadata that is never released
+  public void RegisterBindings(IUserBindings bindings)
+  {
+    var attr = (BhlBindingAttribute)System.Attribute.GetCustomAttribute(
+      bindings.GetType(), typeof(BhlBindingAttribute));
+
+    //NOTE: no attribute means it declares its version itself, if at all
+    if(attr != null)
+      RegisterBindingsVersion(attr.Name, attr.Version);
+
+    bindings.Register(this);
   }
 
   public void RegisterBindingsVersion(string name, string version)

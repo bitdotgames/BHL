@@ -188,7 +188,7 @@ public static class BindingsRegistry
 
   //NOTE: instantiates and fans out to everything discovered - for a driver with no
   //      compile-time knowledge of which bindings classes exist (e.g. a Unity Editor
-  //      integration), unlike RegisterRequiredBindings' name-filtered lookup. Excludes
+  //      integration), unlike EnsureRequiredBindings' name-filtered lookup. Excludes
   //      prelude, since every Types() already attaches that one itself
   public static IUserBindings CreateCombined()
   {
@@ -223,30 +223,45 @@ public static class BindingsRegistry
     return scratch.TryGetBindingsVersion(name, out version);
   }
 
-  //NOTE: registers matches for loader.RequiredBindings into `ts` - a missing binding or
-  //      an incompatible version is a hard failure here, not a silent skip
-  public static void RegisterRequiredBindings(Types ts, ModuleLoader loader)
+  //NOTE: makes sure `ts` carries everything the bytecode declares as required. Anything the
+  //      caller already attached itself - via Types.RegisterBindings - is only version checked,
+  //      so a host that registers all of its bindings explicitly never reaches the registry and
+  //      never pays for its scan. Only what's left over is looked up by name and instantiated,
+  //      which keeps editor and tooling drivers working without any registration code
+  public static void EnsureRequiredBindings(Types ts, ModuleLoader loader)
   {
     foreach(var (name, required_version) in loader.RequiredBindings)
     {
+      if(ts.TryGetBindingsVersion(name, out var registered_version))
+      {
+        CheckVersion(name, registered_version, required_version);
+        continue;
+      }
+
       if(!All.TryGetValue(name, out var match))
         throw new Exception(
-          $"Required bindings '{name}' not found - no IUserBindings declared " +
+          $"Required bindings '{name}' not found - neither registered on Types " +
+          $"(see Types.RegisterBindings) nor discoverable as an IUserBindings declared " +
           $"under that name (renamed? assembly not loaded?)"
         );
 
-      if(!IsVersionCompatible(match.version, required_version))
-        throw new Exception(
-          $"Bindings '{name}' version incompatible: required {required_version}, " +
-          $"but {match.version} is registered"
-        );
+      CheckVersion(name, match.version, required_version);
 
       RegisterForType(ts, name);
     }
   }
 
+  static void CheckVersion(string name, string available, string required)
+  {
+    if(!IsVersionCompatible(available, required))
+      throw new Exception(
+        $"Bindings '{name}' version incompatible: required {required}, " +
+        $"but {available} is registered"
+      );
+  }
+
   //NOTE: instantiates a discovered entry, injects its version into `ts`, and runs its
-  //      Register() - no version-compatibility check, unlike RegisterRequiredBindings.
+  //      Register() - no version-compatibility check, unlike EnsureRequiredBindings.
   //      For entries that are unconditionally needed (e.g. Types()'s own prelude) rather
   //      than checked against a compiled .bhc's required version
   public static void RegisterForType(Types ts, string name)

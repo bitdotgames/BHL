@@ -605,7 +605,7 @@ public partial class ProjectConf
   //      run in list order for determinism. The returned UserBindingsWithInfo.info
   //      (discovered per entry, see DiscoverDeclaredBindings) is embedded into the compiled
   //      .bhc so an incompatible version at load time is a clear failure instead of a
-  //      confusing symbol-resolution one (BindingsRegistry.RegisterRequiredBindings)
+  //      confusing symbol-resolution one (BindingsRegistry.EnsureRequiredBindings)
   public IUserBindings LoadBindings()
   {
     var loaded = bindings.Select(LoadBindingsEntry).ToList();
