@@ -180,15 +180,43 @@ public class CsBindingsProgram
     new CsInterpreter(this).Call(entry, new List<object>() { ts }, entry.line);
   }
 
-  static CsMethod FindEntry(IEnumerable<CsClass> candidates, string what)
+  //NOTE: several of them are expected once one registers another, so the entry is the one
+  //      nobody registers - the root of the graph the RegisterBindings calls describe
+  CsMethod FindEntry(IEnumerable<CsClass> candidates, string what)
   {
-    var found = candidates.Where(c => c.methods.ContainsKey("Register")).Select(c => c.methods["Register"]).ToList();
+    var found = candidates.Where(c => c.methods.ContainsKey("Register")).ToList();
     if(found.Count > 1)
-      throw new CsBindingsException(
-        $"C# bindings: 'Register' is declared in more than one {what} ({string.Join(", ", found.Select(m => m.cls.full_name))}) - " +
-        "the entry is 'Register' of a single class implementing IUserBindings"
-      );
-    return found.Count == 1 ? found[0] : null;
+    {
+      var registered = RegisteredByOthers();
+      var roots = found.Where(c => !registered.Contains(c.full_name)).ToList();
+
+      if(roots.Count == 0)
+        throw new CsBindingsException(
+          $"C# bindings: every {what} with a 'Register' is registered by another one - " +
+          "there's a cycle, so there's no entry"
+        );
+
+      if(roots.Count > 1)
+        throw new CsBindingsException(
+          $"C# bindings: 'Register' is declared in more than one {what} ({string.Join(", ", roots.Select(c => c.full_name))}) - " +
+          "the entry is the one no other registers, via types.RegisterBindings(new ...)"
+        );
+
+      found = roots;
+    }
+    return found.Count == 1 ? found[0].methods["Register"] : null;
+  }
+
+  //NOTE: full names of classes some other class hands to types.RegisterBindings()
+  HashSet<string> RegisteredByOthers()
+  {
+    var res = new HashSet<string>();
+    foreach(var cls in classes.Values)
+      foreach(var name in cls.registers)
+        foreach(var match in classes.Values)
+          if(match.full_name == name || match.full_name.EndsWith("." + name))
+            res.Add(match.full_name);
+    return res;
   }
 }
 
@@ -667,6 +695,9 @@ class CsClass
   public string full_name;
   public bool is_user_bindings;
   public Dictionary<string, CsMethod> methods = new Dictionary<string, CsMethod>();
+  //NOTE: types named in 'RegisterBindings(new X())', collected while parsing so the entry
+  //      can be told from what it registers without running anything
+  public List<string> registers = new List<string>();
 }
 
 class CsMethod
@@ -701,6 +732,20 @@ class CsParser
   int pos;
   readonly List<string> namespaces = new List<string>();
   CsClass cls;
+
+  //NOTE: records 'types.RegisterBindings(new X())' on the class being parsed, so the entry can
+  //      be told apart from what it registers without running anything
+  void NoteRegisterBindings(CsCall call)
+  {
+    if(cls == null)
+      return;
+    if(!(call.target is CsMember m) || m.name != "RegisterBindings")
+      return;
+    if(call.args.Count != 1 || !(call.args[0].expr is CsNew nw))
+      return;
+
+    cls.registers.Add(nw.type);
+  }
 
   public CsParser(string file, List<CsToken> toks, CsBindingsProgram prog)
   {
@@ -1273,7 +1318,11 @@ class CsParser
       if(Accept("."))
         e = new CsMember() { line = Peek(-1).line, target = e, name = ExpectIdent() };
       else if(Is("("))
-        e = new CsCall() { line = Peek().line, target = e, args = ParseArgs() };
+      {
+        var call = new CsCall() { line = Peek().line, target = e, args = ParseArgs() };
+        NoteRegisterBindings(call);
+        e = call;
+      }
       else
         break;
     }
@@ -1731,8 +1780,46 @@ class CsInterpreter
     throw Error(m.line, $"'{target.GetType().Name}' has no member '{m.name}'");
   }
 
+  //NOTE: 'types.RegisterBindings(new Foo())' is followed rather than evaluated: Foo is a class
+  //      of the parsed sources, so its [BhlBinding] is declared and its Register() is run here.
+  //      That makes one registration call mean the same at compile time as at runtime, instead
+  //      of a library's bindings having to be listed in bhl.proj separately
+  bool TryEvalRegisterBindings(CsCall c, Dictionary<string, object> scope)
+  {
+    if(!(c.target is CsMember m) || m.name != "RegisterBindings")
+      return false;
+    if(c.args.Count != 1 || c.args[0].name != null || !(c.args[0].expr is CsNew nw))
+      return false;
+
+    var found = prog.classes.Values
+      .Where(k => k.full_name == nw.type || k.full_name.EndsWith("." + nw.type)).ToList();
+    if(found.Count == 0)
+      return false;
+    if(found.Count > 1)
+      throw Error(c.line, $"'{nw.type}' is ambiguous: {string.Join(", ", found.Select(k => k.full_name))}");
+
+    var target = found[0];
+    if(!target.methods.TryGetValue("Register", out var reg))
+      throw Error(c.line, $"'{target.full_name}' has no 'Register' method");
+
+    if(!registering.Add(target.full_name))
+      throw Error(c.line, $"'{target.full_name}' registers itself, directly or through another");
+
+    Call(reg, new List<object>() { Eval(m.target, scope) }, c.line);
+    registering.Remove(target.full_name);
+
+    return true;
+  }
+
+  HashSet<string> registering = new HashSet<string>();
+
   object EvalCall(CsCall c, Dictionary<string, object> scope)
   {
+    //NOTE: before the args are evaluated - 'new SomeBindings()' names a class of these very
+    //      sources, which no C# type lookup can resolve
+    if(TryEvalRegisterBindings(c, scope))
+      return null;
+
     var args = EvalArgs(c.args, scope);
 
     if(c.target is CsName fn && !scope.ContainsKey(fn.name))

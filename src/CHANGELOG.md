@@ -5,6 +5,19 @@ All notable changes to the BHL Unity package are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- The C# bindings reader follows `types.RegisterBindings(new LibBindings())`: the class is
+  looked up in the parsed sources rather than through a C# type lookup, its `[BhlBinding]` is
+  declared and its `Register()` is run. One line in a library's dependent now means the same
+  at compile time as at runtime, so a shared library no longer needs its own `bhl.proj` entry
+
+### Changed
+- Several classes with a `Register` are allowed when one registers another: the entry is the
+  one no other registers. Two unregistered roots are still ambiguous, and a registration cycle
+  is reported as such
+
 ## [3.0.0-beta32]
 
 ### Added
