@@ -95,6 +95,141 @@ public class TestCLRSpike
     return log.ToString();
   }
 
+  ///////////////////////////////////////////////////
+  // paral_all with an early return from a branch:
+  //
+  //   coro func int test() {
+  //     paral_all {
+  //       { return 1 }
+  //       yield suspend()
+  //     }
+  //     return 0
+  //   }
+  //
+  //NOTE: a return inside a branch leaves the whole function, even with the other branch
+  //      suspended forever. An IEnumerator can't return a value to its caller, so the branch
+  //      signals it and the driver propagates - this is the piece 'defer' didn't need
+  class Ret
+  {
+    public bool has;
+    public double val;
+  }
+
+  static IEnumerator<Tick> Branch_Returns1(Ret ret)
+  {
+    ret.has = true;
+    ret.val = 1;
+    yield break;
+  }
+
+  static IEnumerator<Tick> Branch_Suspends()
+  {
+    while(true)
+      yield return default(Tick);
+  }
+
+  //NOTE: paral_all waits for every branch, unlike paral - but a branch that returns cuts it
+  //      short, so the loop has to watch for that as well as for all of them finishing
+  static IEnumerator<Tick> ParalAll(Ret ret, params IEnumerator<Tick>[] branches)
+  {
+    var alive = new bool[branches.Length];
+    for(int i = 0; i < alive.Length; ++i)
+      alive[i] = true;
+
+    try
+    {
+      while(true)
+      {
+        int running = 0;
+        for(int i = 0; i < branches.Length; ++i)
+        {
+          if(!alive[i])
+            continue;
+
+          if(branches[i].MoveNext())
+            ++running;
+          else
+            alive[i] = false;
+
+          if(ret.has)
+            yield break;
+        }
+
+        if(running == 0)
+          yield break;
+
+        yield return default(Tick);
+      }
+    }
+    finally
+    {
+      for(int i = 0; i < branches.Length; ++i)
+        branches[i].Dispose();
+    }
+  }
+
+  static double RunParalAllReturn()
+  {
+    var ret = new Ret();
+    var test = ParalAll(ret, Branch_Returns1(ret), Branch_Suspends());
+    while(test.MoveNext())
+    {}
+    test.Dispose();
+
+    return ret.has ? ret.val : 0;
+  }
+
+  [Fact]
+  public void TestParalAllEarlyReturnLeavesTheFunction()
+  {
+    //NOTE: tests/test_paral.cs asserts 1 for the same script
+    Assert.Equal(1, RunParalAllReturn());
+  }
+
+  ///////////////////////////////////////////////////
+  // defer firing before the value reaches the caller:
+  //
+  //   func bar(float k) { defer { trace("~BAR") } trace("BAR") }
+  //   func float foo()  { defer { trace("~FOO") } return 3  trace("FOO") }
+  //   func test()       { bar(foo()) }
+
+  static double Foo(Action<string> trace)
+  {
+    try
+    {
+      return 3;
+      //NOTE: the trace("FOO") after the return is dead, as it is in the script
+    }
+    finally
+    {
+      trace("~FOO");
+    }
+  }
+
+  static void Bar(Action<string> trace, double k)
+  {
+    try
+    {
+      trace("BAR");
+    }
+    finally
+    {
+      trace("~BAR");
+    }
+  }
+
+  [Fact]
+  public void TestDeferRunsBeforeTheCallerUsesTheValue()
+  {
+    var log = new StringBuilder();
+    Action<string> trace = x => log.Append(x);
+
+    Bar(trace, Foo(trace));
+
+    //NOTE: tests/test_defer.cs asserts this for the same script
+    Assert.Equal("~FOOBAR~BAR", log.ToString());
+  }
+
   [Fact]
   public void TestMatchesTheVM()
   {
