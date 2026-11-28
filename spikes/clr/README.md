@@ -105,9 +105,59 @@ func test()      { bar(foo()) }
 This one needs nothing: C# evaluates the return value, runs the `finally`, then returns, which
 is the same order. A `return` inside `try/finally` translates as is.
 
+## Probe 4: a native coroutine, and cancelling through a sub coroutine
+
+A native that suspends isn't a C# `yield` at all - it's a `Coroutine` whose `Tick(ExecState)`
+sets `status = RUNNING` to be called again. That maps to an `IEnumerator<Tick>` the generated
+code drives, since C# has no `yield foreach`:
+
+```csharp
+while(co.MoveNext())
+  yield return default(Tick);
+```
+
+The sharp part is cancellation. From `tests/test_defer.cs`:
+
+```bhl
+coro func doer() {
+  float k = 1
+  defer { if(k == 1) { foo(k) } }
+  yield suspend()
+  k = 2
+}
+coro func test() { paral { { yield doer() } { yield() yield() } } }
+```
+
+Must trace `1` - the paral ends, `doer` is cancelled while suspended, its defer runs and still
+sees `k == 1`.
+
+Driving the sub coroutine as above **loses that**. Disposing the caller runs the caller's own
+finally blocks, but nothing disposes the callee, and an abandoned iterator never runs its
+finally - there's no finalizer for it. The defer is silently skipped and the trace is empty.
+
+So `yield <coro>` has to emit the guard:
+
+```csharp
+try { while(co.MoveNext()) yield return default(Tick); }
+finally { co.Dispose(); }
+```
+
+Both versions are in the spike: one asserts `1`, the other asserts the empty string that the
+naive lowering produces.
+
 ## Where that leaves it
 
-Three probes, three different answers: one needs a changed lowering, one needs plumbing the
-compiler must generate, one is free. None of them failed. The model translates - what it
-costs is a lowering rule per construct, each discoverable only by testing against the VM,
-since the semantics live in the VM's behaviour rather than in a spec.
+Four probes, four different answers:
+
+| construct | cost |
+|---|---|
+| `defer`, cancellation | free - `try/finally` and `Dispose()` |
+| `defer` with `return` | free |
+| `for` carrying a `defer` | changed lowering - `while`, increment inside the try |
+| `paral_all` with `return` | a return channel the compiler threads through every branch |
+| `yield <coro>` | a disposal guard, or cancellation stops propagating |
+
+None failed. The model translates. What it costs is a lowering rule per construct, and each
+one is discoverable only by testing against the VM, because these semantics live in the VM's
+behaviour rather than in a spec. Two of the four go silently wrong when lowered naively -
+which is the actual risk here, not feasibility.

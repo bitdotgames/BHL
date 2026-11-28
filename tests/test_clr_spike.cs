@@ -230,6 +230,87 @@ public class TestCLRSpike
     Assert.Equal("~FOOBAR~BAR", log.ToString());
   }
 
+  ///////////////////////////////////////////////////
+  // 'yield doer()' where doer holds a defer and is cancelled while suspended:
+  //
+  //   coro func doer() {
+  //     float k = 1
+  //     defer { if(k == 1) { foo(k) } }
+  //     yield suspend()
+  //     k = 2
+  //   }
+  //   coro func test() { paral { { yield doer() } { yield() yield() } } }
+
+  static IEnumerator<Tick> Doer(Action<string> trace)
+  {
+    double k = 1;
+    try
+    {
+      //NOTE: yield suspend() never resumes, so the 'k = 2' after it is unreachable here too
+      while(true)
+        yield return default(Tick);
+    }
+    finally
+    {
+      if(k == 1)
+        trace(k.ToString());
+    }
+  }
+
+  //NOTE: 'yield <coro>' drives the sub coroutine, and has to dispose it - cancelling the
+  //      caller otherwise leaves the callee's defers unrun, since nothing else ever will
+  static IEnumerator<Tick> YieldCoro(IEnumerator<Tick> co)
+  {
+    try
+    {
+      while(co.MoveNext())
+        yield return default(Tick);
+    }
+    finally
+    {
+      co.Dispose();
+    }
+  }
+
+  //NOTE: what it looks like without that guard
+  static IEnumerator<Tick> YieldCoro_NoDispose(IEnumerator<Tick> co)
+  {
+    while(co.MoveNext())
+      yield return default(Tick);
+  }
+
+  static IEnumerator<Tick> TwoYields()
+  {
+    yield return default(Tick);
+    yield return default(Tick);
+  }
+
+  static string RunYieldCoro(Func<IEnumerator<Tick>, IEnumerator<Tick>> drive)
+  {
+    var log = new StringBuilder();
+    Action<string> trace = x => log.Append(x);
+
+    var test = Paral(drive(Doer(trace)), TwoYields());
+    while(test.MoveNext())
+    {}
+    test.Dispose();
+
+    return log.ToString();
+  }
+
+  [Fact]
+  public void TestCancellingReachesTheSubCoroutinesDefer()
+  {
+    //NOTE: tests/test_defer.cs asserts "1" for the same script
+    Assert.Equal("1", RunYieldCoro(YieldCoro));
+  }
+
+  [Fact]
+  public void TestWithoutDisposingTheSubCoroutineTheDeferIsLost()
+  {
+    Assert.Equal("", RunYieldCoro(YieldCoro_NoDispose));
+  }
+
   [Fact]
   public void TestMatchesTheVM()
   {
