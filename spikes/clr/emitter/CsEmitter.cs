@@ -24,6 +24,7 @@ public class CsEmitter : AST_Visitor
   Stack<string> _exprs = new Stack<string>();
   int _indent;
   bool _in_coro;
+  bool _in_method;
   int _tmp;
   //NOTE: 'continue' lands before a for's increment, not at the condition the way C#'s does,
   //      so each loop gets a label and a real continue is a goto to it
@@ -61,6 +62,8 @@ public class CsEmitter : AST_Visitor
     if(t == Types.Float) return "double";
     if(t == Types.Bool) return "bool";
     if(t == Types.String) return "string";
+    if(t is ArrayTypeSymbol arr) return "List<" + TypeOf(arr.item_type.Get()) + ">";
+    if(t is ClassSymbolScript cs) return cs.name;
     throw new NotSupported("type '" + t + "'");
   }
 
@@ -117,15 +120,16 @@ public class CsEmitter : AST_Visitor
       args.Add(TypeOf(a.type.Get()) + " " + Name(a));
     }
 
+    string mods = _in_method ? "public " : "public static ";
     if(_in_coro)
     {
       //NOTE: the value leaves through __ret, an IEnumerator can't return one
       args.Add(RT + ".Ret __ret");
-      Line("public static IEnumerator<" + RT + ".Tick> " + fs.name +
+      Line(mods + "IEnumerator<" + RT + ".Tick> " + fs.name +
            "(" + string.Join(", ", args) + ")");
     }
     else
-      Line("public static " + TypeOf(fs.GetReturnType()) + " " + fs.name +
+      Line(mods + TypeOf(fs.GetReturnType()) + " " + fs.name +
            "(" + string.Join(", ", args) + ")");
 
     Line("{");
@@ -245,17 +249,116 @@ public class CsEmitter : AST_Visitor
     Line(TypeOf(vs.type.Get()) + " " + Name(vs) + " = default(" + TypeOf(vs.type.Get()) + ");");
   }
 
-  public override void DoVisit(AST_VarRead ast) { _exprs.Push(Name(ast.symbol)); }
+  public override void DoVisit(AST_VarRead ast)
+  {
+    if(ast.symbol is FieldSymbol fld)
+    {
+      //NOTE: the instance was pushed by a preceding sibling
+      _exprs.Push(Pop() + "." + MemberName(fld));
+      return;
+    }
+    _exprs.Push(ast.symbol.name == "this" ? "this" : Name(ast.symbol));
+  }
+
+  //NOTE: an array's Count is a field on the native type, and C#'s List spells it the same
+  static string MemberName(FieldSymbol f)
+  {
+    return f.scope is ArrayTypeSymbol ? f.name : "v_" + f.name;
+  }
 
   public override void DoVisit(AST_VarWrite ast)
   {
+    if(ast.symbol is FieldSymbol fld)
+    {
+      //NOTE: value pushed first, then the instance
+      var inst = Pop();
+      Line(inst + "." + MemberName(fld) + " = " + Pop() + ";");
+      return;
+    }
+
     var vs = (VariableSymbol)ast.symbol;
-    //NOTE: the value was pushed by a preceding sibling, as in the bytecode
     Line((ast.is_decl ? TypeOf(vs.type.Get()) + " " : "") + Name(vs) + " = " + Pop() + ";");
   }
 
   public override void DoVisit(AST_Inc ast) { Line(Name(ast.symbol) + "++;"); }
   public override void DoVisit(AST_Dec ast) { Line(Name(ast.symbol) + "--;"); }
+
+  //////////////////////////////// classes and arrays
+
+  public override void DoVisit(AST_ClassDecl ast)
+  {
+    var cl = ast.symbol;
+    if(cl.super_class != null)
+      throw new NotSupported("class inheritance");
+
+    Line("public class " + cl.name);
+    Line("{");
+    ++_indent;
+
+    foreach(var m in cl)
+      if(m is VariableSymbol f && !(m is FuncSymbol))
+        Line("public " + TypeOf(f.type.Get()) + " " + Name(f) + ";");
+
+    bool was_method = _in_method;
+    _in_method = true;
+    VisitChildren(ast);
+    _in_method = was_method;
+
+    --_indent;
+    Line("}");
+  }
+
+  public override void DoVisit(AST_New ast)
+  {
+    _exprs.Push("new " + TypeOf(ast.type) + "()");
+  }
+
+  public override void DoVisit(AST_Index ast)
+  {
+    //NOTE: the array and the index were pushed by preceding siblings
+    var idx = Pop();
+    var arr = Pop();
+    _exprs.Push(arr + "[(int)" + idx + "]");
+  }
+
+  public override void DoVisit(AST_CallMethod ast)
+  {
+    VisitChildren(ast);
+
+    var fs = (FuncSymbol)ast.symbol;
+    int n = fs.GetTotalArgsNum();
+    var args = new string[n];
+    for(int i = n - 1; i >= 0; --i)
+      args[i] = Pop();
+
+    //NOTE: the instance was pushed before the args
+    var inst = Pop();
+    var call = inst + "." + fs.name + "(" + string.Join(", ", args) + ")";
+
+    if(fs.GetReturnType() == Types.Void)
+      Line(call + ";");
+    else
+      _exprs.Push(call);
+  }
+
+  public override void DoVisit(AST_JsonArr ast)
+  {
+    var items = new List<string>();
+    for(int i = 0; i < ast.children.Count; ++i)
+    {
+      //NOTE: an add marker consumes the value the preceding child pushed
+      if(ast.children[i] is AST_JsonArrAddItem)
+        items.Add(Pop());
+      else
+        Visit(ast.children[i]);
+    }
+    if(ast.children.Count > 0)
+      items.Add(Pop());
+
+    _exprs.Push("new " + TypeOf(ast.type) + "() { " + string.Join(", ", items) + " }");
+  }
+
+  public override void DoVisit(AST_JsonArrAddItem ast) {}
 
   //////////////////////////////// expressions
 
@@ -378,7 +481,7 @@ public class CsEmitter : AST_Visitor
   //////////////////////////////// everything else is out of scope for the slice
 
   public override void DoVisit(AST_LambdaDecl ast)   { throw new NotSupported("lambdas"); }
-  public override void DoVisit(AST_ClassDecl ast)    { throw new NotSupported("classes"); }
+
   public override void DoVisit(AST_Paral ast)    { EmitParal(ast, "Paral"); }
   public override void DoVisit(AST_ParalAll ast) { EmitParal(ast, "ParalAll"); }
 
@@ -413,18 +516,18 @@ public class CsEmitter : AST_Visitor
   }
   //NOTE: handled by EmitBlock, which needs to see it in its block's context
   public override void DoVisit(AST_Defer ast)        { throw new NotSupported("defer outside a block"); }
-  public override void DoVisit(AST_New ast)          { throw new NotSupported("new"); }
-  public override void DoVisit(AST_Index ast)        { throw new NotSupported("indexing"); }
+
+
   public override void DoVisit(AST_TypeAs ast)       { throw new NotSupported("as"); }
   public override void DoVisit(AST_TypeIs ast)       { throw new NotSupported("is"); }
   public override void DoVisit(AST_Typeof ast)       { throw new NotSupported("typeof"); }
-  public override void DoVisit(AST_CallMethod ast)   { throw new NotSupported("methods"); }
+
   public override void DoVisit(AST_GetFuncAddr ast)  { throw new NotSupported("func pointers"); }
   public override void DoVisit(AST_CallFuncPtr ast)  { throw new NotSupported("func pointers"); }
   public override void DoVisit(AST_CallFuncPtrVar ast) { throw new NotSupported("func pointers"); }
   public override void DoVisit(AST_JsonObj ast)      { throw new NotSupported("json init"); }
-  public override void DoVisit(AST_JsonArr ast)      { throw new NotSupported("json init"); }
-  public override void DoVisit(AST_JsonArrAddItem ast) { throw new NotSupported("json init"); }
+
+
   public override void DoVisit(AST_JsonMap ast)      { throw new NotSupported("json init"); }
   public override void DoVisit(AST_JsonMapAddItem ast) { throw new NotSupported("json init"); }
   public override void DoVisit(AST_JsonPair ast)     { throw new NotSupported("json init"); }

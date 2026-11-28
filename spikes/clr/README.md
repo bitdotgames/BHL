@@ -186,8 +186,13 @@ pins, so neither backend nor suite would notice it.
 generated code and compares - return values for plain funcs, traced output for coroutines.
 
 Covered: scalar funcs, arithmetic, if/else, while, break/continue, recursion, `coro func`,
-`yield`, `defer`, `yield <coro>`, `paral`, `paral_all`, and the `trace` native. Anything else
-throws `NotSupported` by name.
+`yield`, `defer`, `yield <coro>`, `paral`, `paral_all`, classes with fields and methods,
+arrays (literals, `Add`, `Count`, indexing), and the `trace` native. Anything else throws
+`NotSupported` by name - notably class inheritance, lambdas, func pointers, maps and imports.
+
+Field access reads the instance off the stack rather than from a child, the way the bytecode
+does: `f.x = 7` is push 7, push f, write. An array's `Count` keeps its name since C#'s `List`
+spells it the same, while a user field is prefixed to avoid colliding with C# keywords.
 
 The paral + for + defer script from `tests/test_paral.cs` goes through it and traces exactly
 what the VM traces.

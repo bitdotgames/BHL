@@ -170,6 +170,75 @@ public class TestCLREmitter : BHL_TestBase
     ", "test", 5);
   }
 
+  [Fact]
+  public void TestClassFieldsAndMethods()
+  {
+    AssertSame(@"
+    class Foo {
+      int x
+      int y
+
+      func int sum() {
+        return this.x + this.y
+      }
+    }
+
+    func int test(int k) {
+      Foo f = new Foo
+      f.x = k
+      f.y = k * 2
+      return f.sum()
+    }
+    ", "test", 5);
+  }
+
+  [Fact]
+  public void TestArrayLiteralIndexAndCount()
+  {
+    AssertSame(@"
+    func int test(int k) {
+      []int a = [1,2,3]
+      a.Add(k)
+      int s = 0
+      int i = 0
+      while(i < a.Count) {
+        s = s * 10 + a[i]
+        i = i + 1
+      }
+      return s
+    }
+    ", "test", 9);
+  }
+
+  [Fact]
+  public void TestArrayOfClasses()
+  {
+    AssertSame(@"
+    class Item {
+      int n
+    }
+
+    func int test(int k) {
+      []Item items = []
+      int i = 0
+      while(i < 3) {
+        Item it = new Item
+        it.n = i + k
+        items.Add(it)
+        i = i + 1
+      }
+
+      int s = 0
+      int j = 0
+      while(j < items.Count) {
+        s = s + items[j].n
+        j = j + 1
+      }
+      return s
+    }
+    ", "test", 10);
+  }
+
   //NOTE: what the slice refuses, so the boundary is explicit rather than a mystery crash
   //NOTE: coro scripts are compared by what they trace, the way the VM tests assert
   void AssertSameTrace(string bhl, string func_name)
@@ -285,13 +354,14 @@ public class TestCLREmitter : BHL_TestBase
   public void TestUnsupportedIsReported()
   {
     var ast = Parse(@"
-    class Foo { int x }
+    class Base { int x }
+    class Foo : Base { int y }
 
     func test() {
     }
     ", new Types()).result.ast;
 
     var e = Assert.Throws<CsEmitter.NotSupported>(() => CsEmitter.Emit(ast));
-    Assert.Contains("classes", e.Message);
+    Assert.Contains("inheritance", e.Message);
   }
 }
