@@ -25,6 +25,7 @@ public class CsEmitter : AST_Visitor
   int _indent;
   bool _in_coro;
   bool _in_method;
+  bool _in_subclass;
   int _tmp;
   //NOTE: 'continue' lands before a for's increment, not at the condition the way C#'s does,
   //      so each loop gets a label and a real continue is a goto to it
@@ -32,7 +33,7 @@ public class CsEmitter : AST_Visitor
 
   const string RT = "bhl.spike.clr.BhlRt";
 
-  public static string Emit(AST_Module ast, string class_name = "Gen")
+  public static string Emit(AST_Module ast, string class_name = "Gen", Namespace ns = null)
   {
     var e = new CsEmitter();
     e.Line("using System;");
@@ -42,6 +43,10 @@ public class CsEmitter : AST_Visitor
     ++e._indent;
     //NOTE: the one native the spike knows, so trace based scripts can be compared
     e.Line("public static Action<string> __trace;");
+
+    //NOTE: an interface is only a symbol, it has no AST node of its own
+    if(ns != null)
+      e.EmitInterfaces(ns);
     e.Visit(ast);
     --e._indent;
     e.Line("}");
@@ -64,6 +69,18 @@ public class CsEmitter : AST_Visitor
     if(t == Types.String) return "string";
     if(t is ArrayTypeSymbol arr) return "List<" + TypeOf(arr.item_type.Get()) + ">";
     if(t is ClassSymbolScript cs) return cs.name;
+    if(t is InterfaceSymbolScript isy) return isy.name;
+    if(t is MapTypeSymbol map)
+      return "Dictionary<" + TypeOf(map.key_type.Get()) + ", " + TypeOf(map.val_type.Get()) + ">";
+    if(t is FuncSignature sig)
+    {
+      var ps = sig.arg_types.Select(a => TypeOf(a.Get())).ToList();
+      bool is_void = sig.return_type.Get() == Types.Void;
+      if(is_void)
+        return ps.Count == 0 ? "Action" : "Action<" + string.Join(", ", ps) + ">";
+      ps.Add(TypeOf(sig.return_type.Get()));
+      return "Func<" + string.Join(", ", ps) + ">";
+    }
     throw new NotSupported("type '" + t + "'");
   }
 
@@ -120,7 +137,16 @@ public class CsEmitter : AST_Visitor
       args.Add(TypeOf(a.type.Get()) + " " + Name(a));
     }
 
-    string mods = _in_method ? "public " : "public static ";
+    string mods = "public static ";
+    if(_in_method)
+    {
+      if(fs.attribs.HasFlag(FuncAttrib.Virtual))
+        mods = "public virtual ";
+      else if(fs.attribs.HasFlag(FuncAttrib.Override))
+        mods = "public override ";
+      else
+        mods = "public ";
+    }
     if(_in_coro)
     {
       //NOTE: the value leaves through __ret, an IEnumerator can't return one
@@ -283,26 +309,147 @@ public class CsEmitter : AST_Visitor
   public override void DoVisit(AST_Inc ast) { Line(Name(ast.symbol) + "++;"); }
   public override void DoVisit(AST_Dec ast) { Line(Name(ast.symbol) + "--;"); }
 
+  void EmitInterfaces(Namespace ns)
+  {
+    foreach(var s in ns)
+    {
+      if(!(s is InterfaceSymbolScript itf))
+        continue;
+
+      Line("public interface " + itf.name);
+      Line("{");
+      ++_indent;
+      foreach(var m in itf)
+      {
+        if(!(m is FuncSymbol f))
+          continue;
+        var ps = new List<string>();
+        for(int i = 0; i < f.GetTotalArgsNum(); ++i)
+        {
+          var a = f.TryGetArg(i);
+          ps.Add(TypeOf(a.type.Get()) + " " + Name(a));
+        }
+        Line(TypeOf(f.GetReturnType()) + " " + f.name + "(" + string.Join(", ", ps) + ");");
+      }
+      --_indent;
+      Line("}");
+    }
+  }
+
+  //////////////////////////////// lambdas and func pointers
+
+  //NOTE: emitted as a local before the expression that uses it, so its body can be written as
+  //      statements. C# closures capture by reference, which is what the VM does too
+  public override void DoVisit(AST_LambdaDecl ast)
+  {
+    var fs = ast.symbol;
+    string name = "__lmb" + (_tmp++);
+
+    var ps = new List<string>();
+    for(int i = 0; i < fs.GetTotalArgsNum(); ++i)
+    {
+      var a = fs.TryGetArg(i);
+      ps.Add(TypeOf(a.type.Get()) + " " + Name(a));
+    }
+
+    Line(TypeOf(fs.signature) + " " + name + " = (" + string.Join(", ", ps) + ") =>");
+    Line("{");
+    ++_indent;
+
+    bool was_coro = _in_coro;
+    _in_coro = false;
+    Visit(ast.children[1]);
+    _in_coro = was_coro;
+
+    --_indent;
+    Line("};");
+
+    _exprs.Push(name);
+  }
+
+  public override void DoVisit(AST_GetFuncAddr ast)
+  {
+    var fs = (FuncSymbol)ast.symbol;
+    //NOTE: a method group needs the target type spelled out to become a delegate here
+    _exprs.Push("((" + TypeOf(fs.signature) + ")" + fs.name + ")");
+  }
+
+  public override void DoVisit(AST_CallFuncPtrVar ast)
+  {
+    EmitPtrCall(ast, Name(ast.symbol), ((VariableSymbol)ast.symbol).type.Get() as FuncSignature);
+  }
+
+  public override void DoVisit(AST_CallFuncPtr ast)
+  {
+    //NOTE: the pointer was pushed by a preceding sibling, under the args
+    var sig = (ast.symbol as ITyped)?.GetIType() as FuncSignature;
+    if(sig == null)
+      throw new NotSupported("calling a func pointer of unknown signature");
+
+    VisitChildren(ast);
+
+    int n = sig.arg_types.Count;
+    var args = new string[n];
+    for(int i = n - 1; i >= 0; --i)
+      args[i] = Pop();
+
+    string call = Pop() + "(" + string.Join(", ", args) + ")";
+    if(sig.return_type.Get() == Types.Void)
+      Line(call + ";");
+    else
+      _exprs.Push(call);
+  }
+
+  void EmitPtrCall(AST_Tree ast, string target, FuncSignature sig)
+  {
+    if(sig == null)
+      throw new NotSupported("calling something that isn't a func pointer");
+
+    VisitChildren(ast);
+
+    int n = sig.arg_types.Count;
+    var args = new string[n];
+    for(int i = n - 1; i >= 0; --i)
+      args[i] = Pop();
+
+    string call = target + "(" + string.Join(", ", args) + ")";
+    if(sig.return_type.Get() == Types.Void)
+      Line(call + ";");
+    else
+      _exprs.Push(call);
+  }
+
   //////////////////////////////// classes and arrays
 
   public override void DoVisit(AST_ClassDecl ast)
   {
     var cl = ast.symbol;
-    if(cl.super_class != null)
-      throw new NotSupported("class inheritance");
 
-    Line("public class " + cl.name);
+    var bases = new List<string>();
+    if(cl.super_class != null)
+      bases.Add(cl.super_class.name);
+    for(int i = 0; i < cl.implements.Count; ++i)
+      bases.Add(cl.implements[i].name);
+
+    bool was_sub = _in_subclass;
+    _in_subclass = cl.super_class != null;
+
+    Line("public class " + cl.name + (bases.Count > 0 ? " : " + string.Join(", ", bases) : ""));
     Line("{");
     ++_indent;
 
     foreach(var m in cl)
-      if(m is VariableSymbol f && !(m is FuncSymbol))
+    {
+      //NOTE: an inherited field is already declared on the base
+      if(m is VariableSymbol f && !(m is FuncSymbol) && m.scope == cl)
         Line("public " + TypeOf(f.type.Get()) + " " + Name(f) + ";");
+    }
 
     bool was_method = _in_method;
     _in_method = true;
     VisitChildren(ast);
     _in_method = was_method;
+    _in_subclass = was_sub;
 
     --_indent;
     Line("}");
@@ -315,10 +462,18 @@ public class CsEmitter : AST_Visitor
 
   public override void DoVisit(AST_Index ast)
   {
-    //NOTE: the array and the index were pushed by preceding siblings
+    //NOTE: pushed by preceding siblings: the value too, when it's a write
     var idx = Pop();
-    var arr = Pop();
-    _exprs.Push(arr + "[(int)" + idx + "]");
+    var cont = Pop();
+
+    //NOTE: a BHL int is a long, and C#'s List indexer wants an int - a map key is whatever
+    //      its key type is and must be left alone
+    string at = cont + "[" + (ast.is_map ? idx : "(int)" + idx) + "]";
+
+    if(ast.is_write)
+      Line(at + " = " + Pop() + ";");
+    else
+      _exprs.Push(at);
   }
 
   public override void DoVisit(AST_CallMethod ast)
@@ -480,7 +635,7 @@ public class CsEmitter : AST_Visitor
 
   //////////////////////////////// everything else is out of scope for the slice
 
-  public override void DoVisit(AST_LambdaDecl ast)   { throw new NotSupported("lambdas"); }
+
 
   public override void DoVisit(AST_Paral ast)    { EmitParal(ast, "Paral"); }
   public override void DoVisit(AST_ParalAll ast) { EmitParal(ast, "ParalAll"); }
@@ -522,15 +677,27 @@ public class CsEmitter : AST_Visitor
   public override void DoVisit(AST_TypeIs ast)       { throw new NotSupported("is"); }
   public override void DoVisit(AST_Typeof ast)       { throw new NotSupported("typeof"); }
 
-  public override void DoVisit(AST_GetFuncAddr ast)  { throw new NotSupported("func pointers"); }
-  public override void DoVisit(AST_CallFuncPtr ast)  { throw new NotSupported("func pointers"); }
-  public override void DoVisit(AST_CallFuncPtrVar ast) { throw new NotSupported("func pointers"); }
+
+
+
   public override void DoVisit(AST_JsonObj ast)      { throw new NotSupported("json init"); }
 
 
-  public override void DoVisit(AST_JsonMap ast)      { throw new NotSupported("json init"); }
-  public override void DoVisit(AST_JsonMapAddItem ast) { throw new NotSupported("json init"); }
-  public override void DoVisit(AST_JsonPair ast)     { throw new NotSupported("json init"); }
+  public override void DoVisit(AST_JsonMap ast)
+  {
+    //NOTE: pairs push key then value, a trailing add consumes each
+    var pairs = new List<string>();
+    foreach(var c in ast.children)
+    {
+      Visit(c);
+      var v = Pop();
+      var k = Pop();
+      pairs.Add("{ " + k + ", " + v + " }");
+    }
+    _exprs.Push("new " + TypeOf(ast.type) + "() { " + string.Join(", ", pairs) + " }");
+  }
+  public override void DoVisit(AST_JsonMapAddItem ast) {}
+  public override void DoVisit(AST_JsonPair ast) { VisitChildren(ast); }
 }
 
 }

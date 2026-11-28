@@ -187,11 +187,17 @@ generated code and compares - return values for plain funcs, traced output for c
 
 Covered: scalar funcs, arithmetic, if/else, while, break/continue, recursion, `coro func`,
 `yield`, `defer`, `yield <coro>`, `paral`, `paral_all`, classes with fields and methods,
-arrays (literals, `Add`, `Count`, indexing), and the `trace` native. Anything else throws
-`NotSupported` by name - notably class inheritance, lambdas, func pointers, maps and imports.
+inheritance, virtual/override, interfaces, lambdas and func pointers, arrays and maps, and the
+`trace` native. Anything else throws `NotSupported` by name - `typeof`, `as`/`is`, imports,
+enums, `ref` args, and natives other than `trace`.
 
 Field access reads the instance off the stack rather than from a child, the way the bytecode
-does: `f.x = 7` is push 7, push f, write. An array's `Count` keeps its name since C#'s `List`
+does: `f.x = 7` is push 7, push f, write. An index write is the same shape - value, container,
+key - matching what `MapIdxW` pops. A map key is used as is while an array index is cast,
+since a BHL int is a `long` and C#'s `List` indexer wants an `int`.
+
+Interfaces have no AST node of their own, so they're emitted from the module's namespace
+before the tree is walked. An array's `Count` keeps its name since C#'s `List`
 spells it the same, while a user field is prefixed to avoid colliding with C# keywords.
 
 The paral + for + defer script from `tests/test_paral.cs` goes through it and traces exactly

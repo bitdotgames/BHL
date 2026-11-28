@@ -49,7 +49,11 @@ public class TestCLREmitter : BHL_TestBase
   (double vm, double cs, string src) RunBoth(string bhl, string func_name, params double[] args)
   {
     //NOTE: the AST isn't kept on the compiled module, so parse separately for the emitter
-    var ast = Parse(bhl, new Types()).result.ast;
+    var parse_ts = new Types();
+    //NOTE: a module's own symbols live on its namespace, not the Types' one
+    var res = Parse(bhl, parse_ts).result;
+    var ast = res.ast;
+    var ns = res.module.ns;
 
     var cm = Compile(bhl);
     var vm = MakeVM(cm);
@@ -59,7 +63,7 @@ public class TestCLREmitter : BHL_TestBase
     double vm_res = fb.Stack.sp > 0 ? fb.Stack.Pop().num : 0;
     CommonChecks(vm);
 
-    var src = CsEmitter.Emit(ast);
+    var src = CsEmitter.Emit(ast, "Gen", ns);
     var asm = CompileCs(src);
     var m = asm.GetType("Gen").GetMethod(func_name);
 
@@ -239,6 +243,102 @@ public class TestCLREmitter : BHL_TestBase
     ", "test", 10);
   }
 
+  [Fact]
+  public void TestLambdaCapturingALocal()
+  {
+    AssertSame(@"
+    func int apply(func int(int) fn, int v) {
+      return fn(v)
+    }
+
+    func int twice(int x) { return x * 2 }
+
+    func int test(int k) {
+      func int(int) f = func int(int a) { return a + k }
+      return apply(f, 1) + apply(twice, 3)
+    }
+    ", "test", 10);
+  }
+
+  [Fact]
+  public void TestFuncPtrStoredAndCalled()
+  {
+    AssertSame(@"
+    func int add(int a, int b) { return a + b }
+
+    func int test(int k) {
+      func int(int,int) f = add
+      int s = f(k, 1)
+      func int(int) g = func int(int x) { return f(x, x) }
+      return s + g(k)
+    }
+    ", "test", 7);
+  }
+
+  [Fact]
+  public void TestInheritanceAndVirtualDispatch()
+  {
+    AssertSame(@"
+    class Base {
+      int a
+      virtual func int get() { return this.a }
+    }
+
+    class Child : Base {
+      int b
+      override func int get() { return this.a + this.b }
+    }
+
+    func int ask(Base x) { return x.get() }
+
+    func int test(int k) {
+      Child c = new Child
+      c.a = k
+      c.b = 100
+      Base b = new Base
+      b.a = 1
+      return ask(c) + ask(b)
+    }
+    ", "test", 5);
+  }
+
+  [Fact]
+  public void TestInterfaceDispatch()
+  {
+    AssertSame(@"
+    interface IThing {
+      func int val()
+    }
+
+    class Thing : IThing {
+      int n
+      func int val() { return this.n }
+    }
+
+    func int ask(IThing t) { return t.val() }
+
+    func int test(int k) {
+      Thing t = new Thing
+      t.n = k
+      return ask(t)
+    }
+    ", "test", 42);
+  }
+
+  [Fact]
+  public void TestMapLiteralAndLookup()
+  {
+    AssertSame(@"
+    func int test(int k) {
+      [string]int m = []
+      m[""a""] = 1
+      m[""b""] = 2
+      m[""c""] = k
+      return m[""a""] * 100 + m[""b""] * 10 + m[""c""]
+    }
+    ", "test", 7);
+  }
+
   //NOTE: what the slice refuses, so the boundary is explicit rather than a mystery crash
   //NOTE: coro scripts are compared by what they trace, the way the VM tests assert
   void AssertSameTrace(string bhl, string func_name)
@@ -247,14 +347,16 @@ public class TestCLREmitter : BHL_TestBase
     //      simply aren't in it
     var parse_ts = new Types();
     BindTrace(parse_ts, new StringBuilder());
-    var ast = Parse(bhl, parse_ts).result.ast;
+    var res = Parse(bhl, parse_ts).result;
+    var ast = res.ast;
+    var ns = res.module.ns;
 
     var vm_log = new StringBuilder();
     var vm = MakeVM(bhl, ts => BindTrace(ts, vm_log));
     Execute(vm, func_name);
     CommonChecks(vm);
 
-    var src = CsEmitter.Emit(ast);
+    var src = CsEmitter.Emit(ast, "Gen", ns);
     var asm = CompileCs(src);
     var gen = asm.GetType("Gen");
 
@@ -354,14 +456,13 @@ public class TestCLREmitter : BHL_TestBase
   public void TestUnsupportedIsReported()
   {
     var ast = Parse(@"
-    class Base { int x }
-    class Foo : Base { int y }
-
     func test() {
+      int a = 1
+      int b = typeof(int) == typeof(int) ? a : 0
     }
     ", new Types()).result.ast;
 
     var e = Assert.Throws<CsEmitter.NotSupported>(() => CsEmitter.Emit(ast));
-    Assert.Contains("inheritance", e.Message);
+    Assert.Contains("typeof", e.Message);
   }
 }
