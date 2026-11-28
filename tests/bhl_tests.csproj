@@ -21,6 +21,12 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <!-- spikes/clr: compiles the C# the emitter generates, in memory -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\spikes\clr\emitter\*.cs"/>
   </ItemGroup>
 
   <ItemGroup>
