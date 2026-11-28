@@ -193,7 +193,7 @@ public class TestCLRSpike
   //   func float foo()  { defer { trace("~FOO") } return 3  trace("FOO") }
   //   func test()       { bar(foo()) }
 
-  static double Foo(Action<string> trace)
+  static double Foo_Deferred(Action<string> trace)
   {
     try
     {
@@ -206,7 +206,7 @@ public class TestCLRSpike
     }
   }
 
-  static void Bar(Action<string> trace, double k)
+  static void Bar_Deferred(Action<string> trace, double k)
   {
     try
     {
@@ -224,7 +224,7 @@ public class TestCLRSpike
     var log = new StringBuilder();
     Action<string> trace = x => log.Append(x);
 
-    Bar(trace, Foo(trace));
+    Bar_Deferred(trace, Foo_Deferred(trace));
 
     //NOTE: tests/test_defer.cs asserts this for the same script
     Assert.Equal("~FOOBAR~BAR", log.ToString());
@@ -309,6 +309,130 @@ public class TestCLRSpike
   public void TestWithoutDisposingTheSubCoroutineTheDeferIsLost()
   {
     Assert.Equal("", RunYieldCoro(YieldCoro_NoDispose));
+  }
+
+  ///////////////////////////////////////////////////
+  // a virtual method that is itself a coroutine returning a value:
+  //
+  //   class Foo { int a  int b
+  //     coro virtual func int getA() { var tmp = this.a  yield()  return tmp }
+  //     func int getB() { return this.b } }
+  //   class Bar : Foo { int new_a
+  //     coro override func int getA() { var tmp = this.new_a  yield() yield()  return tmp } }
+  //   coro func int test1() { Bar b = {} ... return yield b.getA() + b.getB() }
+
+  class Foo
+  {
+    public double a;
+    public double b;
+
+    public virtual IEnumerator<Tick> GetA(Ret ret)
+    {
+      double tmp = this.a;
+      yield return default(Tick);
+      ret.has = true;
+      ret.val = tmp;
+    }
+
+    public double GetB() { return this.b; }
+  }
+
+  class Bar : Foo
+  {
+    public double new_a;
+
+    public override IEnumerator<Tick> GetA(Ret ret)
+    {
+      double tmp = this.new_a;
+      yield return default(Tick);
+      yield return default(Tick);
+      ret.has = true;
+      ret.val = tmp;
+    }
+  }
+
+  //NOTE: each call site needs its own return channel, they can't share one
+  static IEnumerator<Tick> YieldValue(Func<Ret, IEnumerator<Tick>> call, Ret into)
+  {
+    var co = call(into);
+    try
+    {
+      while(co.MoveNext())
+        yield return default(Tick);
+    }
+    finally
+    {
+      co.Dispose();
+    }
+  }
+
+  static double RunVirtualCoro(bool through_base)
+  {
+    var b = new Bar() { a = 1, b = 10, new_a = 100 };
+
+    var got = new Ret();
+    //NOTE: casting to the base changes nothing, exactly as the script's comment says
+    Foo target = through_base ? (Foo)b : b;
+
+    var co = YieldValue(target.GetA, got);
+    while(co.MoveNext())
+    {}
+    co.Dispose();
+
+    return got.val + b.GetB();
+  }
+
+  [Fact]
+  public void TestVirtualCoroutineDispatchesToTheOverride()
+  {
+    //NOTE: tests/test_class.cs asserts 110 for both test1 and test2
+    Assert.Equal(110, RunVirtualCoro(through_base: false));
+    Assert.Equal(110, RunVirtualCoro(through_base: true));
+  }
+
+  ///////////////////////////////////////////////////
+  // lambdas capturing a loop variable:
+  //
+  //   foreach(int x in items) { fns.Add(func int() { return x }) }
+  //
+  //NOTE: no test in the suite covers this, so it's only defined by what the VM does - which,
+  //      measured, is 333: the captured variable is shared, every lambda sees the last value
+
+  static int ForeachCapture_Naive()
+  {
+    var fns = new List<Func<int>>();
+    foreach(var x in new int[] { 1, 2, 3 })
+      fns.Add(() => x);
+
+    int s = 0;
+    foreach(var fn in fns)
+      s = s * 10 + fn();
+    return s;
+  }
+
+  //NOTE: hoisting the variable out of the loop restores the sharing BHL has
+  static int ForeachCapture_Hoisted()
+  {
+    var fns = new List<Func<int>>();
+    int x = 0;
+    foreach(var item in new int[] { 1, 2, 3 })
+    {
+      x = item;
+      fns.Add(() => x);
+    }
+
+    int s = 0;
+    foreach(var fn in fns)
+      s = s * 10 + fn();
+    return s;
+  }
+
+  [Fact]
+  public void TestForeachCaptureNeedsHoisting()
+  {
+    //NOTE: C# gives each iteration its own variable since C# 5, BHL shares one
+    Assert.Equal(123, ForeachCapture_Naive());
+    Assert.Equal(333, ForeachCapture_Hoisted());
   }
 
   [Fact]

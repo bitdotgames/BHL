@@ -145,6 +145,40 @@ finally { co.Dispose(); }
 Both versions are in the spike: one asserts `1`, the other asserts the empty string that the
 naive lowering produces.
 
+## Probe 5: a virtual method that is a coroutine
+
+```bhl
+class Foo { coro virtual func int getA() { var tmp = this.a  yield()  return tmp } }
+class Bar : Foo { coro override func int getA() { ... yield() yield() ... } }
+```
+
+Free. A virtual method returning `IEnumerator<Tick>` dispatches the way C# always does, and
+casting to the base changes nothing - same as the script's own `//NOTE: Bar.getA() will be
+called anyway!`. The only extra is the return channel from probe 2, and each call site needs
+its own rather than sharing one.
+
+## Probe 6: a lambda capturing a loop variable
+
+```bhl
+foreach(int x in items) { fns.Add(func int() { return x }) }
+```
+
+**No test in the suite covers this**, so the behaviour is defined by nothing but what the VM
+does. Measured: `333` - the captured variable is shared and every lambda sees the last value,
+for `for` and `foreach` alike.
+
+C# `for` agrees. C# `foreach` does not: it has given each iteration its own variable since
+C# 5, so the naive translation yields `123`. Restoring BHL's behaviour means hoisting the
+variable out of the loop and assigning it inside:
+
+```csharp
+int x = 0;
+foreach(var item in items) { x = item; fns.Add(() => x); }
+```
+
+This is the worst shape found so far: a silent divergence in behaviour that no existing test
+pins, so neither backend nor suite would notice it.
+
 ## Where that leaves it
 
 Four probes, four different answers:
@@ -156,8 +190,14 @@ Four probes, four different answers:
 | `for` carrying a `defer` | changed lowering - `while`, increment inside the try |
 | `paral_all` with `return` | a return channel the compiler threads through every branch |
 | `yield <coro>` | a disposal guard, or cancellation stops propagating |
+| virtual `coro` methods | free - C# virtual dispatch, plus the return channel |
+| lambda capturing a loop var | `foreach` must hoist the variable, or capture semantics flip |
 
 None failed. The model translates. What it costs is a lowering rule per construct, and each
 one is discoverable only by testing against the VM, because these semantics live in the VM's
-behaviour rather than in a spec. Two of the four go silently wrong when lowered naively -
-which is the actual risk here, not feasibility.
+behaviour rather than in a spec.
+
+Three of the six go silently wrong when lowered naively, and the last one isn't covered by
+any test - so for that one neither the backend nor the suite would notice. That's the actual
+risk here. Not feasibility: unwritten semantics, discovered one at a time, where being wrong
+produces a different answer rather than an error.
