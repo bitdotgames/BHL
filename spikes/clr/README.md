@@ -179,6 +179,32 @@ foreach(var item in items) { x = item; fns.Add(() => x); }
 This is the worst shape found so far: a silent divergence in behaviour that no existing test
 pins, so neither backend nor suite would notice it.
 
+## The emitter
+
+`emitter/CsEmitter.cs` walks the same typed AST `ModuleCompiler` walks and writes C# against
+`emitter/BhlRt.cs`. `tests/test_clr_emitter.cs` runs each script on the VM *and* on the
+generated code and compares - return values for plain funcs, traced output for coroutines.
+
+Covered: scalar funcs, arithmetic, if/else, while, break/continue, recursion, `coro func`,
+`yield`, `defer`, `yield <coro>`, `paral`, `paral_all`, and the `trace` native. Anything else
+throws `NotSupported` by name.
+
+The paral + for + defer script from `tests/test_paral.cs` goes through it and traces exactly
+what the VM traces.
+
+### A lowering the probes hadn't found
+
+`for` desugars to a `while` whose body ends with a **continue marker** and then the increment:
+
+```
+AST_While { cond, body { ...stmts..., CONT(jump_marker), i = i + 1 } }
+```
+
+`AST_Continue.jump_marker` means "this is where `continue` lands", and it lands *before* the
+increment. C#'s `continue` in a `while` jumps to the condition and skips it, so a real
+`continue` has to become a `goto` to a label emitted at the marker. Translating it as C#'s
+`continue` produces an infinite loop - which is how it showed up.
+
 ## Where that leaves it
 
 Four probes, four different answers:

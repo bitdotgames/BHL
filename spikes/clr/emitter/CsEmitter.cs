@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using bhl;
 
@@ -22,14 +23,24 @@ public class CsEmitter : AST_Visitor
   StringBuilder _out = new StringBuilder();
   Stack<string> _exprs = new Stack<string>();
   int _indent;
+  bool _in_coro;
+  int _tmp;
+  //NOTE: 'continue' lands before a for's increment, not at the condition the way C#'s does,
+  //      so each loop gets a label and a real continue is a goto to it
+  Stack<string> _cont_labels = new Stack<string>();
+
+  const string RT = "bhl.spike.clr.BhlRt";
 
   public static string Emit(AST_Module ast, string class_name = "Gen")
   {
     var e = new CsEmitter();
     e.Line("using System;");
+    e.Line("using System.Collections.Generic;");
     e.Line("public static class " + class_name);
     e.Line("{");
     ++e._indent;
+    //NOTE: the one native the spike knows, so trace based scripts can be compared
+    e.Line("public static Action<string> __trace;");
     e.Visit(ast);
     --e._indent;
     e.Line("}");
@@ -59,15 +70,45 @@ public class CsEmitter : AST_Visitor
 
   public override void DoVisit(AST_Module ast) { VisitChildren(ast); }
   public override void DoVisit(AST_Interim ast) { VisitChildren(ast); }
-  public override void DoVisit(AST_Seq ast) { VisitChildren(ast); }
-  public override void DoVisit(AST_FuncBody ast) { VisitChildren(ast); }
+  public override void DoVisit(AST_Seq ast) { EmitBlock(ast); }
+  public override void DoVisit(AST_FuncBody ast) { EmitBlock(ast); }
+
+  //NOTE: 'defer' runs when the scope leaves, by any path, which is try/finally - so the rest
+  //      of the block has to be emitted inside the try, and the emitter only learns a defer
+  //      is there when it reaches it
+  void EmitBlock(AST_Tree ast)
+  {
+    for(int i = 0; i < ast.children.Count; ++i)
+    {
+      if(!(ast.children[i] is AST_Defer def))
+      {
+        Visit(ast.children[i]);
+        continue;
+      }
+
+      Line("try");
+      Line("{");
+      ++_indent;
+      for(int j = i + 1; j < ast.children.Count; ++j)
+        Visit(ast.children[j]);
+      --_indent;
+      Line("}");
+      Line("finally");
+      Line("{");
+      ++_indent;
+      VisitChildren(def);
+      --_indent;
+      Line("}");
+      return;
+    }
+  }
   public override void DoVisit(AST_Import ast) { throw new NotSupported("imports"); }
 
   public override void DoVisit(AST_FuncDecl ast)
   {
     var fs = ast.symbol;
-    if(fs.attribs.HasFlag(FuncAttrib.Coro))
-      throw new NotSupported("coroutines");
+    bool was_coro = _in_coro;
+    _in_coro = fs.attribs.HasFlag(FuncAttrib.Coro);
 
     var args = new List<string>();
     for(int i = 0; i < fs.GetTotalArgsNum(); ++i)
@@ -76,14 +117,25 @@ public class CsEmitter : AST_Visitor
       args.Add(TypeOf(a.type.Get()) + " " + Name(a));
     }
 
-    Line("public static " + TypeOf(fs.GetReturnType()) + " " + fs.name +
-         "(" + string.Join(", ", args) + ")");
+    if(_in_coro)
+    {
+      //NOTE: the value leaves through __ret, an IEnumerator can't return one
+      args.Add(RT + ".Ret __ret");
+      Line("public static IEnumerator<" + RT + ".Tick> " + fs.name +
+           "(" + string.Join(", ", args) + ")");
+    }
+    else
+      Line("public static " + TypeOf(fs.GetReturnType()) + " " + fs.name +
+           "(" + string.Join(", ", args) + ")");
+
     Line("{");
     ++_indent;
     //NOTE: child 0 is the params interim, child 1 the body
     Visit(ast.children[1]);
     --_indent;
     Line("}");
+
+    _in_coro = was_coro;
   }
 
   public override void DoVisit(AST_If ast)
@@ -111,15 +163,36 @@ public class CsEmitter : AST_Visitor
     }
   }
 
+  static bool HasContinueMarker(IAST body)
+  {
+    //NOTE: a for's marker sits among the body's own statements, nested loops carry their own
+    if(!(body is AST_Tree t))
+      return false;
+    foreach(var c in t.children)
+      if(c is AST_Continue k && k.jump_marker)
+        return true;
+    return false;
+  }
+
   public override void DoVisit(AST_While ast)
   {
+    string label = "__cont" + (_tmp++);
+    bool marked = HasContinueMarker(ast.children[1]);
+
     //NOTE: the condition is re-evaluated each pass, so it's emitted inside the loop
     Line("while(true)");
     Line("{");
     ++_indent;
     Visit(ast.children[0]);
     Line("if(!(" + Pop() + ")) break;");
+
+    _cont_labels.Push(label);
     Visit(ast.children[1]);
+    //NOTE: a plain while has no marker, so its continue lands at the end of the body
+    if(!marked)
+      Line(label + ": ;");
+    _cont_labels.Pop();
+
     --_indent;
     Line("}");
   }
@@ -137,12 +210,31 @@ public class CsEmitter : AST_Visitor
   }
 
   public override void DoVisit(AST_Break ast) { Line("break;"); }
-  public override void DoVisit(AST_Continue ast) { Line("continue;"); }
+  public override void DoVisit(AST_Continue ast)
+  {
+    if(ast.jump_marker)
+      Line(_cont_labels.Peek() + ": ;");
+    else
+      Line("goto " + _cont_labels.Peek() + ";");
+  }
 
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Line(_exprs.Count > 0 ? "return " + Pop() + ";" : "return;");
+
+    if(_in_coro)
+    {
+      if(_exprs.Count > 0)
+        Line("__ret.val = " + Pop() + ";");
+      Line("yield break;");
+    }
+    else
+      Line(_exprs.Count > 0 ? "return " + Pop() + ";" : "return;");
+  }
+
+  public override void DoVisit(AST_Yield ast)
+  {
+    Line("yield return default(" + RT + ".Tick);");
   }
 
   //////////////////////////////// variables
@@ -223,11 +315,25 @@ public class CsEmitter : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
-    _exprs.Push("((" + TypeOf(ast.type) + ")" + Pop() + ")");
+    var v = Pop();
+    var t = TypeOf(ast.type);
+    //NOTE: BHL's (string) converts, C#'s cast from a number doesn't compile
+    _exprs.Push(t == "string"
+      ? "System.Convert.ToString(" + v + ", System.Globalization.CultureInfo.InvariantCulture)"
+      : "((" + t + ")" + v + ")");
   }
 
   public override void DoVisit(AST_CallFunc ast)
   {
+    if(ast.symbol is FuncSymbolNative nfs)
+    {
+      if(nfs.name != "trace")
+        throw new NotSupported("native '" + nfs.name + "'");
+      VisitChildren(ast);
+      Line("__trace(" + Pop() + ");");
+      return;
+    }
+
     if(!(ast.symbol is FuncSymbolScript fs))
       throw new NotSupported("native calls");
 
@@ -237,6 +343,24 @@ public class CsEmitter : AST_Visitor
     var args = new string[n];
     for(int i = n - 1; i >= 0; --i)
       args[i] = Pop();
+
+    if(fs.attribs.HasFlag(FuncAttrib.Coro))
+    {
+      if(!_in_coro)
+        throw new NotSupported("calling a coro from a plain func");
+
+      string r = "__r" + (_tmp++);
+      Line("var " + r + " = new " + RT + ".Ret();");
+      args = args.Concat(new string[] { r }).ToArray();
+
+      string co = "__co" + (_tmp++);
+      Line("var " + co + " = " + RT + ".Drive(" + fs.name + "(" + string.Join(", ", args) + "));");
+      Line("while(" + co + ".MoveNext()) yield return default(" + RT + ".Tick);");
+
+      if(fs.GetReturnType() != Types.Void)
+        _exprs.Push(r + ".val");
+      return;
+    }
 
     var call = fs.name + "(" + string.Join(", ", args) + ")";
     if(fs.GetReturnType() == Types.Void)
@@ -255,10 +379,40 @@ public class CsEmitter : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)   { throw new NotSupported("lambdas"); }
   public override void DoVisit(AST_ClassDecl ast)    { throw new NotSupported("classes"); }
-  public override void DoVisit(AST_Paral ast)        { throw new NotSupported("paral"); }
-  public override void DoVisit(AST_ParalAll ast)     { throw new NotSupported("paral_all"); }
-  public override void DoVisit(AST_Defer ast)        { throw new NotSupported("defer"); }
-  public override void DoVisit(AST_Yield ast)        { throw new NotSupported("yield"); }
+  public override void DoVisit(AST_Paral ast)    { EmitParal(ast, "Paral"); }
+  public override void DoVisit(AST_ParalAll ast) { EmitParal(ast, "ParalAll"); }
+
+  //NOTE: a branch is a local iterator function, which C# allows - that keeps each branch's
+  //      own suspension points and its own finally blocks where they belong
+  void EmitParal(AST_Tree ast, string driver)
+  {
+    if(!_in_coro)
+      throw new NotSupported("paral outside a coro func");
+
+    var names = new List<string>();
+    for(int i = 0; i < ast.children.Count; ++i)
+    {
+      string n = "__br" + (_tmp++);
+      names.Add(n);
+
+      Line("IEnumerator<" + RT + ".Tick> " + n + "()");
+      Line("{");
+      ++_indent;
+      Visit(ast.children[i]);
+      //NOTE: a branch with no suspension point still has to be an iterator
+      Line("yield break;");
+      --_indent;
+      Line("}");
+    }
+
+    string co = "__co" + (_tmp++);
+    Line("var " + co + " = " + RT + "." + driver + "(" +
+         string.Join(", ", names.Select(n => n + "()")) + ");");
+    Line("while(" + co + ".MoveNext()) yield return default(" + RT + ".Tick);");
+    Line(co + ".Dispose();");
+  }
+  //NOTE: handled by EmitBlock, which needs to see it in its block's context
+  public override void DoVisit(AST_Defer ast)        { throw new NotSupported("defer outside a block"); }
   public override void DoVisit(AST_New ast)          { throw new NotSupported("new"); }
   public override void DoVisit(AST_Index ast)        { throw new NotSupported("indexing"); }
   public override void DoVisit(AST_TypeAs ast)       { throw new NotSupported("as"); }

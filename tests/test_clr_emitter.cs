@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using bhl;
+using System.Text;
 using bhl.spike.clr;
 using Xunit;
 
@@ -170,16 +171,127 @@ public class TestCLREmitter : BHL_TestBase
   }
 
   //NOTE: what the slice refuses, so the boundary is explicit rather than a mystery crash
+  //NOTE: coro scripts are compared by what they trace, the way the VM tests assert
+  void AssertSameTrace(string bhl, string func_name)
+  {
+    //NOTE: the AST has to be built with the same bindings the VM gets, or unresolved calls
+    //      simply aren't in it
+    var parse_ts = new Types();
+    BindTrace(parse_ts, new StringBuilder());
+    var ast = Parse(bhl, parse_ts).result.ast;
+
+    var vm_log = new StringBuilder();
+    var vm = MakeVM(bhl, ts => BindTrace(ts, vm_log));
+    Execute(vm, func_name);
+    CommonChecks(vm);
+
+    var src = CsEmitter.Emit(ast);
+    var asm = CompileCs(src);
+    var gen = asm.GetType("Gen");
+
+    var cs_log = new StringBuilder();
+    gen.GetField("__trace").SetValue(null, new Action<string>(x => cs_log.Append(x)));
+
+    var ret = new BhlRt.Ret();
+    var co = (IEnumerator<BhlRt.Tick>)gen.GetMethod(func_name).Invoke(null, new object[] { ret });
+    BhlRt.Run(co, ret);
+
+    Assert.True(vm_log.ToString() == cs_log.ToString(),
+      $"VM traced '{vm_log}', generated C# traced '{cs_log}'\n--- generated ---\n{src}");
+  }
+
+  [Fact]
+  public void TestYieldAndDefer()
+  {
+    AssertSameTrace(@"
+    coro func test() {
+      defer {
+        trace(""~;"")
+      }
+      trace(""a;"")
+      yield()
+      trace(""b;"")
+    }
+    ", "test");
+  }
+
+  [Fact]
+  public void TestParalWithForInABranchAndDefer()
+  {
+    AssertSameTrace(@"
+    coro func test()
+    {
+      paral {
+        {
+          yield()
+          yield()
+          yield()
+        }
+        {
+          for(int i = 0; i < 3; i++) {
+            defer {
+              trace((string)i+""~;"")
+            }
+            trace((string)i+"";"")
+            yield()
+          }
+        }
+      }
+    }
+    ", "test");
+  }
+
+  [Fact]
+  public void TestParalAllWaitsForBoth()
+  {
+    AssertSameTrace(@"
+    coro func test()
+    {
+      paral_all {
+        {
+          yield()
+          trace(""a;"")
+        }
+        {
+          yield()
+          yield()
+          trace(""b;"")
+        }
+      }
+      trace(""done;"")
+    }
+    ", "test");
+  }
+
+  [Fact]
+  public void TestCoroCallingCoro()
+  {
+    AssertSameTrace(@"
+    coro func sub(int n) {
+      defer { trace(""~sub;"") }
+      trace(""sub;"")
+      yield()
+    }
+
+    coro func test() {
+      trace(""a;"")
+      yield sub(1)
+      trace(""b;"")
+    }
+    ", "test");
+  }
+
   [Fact]
   public void TestUnsupportedIsReported()
   {
     var ast = Parse(@"
-    coro func test() {
-      yield()
+    class Foo { int x }
+
+    func test() {
     }
     ", new Types()).result.ast;
 
     var e = Assert.Throws<CsEmitter.NotSupported>(() => CsEmitter.Emit(ast));
-    Assert.Contains("coroutines", e.Message);
+    Assert.Contains("classes", e.Message);
   }
 }
